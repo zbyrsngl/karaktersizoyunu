@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Karakter Macerası - 2D Karikatür Modu</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --ui-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #4ecca3;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .joystick-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 120px;
+            height: 120px;
+            background: var(--ui-color);
+            border-radius: 50%;
+            pointer-events: auto;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        #joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        #mission-log {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background: var(--ui-color);
+            backdrop-filter: blur(5px);
+            color: white;
+            border-radius: 10px;
+            min-width: 200px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #loading-screen {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            z-index: 100;
+            background: var(--bg-color);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="loading-screen">
+        <div>Karakter Hazırlanıyor...</div>
+        <div style="font-size: 12px; margin-top: 10px;">Lütfen images.jpg dosyasının aynı klasörde olduğundan emin olun.</div>
+    </div>
+    <div id="status" class="status-bar">Puan: <span id="score">0</span></div>
+    <div id="ui-layer">
+        <div id="mission-log">
+            <h4 style="margin: 0 0 10px 0;">Aktif Görevler</h4>
+            <ul id="task-list" style="margin: 0; padding-left: 20px; font-size: 14px;">
+                <li>Haritayı keşfet</li>
+                <li>Altınları topla (0/3)</li>
+            </ul>
+        </div>
+        <div class="joystick-container" id="joystick">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+/**
+ * 2D OYUN MOTORU VE KARAKTER ENTEGRASYONU
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const taskListEl = document.getElementById('task-list');
+const loadingScreen = document.getElementById('loading-screen');
+
+// Karakter resmi yükleme
+const CHARACTER_IMAGE_URL = 'images.jpg'; 
+const charImg = new Image();
+charImg.src = CHARACTER_IMAGE_URL;
+
+charImg.onload = () => {
+    loadingScreen.style.display = 'none';
+    init();
+};
+
+charImg.onerror = () => {
+    loadingScreen.innerHTML = "<div>Hata: Karakter resmi bulunamadı!</div><div style='font-size:14px'>Dosya adının 'images.jpg' olduğundan emin olun.</div>";
+};
+
+// Ses efektleri placeholderları
+const sounds = {
+    move: null, 
+    collect: null, 
+    complete: null 
+};
+
+function playSound(name) {
+    if (sounds[name]) {
+        sounds[name].currentTime = 0;
+        sounds[name].play().catch(e => {});
+    }
+}
+
+// Global Değişkenler
+let width, height;
+let score = 0;
+let items = [];
+let animFrame = 0;
+
+const player = {
+    x: 0,
+    y: 0,
+    width: 90,   // Karakter genişliği
+    height: 120, // Karakter yüksekliği
+    speed: 5,
+    vx: 0,
+    vy: 0,
+    direction: 1 // 1: Sağ, -1: Sol
+};
+
+let missionProgress = 0;
+const totalMissions = 3;
+
+function init() {
+    resize();
+    player.x = width / 2;
+    player.y = height / 2;
+    spawnItems(totalMissions);
+    window.addEventListener('resize', resize);
+    setupControls();
+    gameLoop();
+}
+
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+
+function spawnItems(count) {
+    for(let i = 0; i < count; i++) {
+        items.push({
+            x: Math.random() * (width - 100) + 50,
+            y: Math.random() * (height - 100) + 50,
+            radius: 12,
+            collected: false,
+            pulse: 0
+        });
+    }
+}
+
+function setupControls() {
+    const joystick = document.getElementById('joystick');
+    const knob = document.getElementById('joystick-knob');
+    let isDragging = false;
+
+    const handleMove = (e) => {
+        if (!isDragging) return;
+        const touch = e.touches ? e.touches[0] : e;
+        const rect = joystick.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
+        
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxDist = rect.width / 2;
+        
+        if (dist > maxDist) {
+            dx *= maxDist / dist;
+            dy *= maxDist / dist;
+        }
+        
+        knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        
+        player.vx = (dx / maxDist) * player.speed;
+        player.vy = (dy / maxDist) * player.speed;
+
+        // Karakterin baktığı yönü güncelle
+        if (player.vx > 0.1) player.direction = 1;
+        if (player.vx < -0.1) player.direction = -1;
+    };
+
+    const stopDragging = () => {
+        isDragging = false;
+        knob.style.transform = `translate(-50%, -50%)`;
+        player.vx = 0;
+        player.vy = 0;
+    };
+
+    joystick.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging = true; handleMove(e); });
+    window.addEventListener('touchmove', (e) => { if(isDragging) e.preventDefault(); handleMove(e); }, { passive: false });
+    window.addEventListener('touchend', stopDragging);
+    
+    joystick.addEventListener('mousedown', (e) => { isDragging = true; handleMove(e); });
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', stopDragging);
+}
+
+function update() {
+    player.x += player.vx;
+    player.y += player.vy;
+    
+    // Ekran sınırları
+    const padX = player.width / 2;
+    const padY = player.height / 2;
+    if (player.x < padX) player.x = padX;
+    if (player.x > width - padX) player.x = width - padX;
+    if (player.y < padY) player.y = padY;
+    if (player.y > height - padY) player.y = height - padY;
+    
+    // Toplanabilir eşyalarla çarpışma
+    items.forEach(item => {
+        if (!item.collected) {
+            item.pulse += 0.1;
+            const dx = player.x - item.x;
+            const dy = player.y - item.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            if (dist < 45) { // Çarpışma toleransı
+                item.collected = true;
+                score += 10;
+                missionProgress++;
+                scoreEl.innerText = score;
+                updateMissionUI();
+                playSound('collect');
+            }
+        }
+    });
+
+    // Hareket varsa animasyon karesini artır
+    if (Math.abs(player.vx) > 0.1 || Math.abs(player.vy) > 0.1) {
+        animFrame += 0.15;
+    } else {
+        animFrame *= 0.8; // Durduğunda yumuşakça dur
+    }
+}
+
+function updateMissionUI() {
+    if (missionProgress < totalMissions) {
+        taskListEl.innerHTML = `
+            <li>Haritayı keşfet</li>
+            <li>Altınları topla (${missionProgress}/${totalMissions})</li>
+        `;
+    } else {
+        taskListEl.innerHTML = `<li style="color: #4ecca3; font-weight: bold;">✓ Tüm görevler tamamlandı!</li>`;
+        playSound('complete');
+    }
+}
+
+/**
+ * 2D KARAKTER ÇİZİMİ
+ */
+function drawPlayer(x, y, dir) {
+    // 2D yürüme animasyonu (Hafif zıplama ve eğilme)
+    const bounce = Math.abs(Math.sin(animFrame)) * 6;
+    const stretch = 1 + (Math.sin(animFrame) * 0.05);
+
+    ctx.save();
+    ctx.translate(x, y - bounce);
+    
+    // Karakterin baktığı yöne göre aynalama
+    ctx.scale(dir, 1);
+    
+    // Karakterin gövdesini çiz
+    ctx.drawImage(
+        charImg, 
+        -player.width / 2, 
+        -player.height / 2, 
+        player.width, 
+        player.height * (1 / stretch) // Hafif yaylanma efekti
+    );
+
+    ctx.restore();
+}
+
+function draw() {
+    // Arkaplanı temizle
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Izgara efekti
+    ctx.strokeStyle = 'rgba(78, 204, 163, 0.05)';
+    ctx.lineWidth = 1;
+    const step = 60;
+    for(let i = 0; i < width; i += step) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
+    }
+    for(let j = 0; j < height; j += step) {
+        ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(width, j); ctx.stroke();
+    }
+
+    // Altınları çiz
+    items.forEach(item => {
+        if (!item.collected) {
+            const s = 1 + Math.sin(item.pulse) * 0.2;
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, item.radius * s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Parlama efekti
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#f1c40f';
+        }
+    });
+    ctx.shadowBlur = 0;
+
+    // Karakteri çiz
+    drawPlayer(player.x, player.y, player.direction);
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
