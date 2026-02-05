@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Karakter Macerası - 2D Karikatür Modu</title>
+    <title>İstanbul Macerası - Dolar Fırlatma Özelliği</title>
     <style>
         :root {
-            --bg-color: #1a1a2e;
-            --ui-color: rgba(255, 255, 255, 0.1);
-            --accent-color: #4ecca3;
+            --bg-color: #0f172a;
+            --accent-color: #fbbf24;
         }
 
         body {
@@ -31,7 +30,7 @@
 
         canvas {
             display: block;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
         }
 
         #ui-layer {
@@ -44,41 +43,59 @@
             z-index: 10;
         }
 
-        .joystick-container {
+        #joystick-wrapper {
             position: absolute;
             bottom: 50px;
             left: 50px;
             width: 120px;
             height: 120px;
-            background: var(--ui-color);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             pointer-events: auto;
-            border: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        #joystick-knob {
-            position: absolute;
+        #joystick-stick {
             width: 50px;
             height: 50px;
             background: var(--accent-color);
             border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px var(--accent-color);
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
         }
 
-        #mission-log {
+        .action-buttons {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 15px;
-            background: var(--ui-color);
-            backdrop-filter: blur(5px);
+            bottom: 50px;
+            right: 50px;
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .btn {
+            width: 100px;
+            height: 100px;
+            background: rgba(251, 191, 36, 0.4);
+            border: 4px solid var(--accent-color);
+            border-radius: 50%;
             color: white;
-            border-radius: 10px;
-            min-width: 200px;
-            border-left: 4px solid var(--accent-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            user-select: none;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
+        .shoot-btn {
+            background: rgba(34, 197, 94, 0.4);
+            border-color: #22c55e;
         }
 
         .status-bar {
@@ -86,112 +103,233 @@
             top: 20px;
             left: 20px;
             color: white;
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
 
-        #loading-screen {
+        #gemini-chat {
             position: absolute;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 400px;
+            padding: 15px;
+            background: rgba(200, 0, 0, 0.9);
             color: white;
-            font-size: 20px;
-            z-index: 100;
-            background: var(--bg-color);
+            border-radius: 15px;
+            border: 3px solid white;
+            display: none;
+            text-align: center;
+            z-index: 20;
+            font-size: 22px;
+            font-weight: bold;
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0 { transform: translateX(-50%) scale(0.5); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        #start-screen {
+            position: absolute;
             width: 100%;
             height: 100%;
+            background: rgba(0,0,0,0.8);
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
+
+        #start-button {
+            background: var(--accent-color);
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            pointer-events: auto;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="loading-screen">
-        <div>Karakter Hazırlanıyor...</div>
-        <div style="font-size: 12px; margin-top: 10px;">Lütfen images.jpg dosyasının aynı klasörde olduğundan emin olun.</div>
+    <div id="start-screen">
+        <h1>İstanbul Macerası</h1>
+        <p>Aksiyon dolu bir yürüyüşe başlamak için tıkla<br><small>(ENTER veya Yeşil Buton ile Dolar Fırlat)</small></p>
+        <button id="start-button">BAŞLA</button>
     </div>
-    <div id="status" class="status-bar">Puan: <span id="score">0</span></div>
+
+    <div id="status" class="status-bar">Altın: <span id="score">0</span></div>
+
     <div id="ui-layer">
-        <div id="mission-log">
-            <h4 style="margin: 0 0 10px 0;">Aktif Görevler</h4>
-            <ul id="task-list" style="margin: 0; padding-left: 20px; font-size: 14px;">
-                <li>Haritayı keşfet</li>
-                <li>Altınları topla (0/3)</li>
-            </ul>
+        <div id="gemini-chat">
+            <p id="gemini-text">EYVAHH!</p>
         </div>
-        <div class="joystick-container" id="joystick">
-            <div id="joystick-knob"></div>
+        <div id="joystick-wrapper"><div id="joystick-stick"></div></div>
+        <div class="action-buttons">
+            <div class="btn shoot-btn" id="shoot-btn">DOLAR</div>
+            <div class="btn" id="jump-btn">ZIPLA</div>
         </div>
     </div>
     <canvas id="gameCanvas"></canvas>
 </div>
 
+<!-- Arka plan müziği -->
+<audio id="bg-music" loop>
+  <source src="pixel_spy_vs_spy.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Ses Efektleri -->
+<audio id="coin-sfx">
+  <source src="pickupCoin.wav" type="audio/wav">
+</audio>
+<audio id="death-sfx">
+  <source src="explosion.wav" type="audio/wav">
+</audio>
+
 <script>
-/**
- * 2D OYUN MOTORU VE KARAKTER ENTEGRASYONU
- */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const taskListEl = document.getElementById('task-list');
-const loadingScreen = document.getElementById('loading-screen');
+const apiKey = ""; 
+const bgMusic = document.getElementById('bg-music');
+const coinSfx = document.getElementById('coin-sfx');
+const deathSfx = document.getElementById('death-sfx');
 
-// Karakter resmi yükleme
-const CHARACTER_IMAGE_URL = 'images.jpg'; 
-const charImg = new Image();
-charImg.src = CHARACTER_IMAGE_URL;
-
-charImg.onload = () => {
-    loadingScreen.style.display = 'none';
-    init();
-};
-
-charImg.onerror = () => {
-    loadingScreen.innerHTML = "<div>Hata: Karakter resmi bulunamadı!</div><div style='font-size:14px'>Dosya adının 'images.jpg' olduğundan emin olun.</div>";
-};
-
-// Ses efektleri placeholderları
-const sounds = {
-    move: null, 
-    collect: null, 
-    complete: null 
-};
-
-function playSound(name) {
-    if (sounds[name]) {
-        sounds[name].currentTime = 0;
-        sounds[name].play().catch(e => {});
+async function fetchWithRetry(url, options, maxRetries = 5) {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const response = await fetch(url, options);
+            if (response.ok) return await response.json();
+            const delay = Math.pow(2, retries) * 1000;
+            await new Promise(res => setTimeout(res, delay));
+            retries++;
+        } catch (e) { retries++; }
     }
 }
 
-// Global Değişkenler
-let width, height;
-let score = 0;
-let items = [];
-let animFrame = 0;
+async function playVoice(prompt, voice = "Puck") {
+    if (!apiKey) return;
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+        const result = await fetchWithRetry(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { 
+                    responseModalities: ["AUDIO"], 
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } 
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            })
+        });
+        
+        if (result && result.candidates && result.candidates[0].content.parts[0].inlineData) {
+            const pcmData = result.candidates[0].content.parts[0].inlineData.data;
+            const audio = new Audio(URL.createObjectURL(pcmToWav(pcmData, 24000)));
+            audio.play();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function playScream() {
+    const texts = ["HAYDAAAA!", "EYVAHHH!", "DİKKAT ET!", "TERLİKKK!"];
+    const text = texts[Math.floor(Math.random() * texts.length)];
+    const chat = document.getElementById('gemini-chat');
+    const chatText = document.getElementById('gemini-text');
+    const container = document.getElementById('game-container');
+    
+    chat.style.display = 'block';
+    chatText.innerText = text;
+    container.classList.add('shake');
+
+    if(deathSfx) {
+        deathSfx.currentTime = 0;
+        deathSfx.play().catch(e => {});
+    }
+
+    playVoice("Say it as a shocked Turkish man screaming: " + text, "Puck");
+    
+    setTimeout(() => {
+        playVoice("A mischievous and loud Turkish aunt laugh: HA HA HA!", "Aoede");
+    }, 400);
+
+    setTimeout(() => { 
+        chat.style.display = 'none'; 
+        container.classList.remove('shake');
+    }, 1500);
+}
+
+function pcmToWav(base64Pcm, sampleRate) {
+    const binary = window.atob(base64Pcm);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const header = new ArrayBuffer(44);
+    const view = new DataView(header);
+    view.setUint32(0, 0x52494646, false); view.setUint32(4, 36 + binary.length, true);
+    view.setUint32(8, 0x57415645, false); view.setUint32(12, 0x666d7420, false);
+    view.setUint16(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true); view.setUint32(36, 0x64617461, false);
+    view.setUint32(40, binary.length, true);
+    return new Blob([header, bytes], { type: 'audio/wav' });
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+
+const imgPlayer = new Image(); imgPlayer.src = 'recep.jpg';
+const imgEnemy = new Image(); imgEnemy.src = 'emine.jpg';
+
+let width, height, score = 0, items = [], platforms = [], camX = 0, enemies = [], projectiles = [], playerProjectiles = [], gameStarted = false;
+let frameCount = 0;
+const gravity = 0.65;
 
 const player = {
-    x: 0,
-    y: 0,
-    width: 90,   // Karakter genişliği
-    height: 120, // Karakter yüksekliği
-    speed: 5,
-    vx: 0,
-    vy: 0,
-    direction: 1 // 1: Sağ, -1: Sol
+    x: 100, y: 0, w: 110, h: 150, vx: 0, vy: 0, 
+    speed: 7.5, jumpPower: -23, 
+    grounded: false, dir: 1,
+    isDying: false
 };
 
-let missionProgress = 0;
-const totalMissions = 3;
+let joystickActive = false, joystickDir = 0;
+const keys = { a: false, d: false };
+
+document.getElementById('start-button').onclick = () => {
+    gameStarted = true;
+    document.getElementById('start-screen').style.display = 'none';
+    try {
+        bgMusic.volume = 0.3;
+        bgMusic.play().catch(e => {});
+    } catch(err) {}
+    init();
+};
 
 function init() {
     resize();
-    player.x = width / 2;
-    player.y = height / 2;
-    spawnItems(totalMissions);
-    window.addEventListener('resize', resize);
+    createLevel();
     setupControls();
     gameLoop();
 }
@@ -203,185 +341,305 @@ function resize() {
     canvas.height = height;
 }
 
-function spawnItems(count) {
-    for(let i = 0; i < count; i++) {
-        items.push({
-            x: Math.random() * (width - 100) + 50,
-            y: Math.random() * (height - 100) + 50,
-            radius: 12,
-            collected: false,
-            pulse: 0
+function createLevel() {
+    platforms = [
+        {x: 0, y: height - 60, w: 30000, h: 60}, 
+        {x: 600, y: height - 320, w: 400, h: 30},
+        {x: 1200, y: height - 580, w: 300, h: 30},
+        {x: 1800, y: height - 400, w: 450, h: 30},
+        {x: 2500, y: height - 650, w: 350, h: 30},
+    ];
+    for(let i=0; i<100; i++) {
+        items.push({ x: 600 + i*450, y: height - 250 - Math.random()*500, collected: false });
+    }
+    for(let i=0; i<25; i++) {
+        enemies.push({ 
+            x: 2000 + i*1500, y: height - 280, 
+            w: 160, h: 220, 
+            shootTimer: 0,
+            shootInterval: 120 + Math.random() * 60,
+            dead: false
         });
     }
 }
 
 function setupControls() {
-    const joystick = document.getElementById('joystick');
-    const knob = document.getElementById('joystick-knob');
-    let isDragging = false;
+    window.addEventListener('keydown', (e) => {
+        if(e.key.toLowerCase() === 'a') keys.a = true;
+        if(e.key.toLowerCase() === 'd') keys.d = true;
+        if(e.key === ' ' || e.key === 'ArrowUp') jump();
+        if(e.key === 'Enter') shootDollar();
+    });
+    window.addEventListener('keyup', (e) => {
+        if(e.key.toLowerCase() === 'a') keys.a = false;
+        if(e.key.toLowerCase() === 'd') keys.d = false;
+    });
 
-    const handleMove = (e) => {
-        if (!isDragging) return;
-        const touch = e.touches ? e.touches[0] : e;
-        const rect = joystick.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        let dx = touch.clientX - centerX;
-        let dy = touch.clientY - centerY;
-        
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const maxDist = rect.width / 2;
-        
-        if (dist > maxDist) {
-            dx *= maxDist / dist;
-            dy *= maxDist / dist;
-        }
-        
-        knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-        
-        player.vx = (dx / maxDist) * player.speed;
-        player.vy = (dy / maxDist) * player.speed;
-
-        // Karakterin baktığı yönü güncelle
-        if (player.vx > 0.1) player.direction = 1;
-        if (player.vx < -0.1) player.direction = -1;
-    };
-
-    const stopDragging = () => {
-        isDragging = false;
-        knob.style.transform = `translate(-50%, -50%)`;
-        player.vx = 0;
-        player.vy = 0;
-    };
-
-    joystick.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging = true; handleMove(e); });
-    window.addEventListener('touchmove', (e) => { if(isDragging) e.preventDefault(); handleMove(e); }, { passive: false });
-    window.addEventListener('touchend', stopDragging);
+    const wrapper = document.getElementById('joystick-wrapper');
+    const stick = document.getElementById('joystick-stick');
     
-    joystick.addEventListener('mousedown', (e) => { isDragging = true; handleMove(e); });
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', stopDragging);
+    const handleJoystick = (e) => {
+        if(!gameStarted || player.isDying) return;
+        e.preventDefault();
+        const touch = e.touches ? e.touches[0] : e;
+        const rect = wrapper.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const dx = touch.clientX - centerX;
+        const limit = 40;
+        const moveX = Math.max(Math.min(dx, limit), -limit);
+        stick.style.transform = `translateX(${moveX}px)`;
+        joystickDir = moveX > 10 ? 1 : (moveX < -10 ? -1 : 0);
+    };
+
+    wrapper.addEventListener('touchstart', (e) => { joystickActive = true; handleJoystick(e); });
+    wrapper.addEventListener('touchmove', handleJoystick);
+    wrapper.addEventListener('touchend', () => { joystickActive = false; joystickDir = 0; stick.style.transform = `translateX(0px)`; });
+    document.getElementById('jump-btn').onclick = jump;
+    document.getElementById('shoot-btn').onclick = shootDollar;
 }
 
-function update() {
+function jump() {
+    if(player.grounded && !player.isDying) {
+        player.vy = player.jumpPower;
+        player.grounded = false;
+    }
+}
+
+function shootDollar() {
+    if(!gameStarted || player.isDying) return;
+    
+    playerProjectiles.push({
+        x: player.x + (player.dir === 1 ? player.w : 0),
+        y: player.y + player.h / 2,
+        vx: player.dir * 15,
+        rotation: 0,
+        active: true
+    });
+    
+    // Para saçma sesi yerine kısa bir "Fırlat" sesi simülasyonu
+    playVoice("Cash!", "Puck");
+}
+
+function triggerDeath() {
+    if(player.isDying) return;
+    player.isDying = true;
+    playScream();
+    player.vy = -15;
+    player.vx = 0;
+    setTimeout(() => {
+        player.x = 100;
+        player.y = 0;
+        player.vy = 0;
+        player.isDying = false;
+    }, 1500);
+}
+
+function killEnemy(en) {
+    en.dead = true;
+    score += 5;
+    scoreEl.innerText = score;
+    if(deathSfx) {
+        deathSfx.currentTime = 0;
+        deathSfx.play();
+    }
+    player.vy = player.jumpPower / 1.5;
+}
+
+function gameLoop() {
+    if(!gameStarted) return;
+    frameCount++;
+
+    if(!player.isDying) {
+        let moveDir = 0;
+        if (keys.a) moveDir = -1;
+        if (keys.d) moveDir = 1;
+        if (joystickActive) moveDir = joystickDir;
+
+        if(moveDir !== 0) {
+            player.vx = moveDir * player.speed;
+            player.dir = moveDir;
+        } else {
+            player.vx *= 0.85;
+        }
+    }
+
+    player.vy += gravity;
     player.x += player.vx;
     player.y += player.vy;
-    
-    // Ekran sınırları
-    const padX = player.width / 2;
-    const padY = player.height / 2;
-    if (player.x < padX) player.x = padX;
-    if (player.x > width - padX) player.x = width - padX;
-    if (player.y < padY) player.y = padY;
-    if (player.y > height - padY) player.y = height - padY;
-    
-    // Toplanabilir eşyalarla çarpışma
-    items.forEach(item => {
-        if (!item.collected) {
-            item.pulse += 0.1;
-            const dx = player.x - item.x;
-            const dy = player.y - item.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            
-            if (dist < 45) { // Çarpışma toleransı
-                item.collected = true;
-                score += 10;
-                missionProgress++;
-                scoreEl.innerText = score;
-                updateMissionUI();
-                playSound('collect');
+
+    player.grounded = false;
+    platforms.forEach(p => {
+        if(player.x + 30 < p.x + p.w && player.x + player.w - 30 > p.x && player.y + player.h > p.y && player.y + player.h < p.y + p.h + 15) {
+            if(!player.isDying) {
+                player.y = p.y - player.h; player.vy = 0; player.grounded = true;
             }
         }
     });
 
-    // Hareket varsa animasyon karesini artır
-    if (Math.abs(player.vx) > 0.1 || Math.abs(player.vy) > 0.1) {
-        animFrame += 0.15;
-    } else {
-        animFrame *= 0.8; // Durduğunda yumuşakça dur
-    }
-}
+    if(player.y > height && !player.isDying) triggerDeath();
+    camX = player.x - width/2;
 
-function updateMissionUI() {
-    if (missionProgress < totalMissions) {
-        taskListEl.innerHTML = `
-            <li>Haritayı keşfet</li>
-            <li>Altınları topla (${missionProgress}/${totalMissions})</li>
-        `;
-    } else {
-        taskListEl.innerHTML = `<li style="color: #4ecca3; font-weight: bold;">✓ Tüm görevler tamamlandı!</li>`;
-        playSound('complete');
-    }
-}
-
-/**
- * 2D KARAKTER ÇİZİMİ
- */
-function drawPlayer(x, y, dir) {
-    // 2D yürüme animasyonu (Hafif zıplama ve eğilme)
-    const bounce = Math.abs(Math.sin(animFrame)) * 6;
-    const stretch = 1 + (Math.sin(animFrame) * 0.05);
-
-    ctx.save();
-    ctx.translate(x, y - bounce);
-    
-    // Karakterin baktığı yöne göre aynalama
-    ctx.scale(dir, 1);
-    
-    // Karakterin gövdesini çiz
-    ctx.drawImage(
-        charImg, 
-        -player.width / 2, 
-        -player.height / 2, 
-        player.width, 
-        player.height * (1 / stretch) // Hafif yaylanma efekti
-    );
-
-    ctx.restore();
-}
-
-function draw() {
-    // Arkaplanı temizle
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, width, height);
-    
-    // Izgara efekti
-    ctx.strokeStyle = 'rgba(78, 204, 163, 0.05)';
-    ctx.lineWidth = 1;
-    const step = 60;
-    for(let i = 0; i < width; i += step) {
-        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
-    }
-    for(let j = 0; j < height; j += step) {
-        ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(width, j); ctx.stroke();
-    }
-
-    // Altınları çiz
-    items.forEach(item => {
-        if (!item.collected) {
-            const s = 1 + Math.sin(item.pulse) * 0.2;
-            ctx.fillStyle = '#f1c40f';
-            ctx.beginPath();
-            ctx.arc(item.x, item.y, item.radius * s, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Parlama efekti
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#f1c40f';
+    items.forEach(it => {
+        if(!it.collected && Math.hypot(player.x + player.w/2 - it.x, player.y + player.h/2 - it.y) < 80) {
+            it.collected = true; 
+            score++; 
+            scoreEl.innerText = score;
+            if(coinSfx) {
+                coinSfx.currentTime = 0;
+                coinSfx.play().catch(e => {});
+            }
         }
     });
-    ctx.shadowBlur = 0;
 
-    // Karakteri çiz
-    drawPlayer(player.x, player.y, player.direction);
-}
+    // Dolar Destesi Hareket ve Çarpışma
+    playerProjectiles.forEach((pp, pIndex) => {
+        pp.x += pp.vx;
+        pp.rotation += 0.3;
+        
+        enemies.forEach(en => {
+            if(!en.dead && pp.x > en.x && pp.x < en.x + en.w && pp.y > en.y && pp.y < en.y + en.h) {
+                en.dead = true;
+                pp.active = false;
+                score += 10;
+                scoreEl.innerText = score;
+                if(deathSfx) { deathSfx.currentTime = 0; deathSfx.play(); }
+            }
+        });
+        
+        if(Math.abs(pp.x - player.x) > 2000) pp.active = false;
+    });
+    playerProjectiles = playerProjectiles.filter(p => p.active);
 
-function gameLoop() {
-    update();
-    draw();
+    enemies.forEach((en) => {
+        if(en.dead) return;
+
+        if(player.x < en.x + en.w) {
+            en.shootTimer++;
+            if(en.shootTimer > en.shootInterval) {
+                en.shootTimer = 0;
+                if(Math.abs(en.x - player.x) < 1200) {
+                    const angle = Math.atan2(player.y - en.y, player.x - en.x);
+                    projectiles.push({
+                        x: en.x + en.w/2,
+                        y: en.y + 30,
+                        vx: Math.cos(angle) * 10,
+                        vy: Math.sin(angle) * 10,
+                        rotation: 0,
+                        passed: false
+                    });
+                }
+            }
+        }
+        
+        if(!player.isDying && 
+           player.x + 40 < en.x + en.w - 40 && player.x + player.w - 40 > en.x + 40 && 
+           player.y + 40 < en.y + en.h && player.y + player.h > en.y) {
+            if(player.vy > 0 && player.y + player.h < en.y + en.h / 2) {
+                killEnemy(en);
+            } else {
+                triggerDeath();
+            }
+        }
+    });
+
+    projectiles.forEach((proj, index) => {
+        proj.x += proj.vx;
+        proj.y += proj.vy;
+        proj.rotation += 0.2;
+        if(!proj.passed && proj.x < player.x && Math.abs(proj.y - player.y) < 200) {
+            proj.passed = true;
+        }
+        if(!player.isDying && Math.hypot(proj.x - (player.x + player.w/2), proj.y - (player.y + player.h/2)) < 50) {
+            projectiles.splice(index, 1);
+            triggerDeath();
+        }
+        if(Math.abs(proj.x - player.x) > 1500) projectiles.splice(index, 1);
+    });
+
+    ctx.clearRect(0,0,width,height);
+    ctx.save();
+    ctx.translate(-camX, 0);
+    
+    ctx.fillStyle = "#1e293b";
+    platforms.forEach(p => {
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(p.x, p.y, p.w, 6);
+    });
+
+    ctx.fillStyle = "#fbbf24";
+    items.forEach(it => {
+        if(!it.collected) {
+            ctx.beginPath(); ctx.arc(it.x, it.y, 18, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+        }
+    });
+
+    enemies.forEach(en => {
+        if(en.dead) return;
+        ctx.save();
+        if(player.x > en.x) {
+            ctx.translate(en.x + en.w, en.y); ctx.scale(-1, 1);
+            ctx.drawImage(imgEnemy, 0, 0, en.w, en.h);
+        } else {
+            ctx.drawImage(imgEnemy, en.x, en.y, en.w, en.h);
+        }
+        ctx.restore();
+    });
+
+    // Dolar Destesi Çizimi
+    playerProjectiles.forEach(pp => {
+        ctx.save();
+        ctx.translate(pp.x, pp.y);
+        ctx.rotate(pp.rotation);
+        // Yeşil Deste
+        ctx.fillStyle = "#15803d";
+        ctx.fillRect(-25, -12, 50, 25);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-25, -12, 50, 25);
+        // Orta simge
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText("$", -5, 6);
+        ctx.restore();
+    });
+
+    projectiles.forEach(proj => {
+        ctx.save();
+        ctx.translate(proj.x, proj.y);
+        ctx.rotate(proj.rotation);
+        ctx.fillStyle = "#f87171";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    ctx.save();
+    let tilt = 0, bounce = 0;
+    if(Math.abs(player.vx) > 0.5 && player.grounded) {
+        tilt = Math.sin(frameCount * 0.2) * 0.1;
+        bounce = Math.abs(Math.cos(frameCount * 0.2)) * 10;
+    }
+
+    if(player.isDying) {
+        ctx.translate(player.x + player.w/2, player.y + player.h/2);
+        ctx.rotate(frameCount * 0.2);
+        ctx.drawImage(imgPlayer, -player.w/2, -player.h/2, player.w, player.h);
+    } else {
+        ctx.translate(player.x + player.w/2, player.y + player.h/2 - bounce);
+        ctx.rotate(tilt);
+        if(player.dir === -1) ctx.scale(-1, 1);
+        ctx.drawImage(imgPlayer, -player.w/2, -player.h/2, player.w, player.h);
+    }
+    
+    ctx.restore();
+    ctx.restore();
     requestAnimationFrame(gameLoop);
 }
+
+window.onresize = resize;
 </script>
 </body>
 </html>
