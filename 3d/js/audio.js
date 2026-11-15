@@ -9,7 +9,11 @@ const FILES = {
     cry: ['../sfx/uufff.mp3'],
     saygili: ['../sfx/saygili_giris.mp3'],   // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
     sifirla: ['../sfx/sifirla.mp3'],          // 3. bölüm: kaset alınınca ve kasa sıfırlarken
-    cengiz: ['../sfx/milletinminakoycaz.mp3'] // 3. bölüm sonu: Cengiz
+    cengiz: ['../sfx/milletinminakoycaz.mp3'], // 3. bölüm sonu: Cengiz
+    hasret: ['../sfx/hasret.mp3'],            // 4. bölüm: FETÖ gelince HIRHIZ "Hocam gel, bu hasret bitsin!"
+    yaallah: ['../sfx/feto2_greet.mp3'],      // FETÖ öfkelenince "Ya Allah!"
+    savci: ['../sfx/savci.mp3'],              // 4. bölüm sonu: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!"
+    peygamber: ['../sfx/sonpeygamber.mp3']    // 4. bölüm sonu: kutlamaya gelen adam
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 

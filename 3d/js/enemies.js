@@ -4,13 +4,13 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { walkPose, nameLabel } from './models.js?v=7';
-import { G, diff, addScore } from './state.js?v=7';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=7';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=7';
-import { playSfx } from './audio.js?v=7';
-import { groundAt } from './physics.js?v=7';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=7';
+import { walkPose, nameLabel } from './models.js?v=8';
+import { G, diff, addScore } from './state.js?v=8';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=8';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=8';
+import { playSfx } from './audio.js?v=8';
+import { groundAt } from './physics.js?v=8';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=8';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -150,11 +150,21 @@ export function damageEnemy(e, power = 2, how = 'hammer') {
     G.kills++;
     addScore(e.T.score || 3000);
     const bribed = how === 'ammo' && G.level.ammo === 'bribe' && e.T.bribable;
-    floatText(bribed ? 'DOSYA KAPANDI!' : G.level.cry, e.pos.clone().setY(e.pos.y + 2.5), bribed ? '#86efac' : '#f8fafc', 0.5);
+    floatText(bribed ? 'DOSYA KAPANDI!' : G.level.cry, e.pos.clone().setY(e.pos.y + 2.5), bribed ? '#86efac' : e.T.arrest ? '#fca5a5' : '#f8fafc', 0.5);
     if (bribed) { e.leave = true; resetPose(e); e.m.armR.rotation.x = -2.6; burst(e.pos.clone().setY(e.pos.y + 2), { n: 8, color: ['#22c55e', '#16a34a'], speed: 2, up: 3 }); }
+    else if (e.T.arrest) arrest(e);   // 4. bölüm: darbeci asker silahını bırakır, elleri arkadan kelepçelenir, götürülür
     else spawnFx('poof', e.pos.clone().setY(e.pos.y + 0.05), 1.6);
     playSfx('cry', { vol: 0.5 });
     G.onKill && G.onKill(e);
+}
+const CUFF_GEO = new THREE.TorusGeometry(0.07, 0.022, 5, 10);
+function arrest(e) {
+    e.leave = true; e.arrested = true; resetPose(e);
+    e.m.armL.rotation.set(0.55, 0, 0.35); e.m.armR.rotation.set(0.55, 0, -0.35);
+    if (e.m.weapon) e.m.weapon.visible = false;
+    const cm = mat('#e5e7eb');
+    [-0.07, 0.07].forEach(x => { const c = new THREE.Mesh(CUFF_GEO, cm); c.position.set(x, 0.3, -0.3); c.rotation.y = Math.PI / 2; e.m.torso.add(c); });
+    burst(e.pos.clone().setY(e.pos.y + 1), { n: 6, color: ['#e5e7eb', '#94a3b8'], speed: 2, up: 2, size: 0.08 });
 }
 export function sayOnce(e, txt, col) {
     if (G.time - e.refused < 0.9) return;
@@ -167,7 +177,7 @@ function updateDead(e, dt) {
     e.deadT += dt;
     if (e.leave) {   // rüşveti alan polis parayı sallayarak arkasını dönüp gider
         e.facing += dt * 3; e.m.root.rotation.y = e.facing;
-        e.m.armR.rotation.x = -2.6 + Math.sin(G.time * 12) * 0.3;
+        if (!e.arrested) e.m.armR.rotation.x = -2.6 + Math.sin(G.time * 12) * 0.3;   // tutuklanan: eller arkada kalır
         if (e.deadT > 0.8) { e.pos.x += Math.sin(e.facing) * dt * 3; e.pos.z += Math.cos(e.facing) * dt * 3; e.phase += dt * 9; walkPose(e.m, e.phase, 1); }
         if (e.deadT > 1.6) e.m.root.scale.setScalar(Math.max(0.01, 1 - (e.deadT - 1.6) * 1.5));
         if (e.deadT > 2.3) G.scene.remove(e.m.root);
@@ -270,6 +280,7 @@ function insideSolid(pos) {
 const AMMO = {};
 function ammoMat(kind) {
     if (AMMO[kind]) return AMMO[kind];
+    if (kind === 'cuffs') return (AMMO[kind] = new THREE.MeshLambertMaterial({ color: '#e5e7eb', emissive: '#334155' }));
     const tex = kind === 'tea'
         ? canvasTex(64, 32, (g) => {
             g.fillStyle = '#dc2626'; g.fillRect(0, 0, 64, 32); g.fillStyle = '#fef3c7'; g.fillRect(4, 4, 56, 24);
@@ -282,7 +293,7 @@ function ammoMat(kind) {
         }, { pixel: true });
     return (AMMO[kind] = new THREE.MeshLambertMaterial({ map: tex }));
 }
-const AMMO_GEO = { tea: new THREE.BoxGeometry(0.3, 0.08, 0.2), bribe: new THREE.BoxGeometry(0.34, 0.1, 0.17) };
+const AMMO_GEO = { tea: new THREE.BoxGeometry(0.3, 0.08, 0.2), bribe: new THREE.BoxGeometry(0.34, 0.1, 0.17), cuffs: new THREE.TorusGeometry(0.13, 0.035, 6, 12) };
 export function throwAmmo(from, dir) {
     const kind = G.level.ammo;
     const m = new THREE.Mesh(AMMO_GEO[kind], ammoMat(kind)); m.position.copy(from); G.scene.add(m);
@@ -314,7 +325,8 @@ function updateAmmo(p, dt) {
     if (p.pos.y < -5) killProj(p);
 }
 function ammoSplash(p) {
-    burst(p.pos, { n: 7, color: p.kind === 'tea' ? ['#14532d', '#78350f', '#dc2626'] : ['#22c55e', '#16a34a', '#bbf7d0'], speed: 2.5, up: 2.5, size: 0.08, life: 0.5 });
+    const col = { tea: ['#14532d', '#78350f', '#dc2626'], bribe: ['#22c55e', '#16a34a', '#bbf7d0'], cuffs: ['#e5e7eb', '#94a3b8', '#fde047'] }[p.kind];
+    burst(p.pos, { n: 7, color: col, speed: 2.5, up: 2.5, size: 0.08, life: 0.5 });
 }
 
 export function killProj(p) {

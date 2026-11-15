@@ -1,22 +1,23 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=7';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=7';
-import { buildWorld, updateWorld, ARENA, makeBag } from './world.js?v=7';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera } from './player.js?v=7';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=7';
-import { updateHazards, clearHazards } from './hazards.js?v=7';
-import { updateBoss, removeBoss } from './boss_core.js?v=7';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=7';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=7';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=7';
-import { groundAt } from './physics.js?v=7';
-import { LEVEL1 } from './level1.js?v=7';
-import { LEVEL2 } from './level2.js?v=7';
-import { LEVEL3 } from './level3.js?v=7';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=8';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=8';
+import { buildWorld, updateWorld, ARENA, makeBag } from './world.js?v=8';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera } from './player.js?v=8';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=8';
+import { updateHazards, clearHazards } from './hazards.js?v=8';
+import { updateBoss, removeBoss } from './boss_core.js?v=8';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=8';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=8';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=8';
+import { groundAt } from './physics.js?v=8';
+import { LEVEL1 } from './level1.js?v=8';
+import { LEVEL2 } from './level2.js?v=8';
+import { LEVEL3 } from './level3.js?v=8';
+import { LEVEL4 } from './level4.js?v=8';
 
-const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3 };
-const MAX_LEVEL = 3;
+const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4 };
+const MAX_LEVEL = 4;
 const $ = id => document.getElementById(id);
 const START = new THREE.Vector3(0, 0, 7);
 const touchDevice = matchMedia('(pointer: coarse)').matches;
@@ -415,6 +416,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=7').then(m => m.runTest(T, { G, input, camera, startGame: () => startGame(G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=8').then(m => m.runTest(T, { G, input, camera, startGame: () => startGame(G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

@@ -6,14 +6,14 @@
 //   KÖPRÜNÜN ÜSTÜNDEKİ SINAYPIRCI: köprüde diz çöker; kırmızı lazerle seni izler, lazer yanıp sönünce kilitlenmiştir → kaç!
 // Rüşvet destesiyle (nişanlı atış) yenilen polis parayı alıp gider: "DOSYA KAPANDI!"
 import * as THREE from 'three';
-import { limb, walkPose } from './models.js?v=7';
-import { G, diff } from './state.js?v=7';
-import { hurtPlayer, blockFx } from './player.js?v=7';
-import { burst, addTrauma } from './fx.js?v=7';
-import { playSfx, beep } from './audio.js?v=7';
-import { makeCloud } from './hazards.js?v=7';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=7';
-import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=7';
+import { limb, walkPose } from './models.js?v=8';
+import { G, diff } from './state.js?v=8';
+import { hurtPlayer, blockFx } from './player.js?v=8';
+import { burst, addTrauma } from './fx.js?v=8';
+import { playSfx, beep } from './audio.js?v=8';
+import { makeCloud } from './hazards.js?v=8';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=8';
+import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=8';
 
 // --- MODELLER ---
 const UNI = '#1e40af', UNI_D = '#172554', ARM = '#1e3a8a', SKIN = '#e8b48f';
@@ -246,6 +246,9 @@ function sniper(e, dt, c) {
         L.lookAt(e.aimAt); L.scale.set(1, 1, d);
     }
 }
+
+// Askerler (soldiers.js) aynı davranışları kendi modelleriyle kullanır
+export const POLICE_AI = { police, riot, gas, sniper };
 
 const cop = (variant, name, update, extra = {}) => ({ kind: 'police', name, hp: 2, score: 3000, bribable: true, build: () => buildPolice(variant), update, ...extra });
 Object.assign(TYPES, {

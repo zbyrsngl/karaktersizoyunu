@@ -3,7 +3,7 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=7';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=8';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği
@@ -203,16 +203,18 @@ export function buildWorld(scene, L) {
     { const m = slab(-ARENA.hw, ARENA.hw, -3, 0, ARENA.z0, ARENA.z1, G0.arena, G0.side, 0.5); scene.add(m);
       addSolid(new AABB(-ARENA.hw, -3, ARENA.z1, ARENA.hw, 0, ARENA.z0, 'ground'), m); }
     // Çukurların dibi
-    const mud = new THREE.Mesh(new THREE.PlaneGeometry(HW * 2, 200), mat(L.pitFloor)); mud.rotation.x = -Math.PI / 2; mud.position.set(0, -3.2, -90); scene.add(mud);
+    if (L.pitFloor) { const mud = new THREE.Mesh(new THREE.PlaneGeometry(HW * 2, 200), mat(L.pitFloor)); mud.rotation.x = -Math.PI / 2; mud.position.set(0, -3.2, -90); scene.add(mud); }
     // Yolun iki yanı ve meydanın arkası
     const oRep = L.outerRep || 3;
     const flat = (x0, x1, z0, z1) => {
         const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z0 - z1), new THREE.MeshLambertMaterial({ map: tiled(L.outer, (x1 - x0) / oRep, (z0 - z1) / oRep) }));
         m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0.0, (z0 + z1) / 2); m.receiveShadow = true; scene.add(m);
     };
-    flat(-90, -HW - 0.01, 40, ARENA.z0); flat(HW + 0.01, 90, 40, ARENA.z0);
-    flat(-90, -ARENA.hw, ARENA.z0, -320); flat(ARENA.hw, 90, ARENA.z0, -320); flat(-ARENA.hw, ARENA.hw, ARENA.z1, -320);
-    flat(-HW, HW, 40, 10);
+    if (!L.noOuter) {   // köprü bölümünde yolun yanı boşluk (aşağıda deniz)
+        flat(-90, -HW - 0.01, 40, ARENA.z0); flat(HW + 0.01, 90, 40, ARENA.z0);
+        flat(-90, -ARENA.hw, ARENA.z0, -320); flat(ARENA.hw, 90, ARENA.z0, -320); flat(-ARENA.hw, ARENA.hw, ARENA.z1, -320);
+        flat(-HW, HW, 40, 10);
+    }
 
     // Görünmez duvarlar (yoldan çıkılmaz)
     const wall = (x0, x1, z0, z1) => addSolid(new AABB(x0, -20, z1, x1, 12, z0, 'wall'));
@@ -252,7 +254,7 @@ export function buildWorld(scene, L) {
         addSolid(new AABB(x - w / 2, top - 0.35, z - d / 2, x + w / 2, top, z + d / 2, 'shelf'), m);
     });
     // Bölüme özel katı yapılar (köprü tabliyesi vb.): [x0, y0, z0, x1, y1, z1]; çizimi bölümün decorate'inde
-    (L.solids || []).forEach(([x0, y0, z0, x1, y1, z1]) => addSolid(new AABB(x0, y0, z0, x1, y1, z1, 'shelf')));
+    (L.solids || []).forEach(([x0, y0, z0, x1, y1, z1, type]) => addSolid(new AABB(x0, y0, z0, x1, y1, z1, type || 'shelf')));
 
     // Kırılabilir tuğlalar (alttan kafa, balyoz ya da mermiyle); ortadaki altın tuğladan kul hakkı torbası çıkar
     L.brickRows.forEach(([cx, z]) => [-1, 0, 1].forEach(k => {
