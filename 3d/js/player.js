@@ -1,15 +1,16 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=17';
-import { moveBody } from './physics.js?v=17';
-import { input } from './input.js?v=17';
-import { G, diff, toast } from './state.js?v=17';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=17';
-import { playSfx, beep } from './audio.js?v=17';
-import { clamp, damp, dampAngle, angDiff } from './util.js?v=17';
+import { buildHirhiz, walkPose } from './models.js?v=18';
+import { moveBody } from './physics.js?v=18';
+import { input } from './input.js?v=18';
+import { G, diff, toast } from './state.js?v=18';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=18';
+import { playSfx, beep } from './audio.js?v=18';
+import { clamp, damp, dampAngle, angDiff } from './util.js?v=18';
+import { throwGrenade } from './grenade.js?v=18';
 
-const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45;
+const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45, SPRINT = 1.6;   // Shift: hızlı koşu
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
 const COYOTE = 0.12, BUFFER = 0.14;
 const SWING = 0.4, SWING_HIT = 0.13, HAMMER_REACH = 2.1;
@@ -26,7 +27,7 @@ export function createPlayer(scene) {
         pos: m.root.position, vel: new THREE.Vector3(), r: 0.32, h: PLAYER_H,
         facing: Math.PI, grounded: false, coyote: 0, buffer: 0, jumping: false,
         hp: diff().hp, maxHp: diff().hp, invuln: 0, mask: 0, slow: 0,
-        swing: 0, swingHit: false, throwCd: 0, throwT: 0, shield: false,
+        swing: 0, swingHit: false, throwCd: 0, throwT: 0, grenCd: 0, noGrenT: 0, shield: false,
         squash: 0, phase: 0, dead: false, deadT: 0,
         safe: new THREE.Vector3(), lastGround: null, collected: 0
     };
@@ -116,13 +117,15 @@ export function updatePlayer(p, dt, camYaw) {
     if (p.slow > 0) p.slow -= dt;
     if (p.throwCd > 0) p.throwCd -= dt;
     if (p.throwT > 0) p.throwT -= dt;
+    if (p.grenCd > 0) p.grenCd -= dt;
     p.shield = input.shieldHeld && p.swing <= 0;
 
     // Yön
     const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
     let wx = rx * input.mx + fx * input.my, wz = rz * input.mx + fz * input.my;
     const amt = Math.min(1, Math.hypot(wx, wz));
-    let top = RUN * (p.shield ? 0.45 : 1) * (p.slow > 0 ? 0.5 : 1) * (p.swing > 0 && p.grounded ? 0.35 : 1);
+    const sprint = input.sprint && !p.shield && p.swing <= 0;
+    let top = RUN * (p.shield ? 0.45 : sprint ? SPRINT : 1) * (p.slow > 0 ? 0.5 : 1) * (p.swing > 0 && p.grounded ? 0.35 : 1);
     const tx = wx * top, tz = wz * top;
     const acc = p.grounded ? (amt > 0.05 ? ACC_G : DEC_G) : ACC_A;
     p.vel.x = approach(p.vel.x, tx, acc * dt); p.vel.z = approach(p.vel.z, tz, acc * dt);
@@ -186,6 +189,22 @@ export function updatePlayer(p, dt, camYaw) {
             p.throwCd = 0.28; p.throwT = 0.2; beep('swing');
         }
     }
+    // El bombası: sol elle, nişangâhın gösterdiği yere kavisle
+    if (input.grenadePressed && !G.level.mode && p.grenCd <= 0 && !p.shield && p.swing <= 0) {
+        if ((G.grenades || 0) <= 0) {
+            if (G.time - p.noGrenT > 1) { p.noGrenT = G.time; floatText('BOMBA YOK!', p.pos.clone().setY(p.pos.y + 2.4), '#fca5a5', 0.4); }
+        } else {
+            const aim = G.aimTarget && G.aimTarget(p);
+            if (aim) {
+                p.facing = Math.atan2(aim.x - p.pos.x, aim.z - p.pos.z);
+                const f = p.facing, from = new THREE.Vector3(p.pos.x + Math.sin(f) * 0.4 - Math.cos(f) * 0.3, p.pos.y + 1.7, p.pos.z + Math.cos(f) * 0.4 + Math.sin(f) * 0.3);
+                if (throwGrenade(from, aim)) {
+                    G.grenades--; G.onGrenadeCount && G.onGrenadeCount(false);
+                    p.grenCd = 0.6; p.throwT = 0.25; beep('swing');
+                }
+            }
+        }
+    }
 
     animate(p, dt, amt);
 }
@@ -246,9 +265,9 @@ function animate(p, dt, amt) {
         else if (t < 0.45) { const k = (t - 0.28) / 0.17; aR = -3.3 + 2.2 * k; hR = -0.6 * k; }
         else { const k = (t - 0.45) / 0.55; aR = -1.1 + 0.85 * k; hR = -0.6 - 0.4 * k; }
     }
-    if (p.throwT > 0 && p.swing <= 0) { const k = 1 - p.throwT / 0.2; aR = -2.7 + 1.5 * k; }
     m.armR.rotation.x = aR; m.hammer.rotation.x = hR;
     m.armL.rotation.x = p.shield ? -1.45 : -Math.sin(p.phase) * 0.4 * swingK * (p.grounded ? 1 : 0);
+    if (p.throwT > 0 && !p.shield) { const k = clamp(1 - p.throwT / 0.2, 0, 1); m.armL.rotation.x = -2.7 + 1.5 * k; }   // atış sol elle: balyozlu sağ kol savrulmaz
     m.shield.visible = !p.shield; p.big.visible = p.shield;
     // Dokunulmazken yanıp söner
     m.root.visible = !(p.invuln > 0 && Math.floor(p.invuln * 12) % 2 === 0);

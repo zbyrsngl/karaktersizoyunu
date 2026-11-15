@@ -4,17 +4,18 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=17';
-import { burst } from './fx.js?v=17';
-import { limb, walkPose, sharpen } from './models.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=17';
-import { ARENA } from './world.js?v=17';
+import { G, toast } from './state.js?v=18';
+import { burst } from './fx.js?v=18';
+import { limb, walkPose, sharpen } from './models.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=18';
+import { ARENA } from './world.js?v=18';
 
-// Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
+// Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre).
+// İsteğe bağlı [.., rxB, ryB]: alt yarı ayrı ölçülerle (yumurta biçimi: çeneye doğru daralır, yaka/arka plan girmez)
 const HEADS = {};
 // fix: keskinleştirme ve renk düzeltme ayarları (models.js sharpen)
-export function photoHead(src, [sx, sy, sw, sh], [cx, cy, rx, ry], fix = null) {
+export function photoHead(src, [sx, sy, sw, sh], [cx, cy, rx, ry, rxB = rx, ryB = ry], fix = null) {
     if (HEADS[src]) return HEADS[src];
     const K = 3, c = document.createElement('canvas'); c.width = sw * K; c.height = sh * K;
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
@@ -23,7 +24,7 @@ export function photoHead(src, [sx, sy, sw, sh], [cx, cy, rx, ry], fix = null) {
         const x = c.getContext('2d', { willReadFrequently: true });
         x.imageSmoothingQuality = 'high';
         x.save(); x.scale(K, K);
-        x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); x.clip();
+        x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, Math.PI, Math.PI * 2); x.ellipse(cx, cy, rxB, ryB, 0, 0, Math.PI); x.closePath(); x.clip();
         x.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
         x.restore();
         if (fix) sharpen(x, c.width, c.height, fix);
@@ -139,8 +140,9 @@ function buildEgemen() {
 // "Yalarım" amca (5. bölüm sonu; 2D'de 2. bölüm sonundaydı): yaşlı, bıyıklı, koyu ceketli; kafa resimler/yalarim.png'den.
 // Hafif kambur; konuşurken bir elini sallar, öbür eli belinde.
 function buildYalarim() {
-    const m = suitMan({ suit: '#44403c', suitD: '#292524', shirt: '#d6d3d1', tie: '#57534e', faceW: 0.8, faceH: 0.9,
-                        tex: photoHead('../resimler/yalarim.png', [18, 0, 100, 112], [50, 52, 42, 52], { amt: 0.9, con: 1.06, blur: 3 }) });
+    // yüz: kulaklar dahil x 25-101, tepe y 2, çene y 82 → üstte geniş, çeneye doğru daralan kesim (yaka ve mikrofon dışarıda)
+    const m = suitMan({ suit: '#44403c', suitD: '#292524', shirt: '#d6d3d1', tie: '#57534e', faceW: 0.74, faceH: 0.8,
+                        tex: photoHead('../resimler/yalarim.png', [24, 1, 80, 86], [39, 41, 38, 40, 31, 41], { amt: 1.1, con: 1.08, blur: 3 }) });
     m.torso.rotation.x = 0.1;   // yaşlı: hafif öne eğik
     m.pose = (t, talking, walking) => {
         if (walking) { m.armL.rotation.set(Math.sin(t * 6) * 0.3, 0, 0); m.armR.rotation.set(-Math.sin(t * 6) * 0.3, 0, 0); return; }

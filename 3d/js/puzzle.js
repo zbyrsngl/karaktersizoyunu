@@ -2,9 +2,9 @@
 // Gece, Ankara'da bir emniyet bürosu: masada ByLock açık telefon, monitörler, dosya yığınları, pencerede Atakule.
 // 4 farklı rakamlı şifre: yeşil = doğru yer, sarı = var ama yeri yanlış, gri = yok. 8 hak; hak bitince şifre değişir.
 import * as THREE from 'three';
-import { G, addScore, toast } from './state.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=17';
+import { G, addScore, toast } from './state.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
 
 const LEN = 4, TRIES = 8, GOOD = 5;   // GOOD: 3. yıldız için en çok bu kadar tahmin
 const TICKER = "BYLOCK LİSTELERİ AÇIKLANDI • 'MOR BEYİN' UYGULAMASI: 11 BİN 480 KİŞİNİN LİSTEDE YANLIŞLIKLA YER ALDIĞI ORTAYA ÇIKTI • KHK İLE 125 BİNDEN FAZLA KAMU GÖREVLİSİ İHRAÇ EDİLDİ • ÖĞRETMENLER, AKADEMİSYENLER, GAZETECİLER DE LİSTEDE • ";

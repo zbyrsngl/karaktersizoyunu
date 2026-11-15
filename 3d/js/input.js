@@ -1,17 +1,17 @@
 // HIRHIZ 3D: klavye, fare ve dokunmatik giriş
-// Klavye: WASD/oklar yürü, Boşluk zıpla, F/J balyoz, K/Shift kalkan (basılı tut), E/Enter çay at, P/Esc duraklat
-// Fare: oyuna tıklayınca imleç kilitlenir, fareyle kamera ve nişan; sol tık çay at, sağ tık kalkan
+// Klavye: WASD/oklar yürü, Shift hızlı koş, Boşluk zıpla, F/J balyoz, R/G el bombası, E/K kalkan (basılı tut), Enter çay at, P/Esc duraklat
+// Fare: oyuna tıklayınca imleç kilitlenir, fareyle kamera ve nişan; sol tık ateş (çay / rüşvet; balyoz savurmaz), sağ tık kalkan
 // Telefon: ekranın solunda parmak nereye değerse orada oyun kolu açılır; sağda sürükleyince kamera döner; düğmeler sağ altta
 export const input = {
     mx: 0, my: 0,                 // hareket (-1..1), my +1 = ileri
     camDX: 0, camDY: 0,           // bu karedeki kamera dönüşü (piksel)
     jumpPressed: false, jumpHeld: false,
-    hammerPressed: false, throwPressed: false, shieldHeld: false,
+    hammerPressed: false, throwPressed: false, grenadePressed: false, shieldHeld: false, sprint: false,
     pausePressed: false, restartPressed: false,
     touch: false, camTouched: 0   // son kamera dokunuşundan beri geçen süre (otomatik takip için)
 };
 const keys = new Set();
-const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyK', 'ShiftLeft', 'ShiftRight'], throw: ['KeyE', 'Enter'] };
+const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyE', 'KeyK'], throw: ['Enter'], grenade: ['KeyR', 'KeyG'], sprint: ['ShiftLeft', 'ShiftRight'] };
 const isKey = (k, a) => KEYMAP[a].includes(k);
 
 let canvasEl = null, onAnyInput = null;
@@ -23,8 +23,8 @@ export function initInput(canvas, anyInput) {
         if (isKey(e.code, 'jump') && !e.repeat) { input.jumpPressed = true; input.jumpHeld = true; }
         if (isKey(e.code, 'hammer')) input.hammerPressed = true;
         if (isKey(e.code, 'throw')) input.throwPressed = true;
+        if (isKey(e.code, 'grenade') && !e.repeat) input.grenadePressed = true;
         if (e.code === 'KeyP' || e.code === 'Escape') input.pausePressed = true;
-        if (e.code === 'KeyR') input.restartPressed = true;
         if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     });
     addEventListener('keyup', e => {
@@ -99,6 +99,7 @@ function initTouch(canvas) {
         () => { clearTimeout(jumpUpTimer); jumpUpTimer = setTimeout(() => { input.jumpHeld = false; }, Math.max(0, 220 - (performance.now() - jumpDownAt))); });
     btn('b-hammer', () => { input.hammerPressed = true; });
     btn('b-bribe', () => { input.throwPressed = true; });
+    btn('b-grenade', () => { input.grenadePressed = true; });
     btn('b-shield', () => { touchShield = true; }, () => { touchShield = false; });
 }
 function setTouch() {
@@ -120,11 +121,12 @@ export function pollInput() {
     const d = Math.hypot(x, y);
     if (d > 1) { x /= d; y /= d; }
     input.mx = x; input.my = y;
-    input.shieldHeld = keys.has('KeyK') || keys.has('ShiftLeft') || keys.has('ShiftRight') || mouseShield || touchShield;
+    input.shieldHeld = KEYMAP.shield.some(k => keys.has(k)) || mouseShield || touchShield;
+    input.sprint = KEYMAP.sprint.some(k => keys.has(k));
 }
 // Basışlar sabit adımda kullanılınca silinir
 export function consumePresses() {
-    input.jumpPressed = input.hammerPressed = input.throwPressed = false;
+    input.jumpPressed = input.hammerPressed = input.throwPressed = input.grenadePressed = false;
 }
 export function clearAll() {
     consumePresses(); input.pausePressed = input.restartPressed = false;

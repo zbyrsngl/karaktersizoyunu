@@ -2,11 +2,11 @@
 // Ağır ağır döner ve yaklaşır; namluyu çevirip (başında kırmızı !) mermi atar. Üstüne zıplanır, balyozla vurulur;
 // rüşvet atılınca TESLİM olur: kapaktan beyaz bayrak çıkar, geri geri gidip kaybolur.
 import * as THREE from 'three';
-import { G, diff } from './state.js?v=17';
-import { burst, addTrauma } from './fx.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { box, mat, canvasTex, dampAngle, angDiff } from './util.js?v=17';
-import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight } from './enemies.js?v=17';
+import { G, diff } from './state.js?v=18';
+import { burst, addTrauma } from './fx.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { box, mat, canvasTex, dampAngle, angDiff } from './util.js?v=18';
+import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight } from './enemies.js?v=18';
 
 let camoTex = null;
 export function tankCamo() {

@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>HIRHIZ 3D</title>
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
 </head>
 <body class="in-menu">
@@ -17,6 +17,7 @@
     <div class="hud-l">
         <div id="hearts"></div>
         <div class="hud-row">💰 <span id="score">0</span></div>
+        <div class="hud-row" id="gren-row"><span id="grenades">💣💣💣</span></div>
     </div>
     <div class="hud-r">
         <div class="hud-row">✊ <span id="kills">0 / 11</span></div>
@@ -38,6 +39,7 @@
     <div class="pb pl" id="b-bribe"><b>□</b>ÇAY AT</div>
     <div class="pb pr" id="b-hammer"><b>○</b>BALYOZ</div>
     <div class="pb pd" id="b-jump"><b>✕</b>ZIPLA</div>
+    <div class="pb pg" id="b-grenade"><b>💣</b>BOMBA</div>
 </div>
 
 <!-- Menüler -->
@@ -51,15 +53,14 @@
         <button id="start" class="big">OYUNU BAŞLAT</button>
         <div class="row"><button class="chip snd"></button><a class="chip" href="../index.html">← 2D OYUN</a></div>
         <p id="menu-best" class="small"></p>
-        <p class="small">Bilgisayar: WASD yürü · fare kamera ve nişan · sol tık nişanlı atış (çay / rüşvet) · F balyoz · Boşluk zıpla · Shift / sağ tık kalkan<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
-        <p class="small dim">Deneme sürümü: şimdilik 1-5. bölümler 3D. Öteki bölümler sırayla gelecek.</p>
+        <p class="small">Bilgisayar: WASD yürü · Shift hızlı koş · fare kamera ve nişan · sol tık ateş (çay / rüşvet) · F balyoz · R el bombası · E / sağ tık kalkan · Boşluk zıpla<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta (💣 el bombası)</p>
     </div>
 </div>
 <div id="pause" class="panel" hidden>
     <div class="card">
         <h2>DURAKLATILDI</h2>
         <button id="resume" class="big">DEVAM ET</button>
-        <button id="restart" class="mid">↻ BÖLÜMÜ BAŞTAN BAŞLAT (R)</button>
+        <button id="restart" class="mid">↻ BÖLÜMÜ BAŞTAN BAŞLAT</button>
         <div class="row"><button class="chip snd"></button><button class="chip to-menu">ANA MENÜ</button></div>
     </div>
 </div>
@@ -88,6 +89,6 @@
 </div>
 
 <script src="../js/fx_sheets.js?v=42"></script>
-<script type="module" src="js/main.js?v=17"></script>
+<script type="module" src="js/main.js?v=18"></script>
 </body>
 </html>

@@ -6,17 +6,17 @@
 //   SIÇRAMA: üstüne sıçrar, inince yerde şok dalgası yayılır (zıpla!); inişte sersemler → kafasına zıpla!
 // Hasar: kafasına zıplamak ya da balyoz (1 can). Rüşvet işlemez. Canı yarıya inince öfkelenir.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=17';
-import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=17';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=17';
-import { playSfx, beep } from './audio.js?v=17';
-import { makeRing } from './hazards.js?v=17';
-import { walkPose } from './models.js?v=17';
-import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=17';
-import { ARENA } from './world.js?v=17';
-import { buildPolice } from './police.js?v=17';
-import { throwLob } from './enemies.js?v=17';
-import { showBossBar, setBossBar } from './boss_core.js?v=17';
+import { G, diff, addScore, toast } from './state.js?v=18';
+import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=18';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
+import { playSfx, beep } from './audio.js?v=18';
+import { makeRing } from './hazards.js?v=18';
+import { walkPose } from './models.js?v=18';
+import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=18';
+import { ARENA } from './world.js?v=18';
+import { buildPolice } from './police.js?v=18';
+import { throwLob } from './enemies.js?v=18';
+import { showBossBar, setBossBar } from './boss_core.js?v=18';
 
 const K = 1.35, TOP = 2.65, REACH = 2.9, LEAP_G = 26;
 const CUFF_GEO = new THREE.TorusGeometry(0.13, 0.035, 6, 12);

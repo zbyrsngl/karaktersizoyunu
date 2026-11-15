@@ -4,13 +4,13 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { walkPose, nameLabel } from './models.js?v=17';
-import { G, diff, addScore } from './state.js?v=17';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=17';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { groundAt } from './physics.js?v=17';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=17';
+import { walkPose, nameLabel } from './models.js?v=18';
+import { G, diff, addScore } from './state.js?v=18';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=18';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { groundAt } from './physics.js?v=18';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=18';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;

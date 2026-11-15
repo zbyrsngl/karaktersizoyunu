@@ -37,6 +37,13 @@ body.touch #pad { display: block; }
 .pb b { font-size: 22px; line-height: 1; }
 .pb.down { transform: scale(.92); background: rgba(250,204,21,.6); }
 .pt { left: 68px; top: 0; } .pl { left: 0; top: 68px; } .pr { right: 0; top: 68px; } .pd { left: 68px; bottom: 0; }
+.pg { left: -4px; top: -4px; width: 60px; height: 60px; background: rgba(77,91,35,.7); font-size: 9px; }
+.pg b { font-size: 18px; }
+.pg.empty { opacity: .35; }
+#gren-row { letter-spacing: 1px; }
+#gren-row.pulse { animation: grenPulse .6s ease-out; }
+@keyframes grenPulse { 0% { transform: scale(1.5); filter: drop-shadow(0 0 6px #fde047); } 100% { transform: scale(1); } }
+body.mode-flight #gren-row, body.mode-flight #b-grenade, body.mode-puzzle #gren-row { display: none; }
 .pd { background: rgba(37,99,235,.55); } .pr { background: rgba(185,28,28,.55); } .pt { background: rgba(22,101,52,.55); } .pl { background: rgba(161,98,7,.55); }
 
 /* Paneller */

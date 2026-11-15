@@ -32,11 +32,61 @@ export function runTest(name, H) {
             res.push(`${G.level.id}:pad${vis('pad')}`); say(res.join(' '));
         }
         if (name === 'ses') {   // konuşma seslerinin yükseltme katsayıları ve müziğin Web Audio'dan geçmesi
-            import('./audio.js?v=17').then(A => { A.unlockAudio(); setTimeout(() => {
+            import('./audio.js?v=18').then(A => { A.unlockAudio(); setTimeout(() => {
                 const D = A.audioDebug(), r = [];
                 for (const k of ['hasret', 'yaallah', 'savci', 'peygamber', 'cengiz', 'selo', 'saygili', 'ekrem']) r.push(k + '=' + (D.gains[k] ? D.gains[k][0].toFixed(2) : '-'));
                 say('müzik=' + D.music + ' ' + r.join(' '));
             }, 6000); });
+        }
+        if (name === 'bomba') {   // el bombası: en yakın düşmana at, patlat; sonra canavara at. &an=sn → patlamadan sn sonra fotoğraf
+            const Q = new URLSearchParams(location.search), an = +(Q.get('an') || 0);
+            const key2 = (code) => { dispatchEvent(new KeyboardEvent('keydown', { code })); run(1 / 60); dispatchEvent(new KeyboardEvent('keyup', { code })); };
+            run(0.5);
+            const live = G.enemies.filter(e => !e.dead && e.kind !== 'duran').sort((a, b) => a.pos.distanceTo(p.pos) - b.pos.distanceTo(p.pos));
+            const e = live[0]; const res = [];
+            if (e) {
+                e.cd = 99; const near = G.enemies.filter(o => !o.dead && o.kind !== 'duran' && o.pos.distanceTo(e.pos) < 4.8).length;
+                p.pos.set(e.pos.x, e.pos.y, e.pos.z + 9); p.vel.set(0, 0, 0); run(0.2);
+                G.aimTarget = () => e.pos.clone().setY(e.pos.y + 0.2);
+                const g0 = G.grenades; key2('KeyR'); const g1 = G.grenades;
+                let t = 0; while (t < 2.5) { run(1 / 60); t += 1 / 60; if (an && e.dead && t > 0) { /* patladı */ } }
+                res.push(`dusman=${e.dead ? 'öldü' : 'sağ'}(${e.kind}) yakın=${near} bomba ${g0}->${g1}`);
+            }
+            // canavar
+            const kills = G.kills; G.enemies.forEach(o => { if (o.kind !== 'duran' && !o.dead) { o.dead = true; G.kills++; G.onKill(o); } });
+            run(1.8); p.pos.set(0, 0, -192); p.hp = 99; run(1.5);
+            const B = G.boss;
+            if (B) { for (let i = 0; i < 360 && (B.st === 'talk' || B.st === 'intro'); i++) { run(1 / 60); p.invuln = 1; }
+                const hp0 = B.hp; G.grenades = 3; p.pos.set(B.pos.x, 0, B.pos.z + 8); run(0.1);
+                G.aimTarget = () => B.pos.clone().setY(0.3);
+                key2('KeyR'); let t = 0; const shotAt = an || 99; let shot = false;
+                while (t < 2.4) { run(1 / 60); t += 1 / 60; }
+                res.push(`canavar ${hp0.toFixed(1)}->${B.hp.toFixed(1)}`);
+            }
+            // stok: 3 at, 4.de BOMBA YOK, 12 sn sonra 1 gelir
+            G.grenades = 3; for (let i = 0; i < 4; i++) { key2('KeyR'); run(0.7); }
+            const empty = G.grenades; run(12.2); res.push(`stok bitti=${empty} 12sn sonra=${G.grenades}`);
+            say(res.join(' | '));
+        }
+        if (name === 'bombafoto') {   // patlama anının fotoğrafı (&an=sn)
+            const an = +(new URLSearchParams(location.search).get('an') || 0.1);
+            run(0.5); G.enemies.forEach(o => o.cd = 99);
+            const at = p.pos.clone().add(new THREE.Vector3(0, 0, -6));
+            G.aimTarget = () => at.clone();
+            dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyR' })); run(1 / 60); dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyR' }));
+            let t = 0; let boomT = -1;
+            const n0 = G.scene.children.length;
+            while (t < 4) { run(1 / 60); t += 1 / 60; if (boomT < 0 && G.blasts) boomT = t; if (boomT >= 0 && t - boomT >= an) break; }
+            cam.yaw = 0; render(); say(`patlama t=${boomT.toFixed(2)} foto=${an}`);
+        }
+        if (name === 'kos') {   // 1 sn yürüme ve Shift ile koşma mesafesi; E kalkan, sol tık atışında balyoz savrulmuyor mu
+            G.enemies.forEach(e => e.cd = 99); run(0.3);
+            const z0 = p.pos.z; key('KeyW', true); run(1); key('KeyW', false); run(0.6);
+            const z1 = p.pos.z; key('ShiftLeft', true); key('KeyW', true); run(1); key('KeyW', false); key('ShiftLeft', false); run(0.6);
+            const z2 = p.pos.z;
+            key('KeyE', true); run(0.1); const sh = p.shield; key('KeyE', false); run(0.1);
+            H.input.throwPressed = true; run(0.05); const sw = p.swing > 0;
+            say(`yürü=${(z0 - z1).toFixed(2)}m koş=${(z1 - z2).toFixed(2)}m kalkanE=${sh} atışta_balyoz=${sw}`);
         }
         if (name === 'start') { run(1.0); say(`y=${p.pos.y.toFixed(2)} grounded=${p.grounded}`); }
         if (name === 'walk') {
@@ -112,7 +162,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=17').then(() => {});
+            import('./player.js?v=18').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -231,7 +281,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=17').then(async o => {
+            import('./outro.js?v=18').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));

@@ -3,15 +3,15 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=17';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=17';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { groundAt } from './physics.js?v=17';
-import { makeCloud } from './hazards.js?v=17';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=17';
-import { ARENA } from './world.js?v=17';
-import { showBossBar, setBossBar } from './boss_core.js?v=17';
+import { G, diff, addScore, toast } from './state.js?v=18';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=18';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { groundAt } from './physics.js?v=18';
+import { makeCloud } from './hazards.js?v=18';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=18';
+import { ARENA } from './world.js?v=18';
+import { showBossBar, setBossBar } from './boss_core.js?v=18';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
@@ -75,7 +75,8 @@ export function spawnToma(scene, pos) {
     };
     m.root.rotation.y = b.yaw;
     b.root = m.root; b.name = 'TOMA'; b.update = dt => updateToma(b, dt);
-    b.onHammer = onArmor; b.onAmmo = p => shot(b, p.pos);   // balyoz işlemez; çay paketi az da olsa işler
+    b.onHammer = onArmor; b.onAmmo = p => shot(b, p.pos);
+    b.onBlast = pt => { for (let i = 0; i < 4; i++) shot(b, pt); };   // el bombası zırhı deler: 4 çay atışı kadar   // balyoz işlemez; çay paketi az da olsa işler
     b.reset = () => { b.ragedTxt = false; b.hp = b.maxHp; b.pos.set(0, 0, -222); b.fireT = 2.5; setBossBar(b); };
     G.boss = b;
     toast('BÖLÜM SONU CANAVARI: TOMA!', 2600, '#fca5a5');

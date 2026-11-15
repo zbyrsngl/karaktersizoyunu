@@ -1,26 +1,27 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=17';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=17';
-import { buildWorld, updateWorld, ARENA, makeBag } from './world.js?v=17';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=17';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=17';
-import { updateHazards, clearHazards } from './hazards.js?v=17';
-import { updateBoss, removeBoss } from './boss_core.js?v=17';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=17';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=17';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=17';
-import { groundAt } from './physics.js?v=17';
-import { LEVEL1 } from './level1.js?v=17';
-import { LEVEL2 } from './level2.js?v=17';
-import { LEVEL3 } from './level3.js?v=17';
-import { LEVEL4 } from './level4.js?v=17';
-import { LEVEL5 } from './level5.js?v=17';
-import { LEVEL6 } from './level6.js?v=17';
-import { LEVEL7 } from './level7.js?v=17';
-import { LEVEL8 } from './level8.js?v=17';
-import { LEVEL9 } from './level9.js?v=17';
-import { LEVEL10 } from './level10.js?v=17';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=18';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=18';
+import { buildWorld, updateWorld, ARENA, makeBag } from './world.js?v=18';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=18';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=18';
+import { updateHazards, clearHazards } from './hazards.js?v=18';
+import { updateBoss, removeBoss } from './boss_core.js?v=18';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=18';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=18';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=18';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=18';
+import { groundAt } from './physics.js?v=18';
+import { LEVEL1 } from './level1.js?v=18';
+import { LEVEL2 } from './level2.js?v=18';
+import { LEVEL3 } from './level3.js?v=18';
+import { LEVEL4 } from './level4.js?v=18';
+import { LEVEL5 } from './level5.js?v=18';
+import { LEVEL6 } from './level6.js?v=18';
+import { LEVEL7 } from './level7.js?v=18';
+import { LEVEL8 } from './level8.js?v=18';
+import { LEVEL9 } from './level9.js?v=18';
+import { LEVEL10 } from './level10.js?v=18';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -52,7 +53,7 @@ initInput(canvas, () => G.state === "play");
 let player = null;
 function loadLevel(id) {
     const L = LEVELS[id];
-    if (scene) { clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards(); if (G.outro) { G.outro.remove(); G.outro = null; } disposeScene(scene); }
+    if (scene) { clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards(); clearGrenades(); if (G.outro) { G.outro.remove(); G.outro = null; } disposeScene(scene); }
     scene = new THREE.Scene();
     G.scene = scene; G.level = L;
     scene.background = canvasTex(4, 256, (g, w, h) => {
@@ -68,7 +69,7 @@ function loadLevel(id) {
     Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 70 });
     sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
     scene.add(sun, sun.target);
-    initFx(scene);
+    initFx(scene); initGrenades(scene);
     // Özel bölümler (L.mode: 6 uçuş, 7 bulmaca) kendi dünyasını kurar, oyuncuyu, kamerayı ve akışı kendisi yönetir
     G.world = L.mode ? L.mode.build(scene, L) : buildWorld(scene, L);
     if (!player) player = createPlayer(scene); else scene.add(player.m.root);
@@ -151,6 +152,15 @@ G.onHammer = (point, p) => {
     }
     const B = G.boss;
     if (B && !B.dead && B.onHammer && (B.hitTest(point.clone().setY(1.2)) || Math.hypot(point.x - B.pos.x, point.z - B.pos.z) < 1.2)) B.onHammer(point);
+};
+// El bombası patlaması: yarıçaptaki tuğlalar kırılır, canavar hasar alır (onBlast yoksa balyoz darbesi gibi)
+G.onBlast = (pos, R) => {
+    for (const b of G.world.bricks) if (!b.broken && b.mesh.position.distanceTo(pos) < R * 0.8) breakBrick(b);
+    const B = G.boss;
+    if (B && !B.dead && Math.hypot(pos.x - B.pos.x, pos.z - B.pos.z) < R + 1.5 && Math.abs(pos.y - B.pos.y) < R + 2) {
+        const pt = B.pos.clone().setY(B.pos.y + 1.2);
+        if (B.onBlast) B.onBlast(pt); else if (B.onHammer) B.onHammer(pt);
+    }
 };
 G.onBrickHit = (aabb) => { const b = G.world.bricks.find(b => b.aabb === aabb); if (b) breakBrick(b); };
 function breakBrick(b) {
@@ -309,11 +319,18 @@ function updateHud() {
     $('score').textContent = G.score.toLocaleString('tr-TR');
     $('kills').textContent = `${Math.min(G.kills, G.target)} / ${G.target}`;
     $('fidans').textContent = `${G.collect} / 10`;
+    updateGrenadeHud();
 }
+function updateGrenadeHud() { const n = G.grenades || 0; $('grenades').textContent = '💣'.repeat(n) + '·'.repeat(Math.max(0, 3 - n)); $('b-grenade').classList.toggle('empty', !n); }
+// Bomba atılınca / yenisi gelince sayaç; yenisi gelince kısa parlama
+G.onGrenadeCount = (gained) => {
+    updateGrenadeHud();
+    if (gained) { const r = $('gren-row'); r.classList.remove('pulse'); void r.offsetWidth; r.classList.add('pulse'); }
+};
 
 // --- OYUN AKIŞI ---
 function resetLevel() {
-    clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards();
+    clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards(); clearGrenades(); resetGrenadeStock();
     if (G.outro) { G.outro.remove(); G.outro = null; }
     const W = G.world, L = G.level;
     if (L.mode) {
@@ -358,7 +375,7 @@ function retry() {
     let at = START.clone();
     if (W.checkpoint.reached) at.set(0, 0, W.checkpoint.z - 1);
     if (G.boss) { at.set(0, 0, ARENA.z0 - 2); G.boss.reset && G.boss.reset(); }
-    G.projectiles.forEach(pr => pr.life = 0); clearHazards();
+    G.projectiles.forEach(pr => pr.life = 0); clearHazards(); clearGrenades(); resetGrenadeStock(); updateGrenadeHud();
     resetPlayer(p, at);
     p.collected = Math.min(p.collected, G.collect);
     cam.yaw = 0; cam.target.copy(at).setY(1.6);
@@ -380,8 +397,8 @@ function showHint() {
     const h = $('hint'), A = G.level.ammoName.toLowerCase();
     h.innerHTML = G.level.hint ? G.level.hint(input.touch || touchDevice)
         : input.touch || touchDevice
-        ? `Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ ${A} (öndekine nişan alır)`
-        : `WASD yürü · Fare: kamera ve nişan (önce oyuna tıkla) · Boşluk zıpla<br>Sol tık ${A} · F balyoz · Shift / sağ tık kalkan · P duraklat`;
+        ? `Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ ${A} (öndekine nişan alır) · 💣 el bombası`
+        : `WASD yürü · Shift hızlı koş · Fare: kamera ve nişan (önce oyuna tıkla) · Boşluk zıpla<br>Sol tık ${A} · F balyoz · R el bombası · E / sağ tık kalkan · P duraklat`;
     h.classList.add('on'); setTimeout(() => h.classList.remove('on'), 7000);
 }
 
@@ -449,6 +466,7 @@ function step(dt) {
     updateEnemies(dt);
     updateBoss(dt);
     updateHazards(dt);
+    updateGrenades(dt);
     if (G.state === 'play') updateLevel(dt);
     updateWorld(G.world, dt, G.time);
     updateFx(dt);
@@ -478,7 +496,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '17';
+const VER = '18';
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
     if (/^\d+$/.test(v) && v !== VER && Q.get('r') !== v) { Q.set('r', v); location.replace(location.pathname + '?' + Q); }
@@ -487,6 +505,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=17').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=18').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

@@ -1,19 +1,19 @@
 // HIRHIZ 3D — 6. bölüm: UÇUŞ. HIRHIZ'ın uçağı Marmaris'ten İstanbul'a uçar (gece, bulutların üstü).
 // Oyun "uçağa göre" koordinatta oynanır: uçak yalnızca sağa-sola / yukarı-aşağı gider, bulutlar ve yer arkaya akar.
-// Darbeci jetler önden gelir ve füze atar; rüşvet zarfı (sol tık / E / □) düz ileri gider, değdiği jetin pilotu
-// zarfı kapıp paraşütle atlar ("TESLİM!"). Kalkan (Shift / sağ tık / △) önden gelen füzeyi durdurur.
+// Darbeci jetler önden gelir ve füze atar; rüşvet zarfı (sol tık / Enter / □) düz ileri gider, değdiği jetin pilotu
+// zarfı kapıp paraşütle atlar ("TESLİM!"). Kalkan (E / sağ tık / △) önden gelen füzeyi durdurur.
 // 12 jet teslim olunca TANKER UÇAK gelir: füze yelpazesi (aralarında hep bir boşluk) ve nişanlı üçlü atış.
 // Tanker düşünce HIRHIZ: "Bunlar haşhaşi! Bunlar sülük!" (hashasi.mp3) — tankerden paraşütlü haşhaşiler ve sülükler dökülür.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=17';
-import { input } from './input.js?v=17';
-import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=17';
-import { getHeadTex, makeShield } from './models.js?v=17';
-import { makeItem } from './world.js?v=17';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=17';
-import { playSfx } from './audio.js?v=17';
-import { showBossBar, setBossBar } from './boss_core.js?v=17';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=17';
+import { G, diff, addScore, toast } from './state.js?v=18';
+import { input } from './input.js?v=18';
+import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=18';
+import { getHeadTex, makeShield } from './models.js?v=18';
+import { makeItem } from './world.js?v=18';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
+import { playSfx } from './audio.js?v=18';
+import { showBossBar, setBossBar } from './boss_core.js?v=18';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=18';
 
 const SPEED = 30;                       // dünyanın arkaya akma hızı (m/s)
 const XMAX = 11, YMIN = 3, YMAX = 17;   // uçağın gidebildiği kutu
@@ -251,7 +251,7 @@ export function makeFlightMode() {
     };
     mode.hint = touch => touch
         ? 'Sol: uç (sağ-sol, yukarı-aşağı)<br>□ rüşvet at · △ kalkan (füzeye karşı)'
-        : 'WASD / oklar: uç (W yukarı, S aşağı)<br>Sol tık / E: rüşvet at · Shift / sağ tık: kalkan · P duraklat';
+        : 'WASD / oklar: uç (W yukarı, S aşağı)<br>Sol tık / Enter: rüşvet at · E / sağ tık: kalkan · P duraklat';
     mode.idle = (dt) => { scroll(dt); F.t = (F.t || 0) + dt; F.pos.y = HOME.y + Math.sin(F.t) * 0.4; F.plane.root.rotation.z = Math.sin(F.t * 0.7) * 0.1; };
 
     // Kamera: uçağın sağ-arkasında (yüzü görünsün), biraz yukarıda; ileriye bakar
