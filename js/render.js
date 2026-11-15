@@ -358,6 +358,7 @@ function draw() {
         else if(p.type === 'gas') drawGasShell(ctx, p);
     });
 
+    drawFx(ctx);   // piksel efektleri: POW, puf, patlama, parıltı (js/pixelfx.js)
     drawBrickFx(ctx);
     drawParticles(ctx);
 

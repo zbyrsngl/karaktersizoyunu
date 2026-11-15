@@ -41,6 +41,7 @@ const rectHit = (ax, ay, aw, ah, bx, by, bw, bh) => ax < bx + bw && ax + aw > bx
 const planeBox = () => [player.x + 20, player.y + 18, player.w - 50, player.h - 34];
 
 function updateFlight() {
+    updateFx();
     if (!player.isDying) {
         const ax = keys.a ? -1 : keys.d ? 1 : joyDir;
         const ay = keys.w ? -1 : keys.s ? 1 : joyDirY;
@@ -67,6 +68,7 @@ function updateFlight() {
     items.forEach(it => {
         if (!it.collected && Math.hypot(player.x + player.w / 2 - it.x, player.y + player.h / 2 - it.y) < 90) {
             it.collected = true;
+            spawnFx('collect', it.x, it.y + 40, 2);
             $('score').innerText = addScore(5000);
             $('sfx-pickup').currentTime = 0; $('sfx-pickup').play().catch(() => {});
             createParticle(it.x, it.y, t("pickup"), "#22c55e", 0.8);
@@ -281,6 +283,7 @@ function drawFlight() {
     drawRecepPlane(ctx);
     playerProjectiles.forEach(p => drawBribe(ctx, p.x, p.y, p.angle));
     projectiles.forEach(p => p.type === 'fire' ? drawFire(ctx, p) : drawMissile(ctx, p));
+    drawFx(ctx);
     drawParticles(ctx);
     ctx.restore();
     ctx.globalAlpha = 1;

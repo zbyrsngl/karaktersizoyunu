@@ -152,6 +152,7 @@ function killEnemy(en) {
     en.fallDir = Math.sign(en.x + en.w / 2 - (player.x + player.w / 2)) || 1;
     en.kvx = en.fallDir * (en.kind === 'tank' ? 6 : 12);   // darbeyle geri savrulur
     hitStop = Math.max(hitStop, 4);
+    if(!(enemyLeaves(en) && en.kind !== 'tank')) spawnFx('poof', en.x + en.w / 2, en.y + en.h, 3);   // puf diye duman olur (pixelfx)
     enemyDeathSound(en);
     const [cry, cryColor] = enemyCryText(en);
     createParticle(en.x + en.w/2, en.y, isPolice ? cry : t("hit"), isPolice ? cryColor : "white", 1.0);

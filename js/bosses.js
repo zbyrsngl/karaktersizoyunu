@@ -143,6 +143,7 @@ function damageBoss(n) {
     if(!isFlight()) { hitStop = Math.max(hitStop, 3); camShake = Math.max(camShake, 6); }
     playSfx('hit', { rate: 0.8 + Math.random() * 0.2, vol: 0.7 });
     createParticle(boss.x + boss.w / 2, boss.y + 40, "-" + n, "#fde047", 0.8);
+    spawnFx('pow', boss.x + boss.w / 2 + (Math.random() - 0.5) * boss.w * 0.4, boss.y + boss.h * 0.45, 1.8);   // çizgi roman POW! (pixelfx)
     if(boss.hp > 0) {
         if(boss.T.hitSfx && (boss.hits = (boss.hits || 0) + 1) % 3 === 0) playSfx(boss.T.hitSfx, { vol: 1, delay: 0.15 });   // ör. SELO her 3. darbede konuşur
         return;
@@ -153,7 +154,14 @@ function damageBoss(n) {
     projectiles = projectiles.filter(p => p.type === 'bullet');   // canavarın saldırıları silinir
     $('score').innerText = addScore(20000);
     $('sfx-explosion').currentTime = 0; $('sfx-explosion').play().catch(()=>{});
-    for(let i = 0; i < 30; i++) createParticle(boss.x + Math.random() * boss.w, boss.y + Math.random() * boss.h);
+    for(let i = 0; i < 12; i++) createParticle(boss.x + Math.random() * boss.w, boss.y + Math.random() * boss.h);
+    // Büyük patlama ve mantar bulutu (pixelfx); hücreye giren (Selo, Ekrem) ya da mezara inen (FETÖ) canavar patlamaz
+    const jailed = typeof JAILS !== 'undefined' && JAILS[boss.kind], custom = BOSS_OUTROS[currentLevel] && BOSS_OUTROS[currentLevel].style === 'custom';
+    if(!jailed && !custom) spawnFx('boom', boss.x + boss.w / 2, boss.y + boss.h, 2.2);
+    if(!isFlight()) {   // oyuncunun iki yanında konfeti patlar
+        const fx = player.x + player.w / 2, fy = player.y + player.h;
+        spawnFx('confetti', fx - 260, fy, 2.4, false, 1.2); spawnFx('confetti', fx + 260, fy, 2.4, true, 1.5);
+    }
     playSfx('hit', { rate: 0.6, vol: 1 });
     playSfx('cry', { rate: 0.55, vol: 1, delay: 0.08 });   // canavar: kalın, uzun çığlık
     // Başörtülü teyzeler koşarak gelip kutlar ve sonraki bölüme geçilene kadar tezahürat eder

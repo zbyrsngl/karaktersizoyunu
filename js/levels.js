@@ -333,7 +333,7 @@ function createLevel() {
     player.w = 100; player.h = 180; player.shield = false;
     $('game-container').classList.remove('shake');
     $('kills').innerText = "0";
-    initChapter(); clearBricks(); closePuzzle();
+    initChapter(); clearBricks(); closePuzzle(); clearFx();
     if (isFlight()) { createFlight(); return; }
     if (isPuzzle()) { platforms = []; pits = []; createPuzzle(); return; }
 

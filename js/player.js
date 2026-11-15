@@ -83,7 +83,8 @@ function updateHammer() {
         const reach = hammerReach();   // dev balyozla 1,6 kat
         const minX = Math.min(cx, cx + player.dir * reach), maxX = Math.max(cx, cx + player.dir * reach);
         const headX = cx + player.dir * (reach - 40), headY = player.y + player.h - 10;
-        for(let i = 0; i < 8; i++) createParticle(headX, headY);   // toz
+        for(let i = 0; i < 4; i++) createParticle(headX, headY);   // toz
+        spawnFx('hit', headX, headY, 2.2, player.dir < 0);   // tok vuruş (pixelfx)
         camShake = Math.max(camShake, 5);
         if(stampMode()) createParticle(headX, headY - 50, "KHK", "#dc2626", 0.7);
         enemies.forEach(en => {

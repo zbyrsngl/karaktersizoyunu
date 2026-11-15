@@ -63,11 +63,13 @@ function update() {
 
     particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life -= (1/60); });
     particles = particles.filter(p => p.life > 0);
+    updateFx();   // piksel efektleri (js/pixelfx.js)
     camX = player.x - width/2;
 
     items.forEach(it => {
         if(!it.collected && !(it.rise > 0) && Math.hypot(player.x + player.w/2 - it.x, player.y + player.h/2 - it.y) < 100) {
             it.collected = true;
+            spawnFx('collect', it.x, it.y + 40, 2);   // alınca parıltı (pixelfx)
             if(it.power) { grantPower(it.power, it.x, it.y); addScore(1000); $('score').innerText = score; return; }
             if(pickupChapterItem(it)) return;
             addScore(5000); 
