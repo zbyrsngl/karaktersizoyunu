@@ -1,5 +1,5 @@
 // HIRHIZ 3D — 6. BÖLÜM: DARBE PLANINI ENİŞTEDEN ÖĞREN! (uçuş; bütün oyun flight.js'te)
-import { makeFlightMode } from './flight.js?v=13';
+import { makeFlightMode } from './flight.js?v=14';
 
 const mode = makeFlightMode();
 export const LEVEL6 = {
