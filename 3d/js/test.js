@@ -13,6 +13,14 @@ export function runTest(name, H) {
     startGame();
     const p = G.player;
     try {
+        if (name === 'tuslar') {   // bütün bölümleri sırayla yükle (menüden geçer gibi), dokunmatik tuşlar görünüyor mu
+            document.body.classList.add('touch'); const res = [];
+            const vis = id => { const el = document.getElementById(id); return el && getComputedStyle(el).display !== 'none' ? 1 : 0; };
+            const seq = [1,2,3,4,5,6,7,8,9,10,1,7,2,6,3,10,5];
+            for (const n of seq) { H.startGame(n); run(0.2);
+                res.push(`${n}:pad${vis('pad')}j${vis('b-jump')}h${vis('b-hammer')}b${vis('b-bribe')}`); }
+            say(res.join(' '));
+        }
         if (name === 'start') { run(1.0); say(`y=${p.pos.y.toFixed(2)} grounded=${p.grounded}`); }
         if (name === 'walk') {
             key('KeyW', true); run(1.5);
@@ -87,7 +95,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=12').then(() => {});
+            import('./player.js?v=13').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -200,7 +208,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=12').then(async o => {
+            import('./outro.js?v=13').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));
