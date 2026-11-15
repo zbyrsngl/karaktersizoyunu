@@ -3,14 +3,15 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=4';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=4';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=4';
-import { playSfx } from './audio.js?v=4';
-import { groundAt } from './physics.js?v=4';
-import { makeCloud } from './hazards.js?v=4';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=4';
-import { ARENA } from './world.js?v=4';
+import { G, diff, addScore, toast } from './state.js?v=6';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=6';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=6';
+import { playSfx } from './audio.js?v=6';
+import { groundAt } from './physics.js?v=6';
+import { makeCloud } from './hazards.js?v=6';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=6';
+import { ARENA } from './world.js?v=6';
+import { showBossBar, setBossBar } from './boss_core.js?v=6';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
@@ -63,7 +64,7 @@ function buildToma() {
     return { root, body, wheels, turret, barrel, lampB, lampR };
 }
 
-export function spawnBoss(scene, pos) {
+export function spawnToma(scene, pos) {
     const m = buildToma();
     m.root.position.copy(pos); scene.add(m.root);
     const hp = Math.max(3, Math.round(5 * diff().boss));
@@ -73,12 +74,14 @@ export function spawnBoss(scene, pos) {
         hitTest(pt) { const l = toLocal(this, pt); return Math.abs(l.x) < HX && Math.abs(l.z) < HZ && pt.y < ROOF + 0.5 && pt.y > 0; }
     };
     m.root.rotation.y = b.yaw;
+    b.root = m.root; b.name = 'TOMA'; b.update = dt => updateToma(b, dt);
+    b.onHammer = onArmor; b.onAmmo = p => onArmor(p.pos);
+    b.reset = () => { b.hp = b.maxHp; b.pos.set(0, 0, -222); b.fireT = 2.5; setBossBar(b); };
     G.boss = b;
     toast('BÖLÜM SONU CANAVARI: TOMA!', 2600, '#fca5a5');
     floatText('HER YER TAKSİM!', pos.clone().setY(4.2), '#f8fafc', 0.7, 2.2);
     floatText('ÜSTÜNE ZIPLA!', pos.clone().setY(3.4), '#fde047', 0.5, 2.6);
-    setBossBar(b);
-    document.getElementById('boss-bar').hidden = false;
+    showBossBar(b);
     playSfx('boom', { rate: 0.6, vol: 0.4 });
     return b;
 }
@@ -91,19 +94,13 @@ function fromLocalDir(b, lx, lz) {
     const c = Math.cos(b.yaw), s = Math.sin(b.yaw);
     return { x: lx * c + lz * s, z: -lx * s + lz * c };
 }
-function setBossBar(b) {
-    document.getElementById('boss-fill').style.width = (100 * Math.max(0, b.hp) / b.maxHp) + '%';
+// TOMA zırhlı: balyoz ve mermi işlemez, yalnızca üstüne zıplayınca hasar alır
+function onArmor(point) {
+    floatText('ZIRHLI! ÜSTÜNE ZIPLA!', point.clone().setY(3), '#fde047', 0.45);
+    playSfx('hit', { rate: 1.4, vol: 0.5 }); spawnFx('hit', point, 1);
 }
 
-export function removeBoss(scene) {
-    const b = G.boss; if (!b) return;
-    scene.remove(b.m.root);
-    G.boss = null;
-    document.getElementById('boss-bar').hidden = true;
-}
-
-export function updateBoss(dt) {
-    const b = G.boss; if (!b) return;
+function updateToma(b, dt) {
     const p = G.player, m = b.m, S = diff();
     // Lambalar yanıp söner
     const blink = Math.floor(G.time * 5) % 2;

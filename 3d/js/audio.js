@@ -6,7 +6,8 @@ const FILES = {
     coin: ['../pickupCoin.wav'],
     boom: ['../explosion.wav'],
     ouch: ['../sfx/ahh.mp3'],
-    cry: ['../sfx/uufff.mp3']
+    cry: ['../sfx/uufff.mp3'],
+    saygili: ['../sfx/saygili_giris.mp3']    // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 
@@ -27,14 +28,15 @@ export function unlockAudio() {
 }
 
 export function playSfx(name, { rate = 1, vol = 1 } = {}) {
-    if (!ac || muted) return;
+    if (!ac || muted) return 0;
     const list = (BUF[name] || []).filter(Boolean);
-    if (!list.length) return;
+    if (!list.length) return 0;
     const src = ac.createBufferSource();
     src.buffer = list[Math.floor(Math.random() * list.length)];
     src.playbackRate.value = rate * (0.95 + Math.random() * 0.1);
     const g = ac.createGain(); g.gain.value = vol;
     src.connect(g); g.connect(master); src.start();
+    return src.buffer.duration / src.playbackRate.value;   // çalan sesin süresi (saniye)
 }
 
 // Sentezlenmiş kısa sesler (zıplama, balyoz savurma, tencere)

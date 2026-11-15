@@ -70,6 +70,7 @@ const SFX_FILES = {
     lutuf: ['sfx/lutuf.mp3'],
     hashasi: ['sfx/hashasi.mp3'],                           // 6. bölüm sonu: HIRHIZ "Bunlar haşhaşi! Bunlar sülük!" (Tolga)
     selo_giris: ['sfx/selo_giris.mp3'],                     // 9. bölüm SELO'nun tek sesi: canavar gelince (kullanıcının verdiği ses)
+    saygili_giris: ['sfx/saygili_giris.mp3'],               // 2. bölüm SAYGILI gelince: kullanıcının verdiği sesin ilk 20 sn'si
     saygili_namus: ['sfx/saygili_namus.mp3'],               // 2. bölüm SAYGILI: "Biz bu ülkenin namusunu kurtardık!" (Tolga, kalınlaştırılıp yankılandı)
     ekrem_guzel: ['sfx/ekrem_guzel.mp3'],                   // 10. bölüm EKREM: "Her şey çok güzel olacak!"
     ekrem_aday: ['sfx/ekrem_aday.mp3'],                     // hikâyede: "15 milyon oyla aday seçildim..."                     // hikâyede: "Burada da kitap yazarım..."                           // 2. bölüm canavarı ölünce ara sahne

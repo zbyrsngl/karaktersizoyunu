@@ -3,16 +3,16 @@
 // - ateş: meşalenin düştüğü yerde kısa süre yanar, basana can götürür
 // - ses dalgası: tencere tavadan yerde büyüyen halka; üstünden zıplanmazsa can götürür
 import * as THREE from 'three';
-import { G } from './state.js?v=4';
-import { hurtPlayer } from './player.js?v=4';
-import { floatText, burst } from './fx.js?v=4';
-import { rand } from './util.js?v=4';
+import { G } from './state.js?v=6';
+import { hurtPlayer } from './player.js?v=6';
+import { floatText, burst } from './fx.js?v=6';
+import { rand } from './util.js?v=6';
 
 let list = [];
 
 const CLOUD_MAT = new THREE.MeshLambertMaterial({ color: '#e5e7eb', transparent: true, opacity: 0.55, depthWrite: false });
 const CLOUD_GEO = new THREE.IcosahedronGeometry(1, 1);
-export function makeCloud(pos, { r = 2.6, t = 3 } = {}) {
+export function makeCloud(pos, { r = 2.6, t = 3, hurt = false } = {}) {
     const g = new THREE.Group(); g.position.copy(pos);
     const k = r / 2.6;
     for (let i = 0; i < 7; i++) {
@@ -21,7 +21,7 @@ export function makeCloud(pos, { r = 2.6, t = 3 } = {}) {
         s.scale.setScalar(rand(1.1, 1.5) * k); g.add(s);
     }
     G.scene.add(g);
-    list.push({ kind: 'cloud', g, pos: g.position, t, max: t, r });
+    list.push({ kind: 'cloud', g, pos: g.position, t, max: t, r, hurt });
 }
 
 const FIRE_MATS = ['#f97316', '#facc15', '#ef4444'].map(c => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9 }));
@@ -57,6 +57,7 @@ export function updateHazards(dt) {
             if (h.t > 0 && !p.dead && Math.hypot(p.pos.x - h.pos.x, p.pos.z - h.pos.z) < h.r && p.pos.y < h.pos.y + 2.5 && !(p.mask > 0)) {
                 if (!(p.slow > 0)) floatText('BİBER GAZI!', p.pos.clone().setY(p.pos.y + 2.4), '#e5e7eb', 0.4, 0.9);
                 p.slow = 0.15;
+                if (h.hurt && !h.hitDone && h.max - h.t > 0.3) h.hitDone = hurtPlayer(h.pos, { knock: 4 });   // 2. bölüm: gaz bulutu bir kez can götürür
             }
         } else if (h.kind === 'fire') {
             h.t -= dt;

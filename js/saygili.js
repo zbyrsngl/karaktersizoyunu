@@ -164,7 +164,7 @@ function drawEmniyetBg(time) {
 //   SIÇRAMA (orta): oyuncunun üstüne zıplar, yere inince iki yana şok dalgası; inişten sonra kısa süre sersemler.
 //   KELEPÇE (uzak): kavisli kelepçe atar (öfkeliyken iki tane).
 // Öfkelenince (can yarıya inince) her şeyi 1,5 kat hızlı yapar.
-BOSS_TYPES.saygili = { greet: 'saygili_namus', say: "BİZ BU ÜLKENİN NAMUSUNU KURTARDIK!", w: 140, h: 260, scale: 1, hp: 7, arena: 900,
+BOSS_TYPES.saygili = { greet: 'saygili_giris', talkMax: 4, rageSfx: null, say: "BİZ BU ÜLKENİN NAMUSUNU KURTARDIK!", w: 140, h: 260, scale: 1, hp: 7, arena: 900,
                        nameKey: "saygiliName", stomp: 80, labelY: 40, update: updateSaygili, draw: drawSaygili };
 const COP_REACH = 250, CUFF_G = 0.35, LEAP_G = 0.8;
 function sgState(b, s) { b.state = s; b.stateT = 0; }

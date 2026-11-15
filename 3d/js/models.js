@@ -1,10 +1,10 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=4';
+import { box, mat, canvasTex, textSprite } from './util.js?v=6';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
-function limb(parent, x, y, z, w, h, d, color, shoe) {
+export function limb(parent, x, y, z, w, h, d, color, shoe) {
     const pv = new THREE.Group(); pv.position.set(x, y, z); parent.add(pv);
     pv.add(box(w, h, d, color, 0, -h / 2, 0));
     if (shoe) pv.add(box(w * 1.1, 0.1, d * 1.5, shoe, 0, -h + 0.03, d * 0.25));

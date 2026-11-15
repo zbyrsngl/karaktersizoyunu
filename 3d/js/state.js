@@ -8,7 +8,7 @@ export const G = {
     scene: null, camera: null, world: null,
     player: null, enemies: [], projectiles: [], boss: null,
     difficulty: 'normal',
-    score: 0, kills: 0, target: 11, fidans: 0, livesLost: 0,
+    score: 0, kills: 0, target: 11, collect: 0, livesLost: 0,
     time: 0, hitStop: 0,
     state: 'menu',          // menu | play | pause | dead | won
     msg: null               // ekrandaki kısa bildirim

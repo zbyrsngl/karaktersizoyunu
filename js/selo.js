@@ -71,7 +71,7 @@ function drawPrisonBg(time) {
 // --- CANAVAR: SELO ---
 // Replikler: karşılama "Seni başkan yaptırmayacağız!", bağlamadan önce "Bir türkü de benden!", AİHM yağmurundan önce "AİHM kararını uygulayın!",
 // öfkelenince "Bu duvarlar beni durduramaz!", her 3. darbede "Yaşasın halkların kardeşliği!" (Windows Türkçe yapay sesi Tolga, inceltildi)
-BOSS_TYPES.selo = { greet: 'selo_giris', rageSfx: null, chantDelay: 2.2, say: "SENİ BAŞKAN YAPTIRMAYACAĞIZ!", w: 120, h: 205, scale: 1, hp: 24, arena: 900, nameKey: "seloName", stomp: 55, labelY: 40,
+BOSS_TYPES.selo = { greet: 'selo_giris', talkMax: 4, rageSfx: null, chantDelay: 2.2, say: "SENİ BAŞKAN YAPTIRMAYACAĞIZ!", w: 120, h: 205, scale: 1, hp: 24, arena: 900, nameKey: "seloName", stomp: 55, labelY: 40,
                     update: updateSelo, draw: drawSelo };
 
 function updateSelo(b) {

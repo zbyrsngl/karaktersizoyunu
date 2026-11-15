@@ -56,7 +56,8 @@ function spawnBoss(x) {
     createParticle(player.x + player.w / 2, player.y - 30, t("bossIntro"), "#f97316", 2.5);
     // Canavar konuşarak karşılar: ses bitene kadar saldırmaz, ağzı oynar, balon çıkar
     const dur = playSfx(T.greet, { vol: 1, delay: 0.3 });
-    boss.talk = Math.round(((dur || 1.5) + 0.3) * 60);
+    // talkMax: uzun giriş sesinde canavar en çok bu kadar saniye bekler, ses arkada çalmaya devam eder
+    boss.talk = Math.round(Math.min(T.talkMax || 99, (dur || 1.5) + 0.3) * 60);
 }
 
 // Öfke: canı yarıya inince kızarır, buharlar çıkar, daha hızlı saldırır

@@ -7,7 +7,7 @@ export function runTest(name, H) {
     const log = [];
     const say = s => { log.push(s); out.textContent = log.join(' | '); document.title = log.join(' | '); };
     const run = (sec) => { for (let i = 0; i < sec / STEP; i++) { step(STEP); updateCamera(STEP); } render(); };
-    window.onerror = (m) => say('HATA: ' + m);
+    window.addEventListener('error', ev => say('HATA: ' + ev.message + ' @ ' + ((ev.error && ev.error.stack) || '').split(String.fromCharCode(10)).slice(1, 3).join(' ')));
     G.freeze = true;
     startGame();
     const p = G.player;
@@ -28,7 +28,7 @@ export function runTest(name, H) {
             say(`can=${p.hp} mermi=${G.projectiles.length}`);
         }
         if (name === 'hammer') {
-            const e = G.enemies[0]; p.pos.set(e.pos.x, 0, e.pos.z + 1.5); p.facing = Math.PI; run(0.05);
+            const e = G.enemies[0]; e.cd = 99; p.pos.set(e.pos.x, 0, e.pos.z + 1.0); p.facing = Math.PI;
             key('KeyF', true); run(0.05); key('KeyF', false); run(0.4);
             say(`öldü=${e.dead} kills=${G.kills} skor=${G.score}`);
         }
@@ -68,7 +68,7 @@ export function runTest(name, H) {
             G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
             run(1.8); p.pos.set(0, 0, -190); run(0.5);
             const b = G.boss; let n = 0;
-            while (b && !b.dead && n < 20) {
+            while (b && !b.dead && n < 40) {
                 p.pos.set(b.pos.x, 4, b.pos.z); p.vel.set(0, -2, 0); p.hp = 9; run(0.7); n++;
             }
             say(`TOMA öldü=${b && b.dead} deneme=${n}`);
@@ -86,7 +86,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=4').then(() => {});
+            import('./player.js?v=6').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -100,10 +100,10 @@ export function runTest(name, H) {
         }
         if (name === 'attacks') {   // her kahramanın saldırısı: 1 düşman + oyuncu (bol canlı), olan biteni say
             const seen = {};
-            for (const skin of ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere']) {
+            for (const skin of (G.level.id === 2 ? ['police', 'riot', 'gas', 'sniper'] : ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere'])) {
                 const e = G.enemies.find(x => x.skin === skin && !x.dead);
                 G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') { x.st = 'idle'; x.cd = 99; } });
-                p.pos.set(e.pos.x, 0, e.pos.z - 6); p.vel.set(0, 0, 0); p.hp = 99; p.maxHp = 99; p.invuln = 0; p.dead = false;
+                p.pos.set(e.pos.x, 0, e.pos.z - (skin === 'sniper' ? 12 : 6)); p.vel.set(0, 0, 0); p.hp = 99; p.maxHp = 99; p.invuln = 0; p.dead = false;
                 e.cd = 0; const hp0 = p.hp, st = new Set(), pr = new Set();
                 for (let i = 0; i < 60 * 7; i++) { step(STEP); st.add(e.st); G.projectiles.forEach(q => pr.add(q.type)); p.invuln = 0; }
                 seen[skin] = [...st].join('/') + (pr.size ? ' [' + [...pr].join(',') + ']' : '') + ' -' + (hp0 - p.hp);
@@ -113,7 +113,7 @@ export function runTest(name, H) {
         }
         if (name === 'tea') {   // telefonda öndekine nişan: çay paketleri düşmanı yener
             H.input.touch = true;
-            const e = G.enemies.find(x => x.skin === 'carsi');
+            const e = G.enemies.find(x => x.skin === 'carsi' || x.skin === 'police');
             G.enemies.forEach(x => { if (x !== e) x.cd = 99; }); e.cd = 99;
             p.pos.set(e.pos.x + 0.5, 0, e.pos.z + 9); p.facing = Math.PI; run(0.1);
             let n = 0;
@@ -136,6 +136,32 @@ export function runTest(name, H) {
             for (let i = 0; i < 400; i++) { step(STEP); p.invuln = 0; if (tc.st === 'rest' && ringT < 0) ringT = i; if (ringT > 0 && i - ringT > 14) break; }
             cam.yaw = 0.5; cam.pitch = 0.5; cam.dist = 8; for (let i = 0; i < 60; i++) { updateCamera(STEP); cam.dist = 8; }
             render(); say('dalga ' + ringT);
+        }
+        if (name === 'look') {   // bölümün görüntüsü: başlangıçtan ileriye ve köprü altı
+            const z = +(new URLSearchParams(location.search).get('z') || 3);
+            p.pos.set(0, 0, z); cam.target.set(0, 1.6, z); cam.yaw = 0.25; cam.pitch = +(new URLSearchParams(location.search).get('pitch') || 0.28); run(0.5);
+            G.enemies.forEach(e => e.cd = 99);
+            const pt = +(new URLSearchParams(location.search).get('pitch') || 0.28);
+            for (let i = 0; i < 40; i++) { updateCamera(STEP); cam.pitch = pt; }
+            render(); say('görüntü z=' + z);
+        }
+        if (name === 'bossshot') {   // canavar meydanı
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -190); p.hp = 99; run(4.5); cam.yaw = 0.3;
+            for (let i = 0; i < 60; i++) { step(STEP); updateCamera(STEP); p.invuln = 0; }
+            render(); say(`canavar=${G.boss && G.boss.name} durum=${G.boss && (G.boss.st || '')} can=${G.boss && G.boss.hp}`);
+        }
+        if (name === 'soak') {   // gerçek döngü: 8 sn ileri yürü, zıpla, at, balyoz
+            G.freeze = false; say('başladı');
+            key('KeyW', true);
+            const iv = setInterval(() => { key('Space', true); setTimeout(() => key('Space', false), 200); key('KeyE', true); key('KeyE', false); key('KeyF', true); key('KeyF', false); }, 700);
+            setTimeout(() => { clearInterval(iv); key('KeyW', false); say(`bitti z=${p.pos.z.toFixed(1)} can=${p.hp} kills=${G.kills} durum=${G.state}`); }, 8000);
+        }
+        if (name === 'shieldshot') {
+            G.enemies.forEach(e => e.cd = 99);
+            p.pos.set(0, 0, -5); p.facing = 0; key('ShiftLeft', true); run(0.3);
+            cam.yaw = Math.PI * 0.8; cam.pitch = 0.15; for (let i = 0; i < 40; i++) { step(STEP); updateCamera(STEP); cam.dist = 4; cam.yaw = Math.PI * 0.8; p.facing = 0; }
+            p.m.root.rotation.y = 0; render(); say('kalkan=' + p.shield + ' big rotY=' + p.big.rotation.y.toFixed(2) + ' q=' + p.big.quaternion.toArray().map(v => v.toFixed(2)));
         }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');

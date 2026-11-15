@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>HIRHIZ 3D</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=6">
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
 </head>
 <body class="in-menu">
@@ -20,7 +20,7 @@
     </div>
     <div class="hud-r">
         <div class="hud-row">✊ <span id="kills">0 / 11</span></div>
-        <div class="hud-row">🌱 <span id="fidans">0 / 10</span></div>
+        <div class="hud-row"><span id="collect-ico">🌱</span> <span id="fidans">0 / 10</span></div>
     </div>
 </div>
 <div id="boss-bar" hidden><div class="boss-name">TOMA</div><div class="boss-track"><div id="boss-fill"></div></div></div>
@@ -43,14 +43,15 @@
 <div id="menu" class="panel">
     <div class="card">
         <h1>HIRHIZ <span>3D</span></h1>
-        <p class="sub">1. BÖLÜM · GEZİ PARKI</p>
-        <p class="desc">11 kişiyi yen, barikatı aç, TOMA'nın üstüne zıpla!</p>
+        <div id="levels" class="row"></div>
+        <p class="sub" id="menu-sub"></p>
+        <p class="desc" id="menu-desc"></p>
         <div id="diff" class="row"></div>
         <button id="start" class="big">OYUNU BAŞLAT</button>
         <div class="row"><button class="chip snd"></button><a class="chip" href="../index.html">← 2D OYUN</a></div>
         <p id="menu-best" class="small"></p>
-        <p class="small">Bilgisayar: WASD yürü · fare kamera ve nişan · sol tık çay at · F balyoz · Boşluk zıpla · Shift / sağ tık kalkan<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
-        <p class="small dim">Deneme sürümü: şimdilik yalnızca 1. bölüm 3D. Öteki bölümler sırayla gelecek.</p>
+        <p class="small">Bilgisayar: WASD yürü · fare kamera ve nişan · sol tık nişanlı atış (çay / rüşvet) · F balyoz · Boşluk zıpla · Shift / sağ tık kalkan<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
+        <p class="small dim">Deneme sürümü: şimdilik 1. ve 2. bölüm 3D. Öteki bölümler sırayla gelecek.</p>
     </div>
 </div>
 <div id="pause" class="panel" hidden>
@@ -72,19 +73,20 @@
 </div>
 <div id="won" class="panel" hidden>
     <div class="card">
-        <h2 class="green">BÖLÜM 1 TAMAM!</h2>
-        <p class="desc">Park boşaltıldı, TOMA sustu!</p>
+        <h2 class="green" id="won-title"></h2>
+        <p class="desc" id="won-note"></p>
         <div id="won-stars" class="stars"></div>
         <div class="score-big">💰 <span id="won-score"></span></div>
         <p id="won-detail" class="small"></p>
         <p id="won-best" class="small gold"></p>
-        <button id="again" class="big">TEKRAR OYNA</button>
+        <button id="next" class="big">2. BÖLÜME GEÇ</button>
+        <button id="again" class="mid">TEKRAR OYNA</button>
         <div class="row"><button class="chip to-menu">ANA MENÜ</button><a class="chip" href="../index.html">← 2D OYUN</a></div>
-        <p class="small dim">2. bölüm 3D'de yakında.</p>
+        <p class="small dim" id="won-soon">Sonraki bölüm 3D'de yakında.</p>
     </div>
 </div>
 
 <script src="../js/fx_sheets.js?v=42"></script>
-<script type="module" src="js/main.js?v=4"></script>
+<script type="module" src="js/main.js?v=6"></script>
 </body>
 </html>

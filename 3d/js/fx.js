@@ -2,7 +2,7 @@
 // - pixelfx resim dizileri (../resimler/fx, MIT) kameraya dönük düz levha olarak oynatılır
 // - köşeli piksel parçacıklar (küçük küpler), uçan yazılar, kamera sarsıntısı
 import * as THREE from 'three';
-import { textSprite, disposeSprite, rand } from './util.js?v=4';
+import { textSprite, disposeSprite, rand } from './util.js?v=6';
 
 let scene = null;
 const SHEETS = window.FX_SHEETS || {};
