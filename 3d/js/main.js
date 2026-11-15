@@ -1,15 +1,15 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=1';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=1';
-import { buildWorld, updateWorld, SPAWNS, ARENA, makeBag } from './world.js?v=1';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected } from './player.js?v=1';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwBribe } from './enemies.js?v=1';
-import { spawnBoss, updateBoss, removeBoss } from './boss.js?v=1';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=1';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=1';
-import { damp, dampAngle, angDiff, clamp, canvasTex } from './util.js?v=1';
-import { groundAt } from './physics.js?v=1';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=3';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=3';
+import { buildWorld, updateWorld, SPAWNS, ARENA, makeBag } from './world.js?v=3';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera } from './player.js?v=3';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwBribe } from './enemies.js?v=3';
+import { spawnBoss, updateBoss, removeBoss } from './boss.js?v=3';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=3';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=3';
+import { damp, dampAngle, angDiff, clamp, canvasTex } from './util.js?v=3';
+import { groundAt } from './physics.js?v=3';
 
 const $ = id => document.getElementById(id);
 const START = new THREE.Vector3(0, 0, 7);
@@ -312,7 +312,7 @@ function step(dt) {
 function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    if (G.freeze) { renderer.render(scene, camera); return; }   // test sürerken döngüyü test yönetir
+    if (G.freeze) { faceCamera(player, cam.yaw); renderer.render(scene, camera); return; }   // test sürerken döngüyü test yönetir
     if (input.pausePressed) { input.pausePressed = false; if (G.state === 'play') pause(); else if (G.state === 'pause') resume(); }
     if (input.restartPressed) { input.restartPressed = false; if (G.state === 'pause' || G.state === 'dead') startGame(); }
     if (G.state === 'play' || G.state === 'dead' || G.state === 'won') {
@@ -325,7 +325,7 @@ function frame(now) {
         }
     } else if (G.state === 'menu') { updateWorld(G.world, dt, G.time += dt); }
     updateCamera(dt);
-    cullFar();
+    cullFar(); faceCamera(player, cam.yaw);
     renderer.render(scene, camera);
     if (fpsEl) { fpsN++; fpsT += dt; if (fpsT > 0.5) { fpsEl.textContent = `${Math.round(fpsN / fpsT)} fps · ${renderer.info.render.calls} çizim`; fpsN = 0; fpsT = 0; } }
 }
@@ -334,4 +334,4 @@ showPanel('menu');
 requestAnimationFrame(frame);
 // Test: ?test=<senaryo> (3d/js/test.js)
 const T = new URLSearchParams(location.search).get('test');
-if (T) import('./test.js?v=1').then(m => m.runTest(T, { G, startGame, retry, step, STEP, cam, updateCamera, render: () => renderer.render(scene, camera), calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));
+if (T) import('./test.js?v=3').then(m => m.runTest(T, { G, startGame, retry, step, STEP, cam, updateCamera, render: () => renderer.render(scene, camera), calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

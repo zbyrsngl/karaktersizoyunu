@@ -3,13 +3,13 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=1';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=1';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=1';
-import { playSfx } from './audio.js?v=1';
-import { groundAt } from './physics.js?v=1';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=1';
-import { ARENA } from './world.js?v=1';
+import { G, diff, addScore, toast } from './state.js?v=3';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=3';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=3';
+import { playSfx } from './audio.js?v=3';
+import { groundAt } from './physics.js?v=3';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=3';
+import { ARENA } from './world.js?v=3';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0, CLOUD_T = 3, CLOUD_R = 2.6;

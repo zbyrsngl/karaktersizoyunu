@@ -1,16 +1,16 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=1';
-import { moveBody } from './physics.js?v=1';
-import { input } from './input.js?v=1';
-import { G, diff, toast } from './state.js?v=1';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=1';
-import { playSfx, beep } from './audio.js?v=1';
-import { clamp, damp, dampAngle, angDiff } from './util.js?v=1';
+import { buildHirhiz, walkPose } from './models.js?v=3';
+import { moveBody } from './physics.js?v=3';
+import { input } from './input.js?v=3';
+import { G, diff, toast } from './state.js?v=3';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=3';
+import { playSfx, beep } from './audio.js?v=3';
+import { clamp, damp, dampAngle, angDiff } from './util.js?v=3';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45;
-const GRAV = 32, JUMP_V = 12.6, FALL_MULT = 1.8, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 4;
+const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
 const COYOTE = 0.12, BUFFER = 0.14;
 const SWING = 0.4, SWING_HIT = 0.13, HAMMER_REACH = 2.1;
 export const PLAYER_H = 1.85;
@@ -38,6 +38,13 @@ export function resetPlayer(p, at) {
     p.pos.copy(at); p.vel.set(0, 0, 0); p.facing = Math.PI; p.safe.copy(at);
     p.hp = p.maxHp = diff().hp; p.invuln = 0; p.mask = 0; p.slow = 0; p.swing = 0; p.dead = false; p.deadT = 0;
     p.m.root.rotation.set(0, p.facing, 0); p.m.root.visible = true; p.m.helmet.visible = false;
+    // Ölüm pozunu (devrilme) ve bütün eklem açılarını sıfırla; yoksa "Tekrar dene"de karakter yamuk kalır
+    const m = p.m;
+    m.body.rotation.set(0, 0, 0); m.body.position.set(0, 0, 0); m.body.scale.set(1, 1, 1);
+    [m.legL, m.legR, m.armL, m.armR].forEach(l => l.rotation.set(0, 0, 0));
+    m.hammer.rotation.set(-1, 0, 0);
+    p.squash = 0; p.phase = 0; p.swingHit = false; p.bribeCd = 0; p.shield = false;
+    p.grounded = false; p.coyote = 0; p.buffer = 0; p.jumping = false;
     p.collected = 0; updateSack(p);
 }
 
@@ -205,6 +212,16 @@ function hammerPoint(p) {
     return new THREE.Vector3(p.pos.x + Math.sin(p.facing) * 1.3, p.pos.y + 0.8, p.pos.z + Math.cos(p.facing) * 1.3);
 }
 export { HAMMER_REACH };
+
+// Fotoğraf kafa her karede kameraya döner; karakter ekranda sola gidiyorsa aynalanır (2D'deki gibi)
+let faceDir = 1;
+export function faceCamera(p, camYaw) {
+    const m = p.m;
+    m.faceGroup.rotation.y = camYaw - p.facing;
+    const side = Math.sin(p.facing - camYaw);
+    if (side > 0.3) faceDir = 1; else if (side < -0.3) faceDir = -1;
+    m.faceGroup.scale.x = faceDir;
+}
 
 function animate(p, dt, amt) {
     const m = p.m;

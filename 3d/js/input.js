@@ -93,7 +93,10 @@ function initTouch(canvas) {
         const u = e => { el.classList.remove('down'); up && up(); };
         el.addEventListener('pointerup', u); el.addEventListener('pointercancel', u); el.addEventListener('pointerleave', u);
     };
-    btn('b-jump', () => { input.jumpPressed = true; input.jumpHeld = true; }, () => { input.jumpHeld = false; });
+    // Telefonda kısa dokunuş da yüksek zıplasın: düğme en az 0.22 sn basılı sayılır
+    let jumpDownAt = 0, jumpUpTimer = null;
+    btn('b-jump', () => { clearTimeout(jumpUpTimer); jumpDownAt = performance.now(); input.jumpPressed = true; input.jumpHeld = true; },
+        () => { clearTimeout(jumpUpTimer); jumpUpTimer = setTimeout(() => { input.jumpHeld = false; }, Math.max(0, 220 - (performance.now() - jumpDownAt))); });
     btn('b-hammer', () => { input.hammerPressed = true; });
     btn('b-bribe', () => { input.bribePressed = true; });
     btn('b-shield', () => { touchShield = true; }, () => { touchShield = false; });

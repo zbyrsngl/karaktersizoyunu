@@ -1,7 +1,7 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=1';
+import { box, mat, canvasTex, textSprite } from './util.js?v=3';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -18,18 +18,41 @@ const RECEP_HEAD = { x: 36, y: 8, w: 120, h: 162,
 let headTex = null;
 function getHeadTex() {
     if (headTex) return headTex;
-    const c = document.createElement('canvas'); c.width = RECEP_HEAD.w * 2; c.height = RECEP_HEAD.h * 2;
-    headTex = new THREE.CanvasTexture(c); headTex.colorSpace = THREE.SRGBColorSpace;
+    // Fotoğraf küçük (194x259): 4 kat büyütülür, keskinleştirilir (unsharp mask) ve hafif kontrast verilir
+    const K = 4, c = document.createElement('canvas'); c.width = RECEP_HEAD.w * K; c.height = RECEP_HEAD.h * K;
+    headTex = new THREE.CanvasTexture(c); headTex.colorSpace = THREE.SRGBColorSpace; headTex.anisotropy = 8;
     const img = new Image();
     img.onload = () => {
-        const x = c.getContext('2d');
-        x.scale(2, 2); x.translate(-RECEP_HEAD.x, -RECEP_HEAD.y);
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+        x.save(); x.scale(K, K); x.translate(-RECEP_HEAD.x, -RECEP_HEAD.y);
         x.beginPath(); RECEP_HEAD.clip.forEach(([px, py], i) => i ? x.lineTo(px, py) : x.moveTo(px, py)); x.closePath(); x.clip();
         x.drawImage(img, 0, 0);
+        x.restore();
+        sharpen(x, c.width, c.height);
         headTex.needsUpdate = true;
     };
     img.src = '../recep.jpg';
     return headTex;
+}
+
+// Keskinleştirme: sonuç = asıl + 1.1 × (asıl − bulanık); kenar yumuşak kalsın diye saydam pikseller atlanır
+function sharpen(x, w, h) {
+    const src = x.getImageData(0, 0, w, h), s = src.data;
+    const b = document.createElement('canvas'); b.width = w; b.height = h;
+    const bx = b.getContext('2d', { willReadFrequently: true });
+    bx.filter = 'blur(3px)'; bx.drawImage(x.canvas, 0, 0);
+    const bl = bx.getImageData(0, 0, w, h).data;
+    const AMT = 1.1, CON = 1.08;
+    for (let i = 0; i < s.length; i += 4) {
+        if (s[i + 3] < 250) continue;
+        for (let k = 0; k < 3; k++) {
+            let v = s[i + k] + AMT * (s[i + k] - bl[i + k]);
+            v = (v - 128) * CON + 128;
+            s[i + k] = v < 0 ? 0 : v > 255 ? 255 : v;
+        }
+    }
+    x.putImageData(src, 0, 0);
 }
 
 // "DİN" yazılı yeşil kalkan (2D çizimin aynısı)
@@ -91,14 +114,12 @@ export function buildHirhiz() {
     torso.add(box(0.16, 0.24, 0.02, '#f8fafc', 0, 0.43, 0.155, false));    // gömlek
     torso.add(box(0.05, 0.3, 0.02, '#1e3a8a', 0, 0.36, 0.166, false));     // kravat
     const strap = box(0.06, 0.62, 0.03, '#7c5a2b', 0, 0.3, 0.16, false); strap.rotation.z = 0.55; torso.add(strap);   // çuval ipi
-    // Kafa: arkada ten rengi kutu + saç, önde fotoğraf
+    // Kafa: 2D'deki gibi fotoğraf; her zaman kameraya döner (player.js), sağa/sola gidişe göre aynalanır
     const head = new THREE.Group(); head.position.y = 0.56; torso.add(head);
-    head.add(box(0.38, 0.5, 0.3, SKIN, 0, 0.3, -0.04));
-    head.add(box(0.46, 0.18, 0.38, '#3f3f46', 0, 0.56, -0.04));
-    head.add(box(0.44, 0.34, 0.06, '#3f3f46', 0, 0.38, -0.2));
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.54, 0.73),
-        new THREE.MeshLambertMaterial({ map: getHeadTex(), transparent: true, alphaTest: 0.4 }));
-    face.position.set(-0.086, 0.3, 0.16); head.add(face);
+    const faceGroup = new THREE.Group(); head.add(faceGroup);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.81),
+        new THREE.MeshBasicMaterial({ map: getHeadTex(), transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));   // ışıktan etkilenmez: yüz hep net ve parlak
+    face.position.set(-0.095, 0.33, 0.05); face.castShadow = true; faceGroup.add(face);
     // Kollar
     const armL = limb(torso, -0.33, 0.5, 0, 0.13, 0.5, 0.14, SUIT_D);
     const armR = limb(torso, 0.33, 0.5, 0, 0.13, 0.5, 0.14, SUIT);
@@ -113,7 +134,7 @@ export function buildHirhiz() {
     hm.position.y = 0.58; hm.castShadow = true; helmet.add(hm);
     helmet.add(box(0.64, 0.04, 0.64, '#eab308', 0, 0.58, 0.02));
     helmet.add(box(0.26, 0.16, 0.1, '#f8fafc', 0.02, 0.12, 0.2, false));
-    return { root, body, legL, legR, armL, armR, torso, head, hammer, shield, sack, helmet };
+    return { root, body, legL, legR, armL, armR, torso, head, faceGroup, hammer, shield, sack, helmet };
 }
 
 // --- GEZİ KAHRAMANLARI ---

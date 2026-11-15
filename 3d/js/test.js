@@ -33,7 +33,7 @@ export function runTest(name, H) {
             say(`öldü=${e.dead} kills=${G.kills} skor=${G.score}`);
         }
         if (name === 'shelves') {   // her rafa yerden ya da alttaki raftan çıkılabiliyor mu
-            say('raf testi'); const res = [];
+            say('raf testi'); const res = []; G.enemies.forEach(e => { if (e.kind !== 'duran') e.dead = true; });
             const shelves = G.world.solids.filter(a => a.type === 'shelf');
             shelves.forEach((a, i) => {
                 const cx = (a.min.x + a.max.x) / 2, cz = (a.min.z + a.max.z) / 2;
@@ -83,6 +83,20 @@ export function runTest(name, H) {
             for (let i = 0; i < 6; i++) { step(STEP); updateCamera(STEP); cam.dist = 4.2; cam.yaw = Math.PI * 0.85; }
             p.m.root.rotation.y = Math.PI * 0.85; p.invuln = 0; p.m.root.visible = true; render();
             say('yüz');
+        }
+        if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
+            p.hp = 1; G.enemies.forEach(e => e.dead = true);
+            import('./player.js?v=3').then(() => {});
+            p.pos.set(0, 0, -10); run(0.2);
+            G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
+            p.hp = 1; p.invuln = 0;
+            // ölüm
+            p.dead = true; p.deadT = 0; run(1.5);
+            const before = p.m.body.rotation.x.toFixed(2);
+            G.state = 'dead'; H.retry(); run(0.6);
+            cam.yaw = Math.PI * 0.85; cam.dist = 4.5; for (let i = 0; i < 6; i++) { updateCamera(STEP); cam.yaw = Math.PI * 0.85; cam.dist = 4.5; }
+            render();
+            say(`önce=${before} sonra=${p.m.body.rotation.x.toFixed(2)} bacak=${p.m.legL.rotation.x.toFixed(2)} durum=${G.state}`);
         }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');

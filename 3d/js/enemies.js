@@ -2,13 +2,13 @@
 // Gezi kahramanları (Çarşı, Kırmızılı Kadın, Semazen, Çapulcu) slogan atar; Tencere Tava kalkan hücumu yapar (2 can);
 // Duran Adam hiç kıpırdamaz (ne balyoz ne rüşvet işler). 1. bölümde rüşvet işlemez: "BİZ RÜŞVET ALMAYIZ!"
 import * as THREE from 'three';
-import { buildHero, walkPose, nameLabel } from './models.js?v=1';
-import { G, diff, addScore } from './state.js?v=1';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=1';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=1';
-import { playSfx, beep } from './audio.js?v=1';
-import { groundAt } from './physics.js?v=1';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, rand } from './util.js?v=1';
+import { buildHero, walkPose, nameLabel } from './models.js?v=3';
+import { G, diff, addScore } from './state.js?v=3';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=3';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=3';
+import { playSfx, beep } from './audio.js?v=3';
+import { groundAt } from './physics.js?v=3';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, rand } from './util.js?v=3';
 
 const NAMES = { carsi: 'ÇARŞI', kirmizi: 'KIRMIZILI KADIN', sema: 'SEMAZEN', capulcu: 'ÇAPULCU', tencere: 'TENCERE TAVA', duran: 'DURAN ADAM' };
 const SLOGANS = ['HER YER TAKSİM!', 'DİRENİŞ!', 'ÇAPULCUYUZ!', 'HÜKÜMET İSTİFA!'];
