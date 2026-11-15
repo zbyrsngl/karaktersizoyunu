@@ -86,7 +86,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=3').then(() => {});
+            import('./player.js?v=4').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -98,12 +98,51 @@ export function runTest(name, H) {
             render();
             say(`önce=${before} sonra=${p.m.body.rotation.x.toFixed(2)} bacak=${p.m.legL.rotation.x.toFixed(2)} durum=${G.state}`);
         }
+        if (name === 'attacks') {   // her kahramanın saldırısı: 1 düşman + oyuncu (bol canlı), olan biteni say
+            const seen = {};
+            for (const skin of ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere']) {
+                const e = G.enemies.find(x => x.skin === skin && !x.dead);
+                G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') { x.st = 'idle'; x.cd = 99; } });
+                p.pos.set(e.pos.x, 0, e.pos.z - 6); p.vel.set(0, 0, 0); p.hp = 99; p.maxHp = 99; p.invuln = 0; p.dead = false;
+                e.cd = 0; const hp0 = p.hp, st = new Set(), pr = new Set();
+                for (let i = 0; i < 60 * 7; i++) { step(STEP); st.add(e.st); G.projectiles.forEach(q => pr.add(q.type)); p.invuln = 0; }
+                seen[skin] = [...st].join('/') + (pr.size ? ' [' + [...pr].join(',') + ']' : '') + ' -' + (hp0 - p.hp);
+                e.cd = 99;
+            }
+            say(Object.entries(seen).map(([k, v]) => k + ':' + v).join(' ; '));
+        }
+        if (name === 'tea') {   // telefonda öndekine nişan: çay paketleri düşmanı yener
+            H.input.touch = true;
+            const e = G.enemies.find(x => x.skin === 'carsi');
+            G.enemies.forEach(x => { if (x !== e) x.cd = 99; }); e.cd = 99;
+            p.pos.set(e.pos.x + 0.5, 0, e.pos.z + 9); p.facing = Math.PI; run(0.1);
+            let n = 0;
+            while (!e.dead && n < 6) { key('KeyE', true); step(STEP); key('KeyE', false); run(0.35); n++; }
+            say(`çay atışı=${n} öldü=${e.dead} kills=${G.kills}`);
+        }
+        if (name === 'aim') {   // bilgisayar: nişangâh ışını düşmana çarpıyor mu
+            const e = G.enemies.find(x => x.skin === 'kirmizi'); e.cd = 99;
+            p.pos.set(e.pos.x - 0.75, 0, e.pos.z + 8); run(0.05);
+            cam.yaw = 0; cam.pitch = 0.08; for (let i = 0; i < 90; i++) { updateCamera(STEP); }
+            const t = G.aimTarget(p);
+            say(`nişan=(${t.x.toFixed(1)},${t.y.toFixed(1)},${t.z.toFixed(1)}) düşman=(${e.pos.x.toFixed(1)},${e.pos.z.toFixed(1)})`);
+            render();
+        }
+        if (name === 'fxshot') {   // ses dalgası ve meşale ateşi görüntüsü
+            const tc = G.enemies.find(x => x.skin === 'tencere'), cs = G.enemies.find(x => x.skin === 'carsi');
+            G.enemies.forEach(x => { if (x !== tc) x.cd = 99; });
+            tc.alt = 1; tc.cd = 0; p.pos.set(tc.pos.x - 2, 0, tc.pos.z + 7); p.hp = 99; p.facing = Math.PI;
+            let ringT = -1;
+            for (let i = 0; i < 400; i++) { step(STEP); p.invuln = 0; if (tc.st === 'rest' && ringT < 0) ringT = i; if (ringT > 0 && i - ringT > 14) break; }
+            cam.yaw = 0.5; cam.pitch = 0.5; cam.dist = 8; for (let i = 0; i < 60; i++) { updateCamera(STEP); cam.dist = 8; }
+            render(); say('dalga ' + ringT);
+        }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');
             G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') x.dead = true; });
-            p.pos.set(e.pos.x, 0, e.pos.z - 7); p.facing = 0; e.facing = Math.PI; e.atkCd = 0;
+            p.pos.set(e.pos.x, 0, e.pos.z - 7); p.facing = 0; e.facing = Math.PI; e.cd = 0; e.alt = 0;
             key('ShiftLeft', true); let stunned = false, sawCharge = false;
-            for (let i = 0; i < 240; i++) { step(STEP); if (e.atk === 'charge') sawCharge = true; if (e.stun > 0) stunned = true; }
+            for (let i = 0; i < 240; i++) { step(STEP); if (e.st === 'charge') sawCharge = true; if (e.st === 'stun') stunned = true; }
             key('ShiftLeft', false); render();
             say(`hücum=${sawCharge} sersem=${stunned} can=${p.hp}/${p.maxHp}`);
         }

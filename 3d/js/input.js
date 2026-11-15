@@ -1,17 +1,17 @@
 // HIRHIZ 3D: klavye, fare ve dokunmatik giriş
-// Klavye: WASD/oklar yürü, Boşluk zıpla, F/J balyoz, K/Shift kalkan (basılı tut), E/Enter rüşvet, P/Esc duraklat
-// Fare: oyuna tıklayınca imleç kilitlenir, fareyle kamera döner; sol tık balyoz, sağ tık kalkan
+// Klavye: WASD/oklar yürü, Boşluk zıpla, F/J balyoz, K/Shift kalkan (basılı tut), E/Enter çay at, P/Esc duraklat
+// Fare: oyuna tıklayınca imleç kilitlenir, fareyle kamera ve nişan; sol tık çay at, sağ tık kalkan
 // Telefon: ekranın solunda parmak nereye değerse orada oyun kolu açılır; sağda sürükleyince kamera döner; düğmeler sağ altta
 export const input = {
     mx: 0, my: 0,                 // hareket (-1..1), my +1 = ileri
     camDX: 0, camDY: 0,           // bu karedeki kamera dönüşü (piksel)
     jumpPressed: false, jumpHeld: false,
-    hammerPressed: false, bribePressed: false, shieldHeld: false,
+    hammerPressed: false, throwPressed: false, shieldHeld: false,
     pausePressed: false, restartPressed: false,
     touch: false, camTouched: 0   // son kamera dokunuşundan beri geçen süre (otomatik takip için)
 };
 const keys = new Set();
-const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyK', 'ShiftLeft', 'ShiftRight'], bribe: ['KeyE', 'Enter'] };
+const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyK', 'ShiftLeft', 'ShiftRight'], throw: ['KeyE', 'Enter'] };
 const isKey = (k, a) => KEYMAP[a].includes(k);
 
 let canvasEl = null, onAnyInput = null;
@@ -22,7 +22,7 @@ export function initInput(canvas, anyInput) {
         keys.add(e.code);
         if (isKey(e.code, 'jump') && !e.repeat) { input.jumpPressed = true; input.jumpHeld = true; }
         if (isKey(e.code, 'hammer')) input.hammerPressed = true;
-        if (isKey(e.code, 'bribe')) input.bribePressed = true;
+        if (isKey(e.code, 'throw')) input.throwPressed = true;
         if (e.code === 'KeyP' || e.code === 'Escape') input.pausePressed = true;
         if (e.code === 'KeyR') input.restartPressed = true;
         if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
@@ -37,7 +37,7 @@ export function initInput(canvas, anyInput) {
     canvas.addEventListener('mousedown', e => {
         if (input.touch) return;
         if (document.pointerLockElement !== canvas) { if (anyInput && anyInput()) canvas.requestPointerLock?.(); return; }
-        if (e.button === 0) input.hammerPressed = true;
+        if (e.button === 0) input.throwPressed = true;   // sol tık: çay at (nişanlı)
         if (e.button === 2) mouseShield = true;
     });
     addEventListener('mouseup', e => { if (e.button === 2) mouseShield = false; });
@@ -98,7 +98,7 @@ function initTouch(canvas) {
     btn('b-jump', () => { clearTimeout(jumpUpTimer); jumpDownAt = performance.now(); input.jumpPressed = true; input.jumpHeld = true; },
         () => { clearTimeout(jumpUpTimer); jumpUpTimer = setTimeout(() => { input.jumpHeld = false; }, Math.max(0, 220 - (performance.now() - jumpDownAt))); });
     btn('b-hammer', () => { input.hammerPressed = true; });
-    btn('b-bribe', () => { input.bribePressed = true; });
+    btn('b-bribe', () => { input.throwPressed = true; });
     btn('b-shield', () => { touchShield = true; }, () => { touchShield = false; });
 }
 function setTouch() {
@@ -124,7 +124,7 @@ export function pollInput() {
 }
 // Basışlar sabit adımda kullanılınca silinir
 export function consumePresses() {
-    input.jumpPressed = input.hammerPressed = input.bribePressed = false;
+    input.jumpPressed = input.hammerPressed = input.throwPressed = false;
 }
 export function clearAll() {
     consumePresses(); input.pausePressed = input.restartPressed = false;

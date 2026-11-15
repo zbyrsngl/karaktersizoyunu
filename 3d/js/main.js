@@ -1,15 +1,16 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=3';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=3';
-import { buildWorld, updateWorld, SPAWNS, ARENA, makeBag } from './world.js?v=3';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera } from './player.js?v=3';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwBribe } from './enemies.js?v=3';
-import { spawnBoss, updateBoss, removeBoss } from './boss.js?v=3';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=3';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=3';
-import { damp, dampAngle, angDiff, clamp, canvasTex } from './util.js?v=3';
-import { groundAt } from './physics.js?v=3';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=4';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=4';
+import { buildWorld, updateWorld, SPAWNS, ARENA, makeBag } from './world.js?v=4';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera } from './player.js?v=4';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwTea } from './enemies.js?v=4';
+import { updateHazards, clearHazards } from './hazards.js?v=4';
+import { spawnBoss, updateBoss, removeBoss } from './boss.js?v=4';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=4';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=4';
+import { damp, dampAngle, angDiff, clamp, canvasTex } from './util.js?v=4';
+import { groundAt } from './physics.js?v=4';
 
 const $ = id => document.getElementById(id);
 const START = new THREE.Vector3(0, 0, 7);
@@ -80,14 +81,17 @@ function updateCamera(dt) {
     cam.target.z = damp(cam.target.z, tz, 14, dt);
     cam.target.y = damp(cam.target.y, ty, 6, dt);
     const cp = Math.cos(cam.pitch);
+    // Bilgisayarda omuz üstü kamera (karakter biraz solda, ortadaki nişangâh boş kalsın)
+    cam.shoulder = damp(cam.shoulder || 0, input.touch ? 0 : 0.75, 6, dt);
+    const sx = Math.cos(cam.yaw) * cam.shoulder, sz = -Math.sin(cam.yaw) * cam.shoulder;
     camera.position.set(
-        cam.target.x + Math.sin(cam.yaw) * cp * cam.dist,
+        cam.target.x + sx + Math.sin(cam.yaw) * cp * cam.dist,
         cam.target.y + Math.sin(cam.pitch) * cam.dist,
-        cam.target.z + Math.cos(cam.yaw) * cp * cam.dist);
+        cam.target.z + sz + Math.cos(cam.yaw) * cp * cam.dist);
     // Zeminin altına inmesin
     const gy = groundAt(G.world.solids, camera.position.x, camera.position.z, camera.position.y + 1);
     if (camera.position.y < gy + 0.4) camera.position.y = gy + 0.4;
-    camera.lookAt(cam.target);
+    camera.lookAt(cam.target.x + sx, cam.target.y, cam.target.z + sz);
     // Sarsıntı (travma karesi kadar)
     const s = shake.trauma * shake.trauma;
     if (s > 0) {
@@ -128,7 +132,42 @@ function breakBrick(b) {
         G.world.items.push({ kind: 'bag', mesh: g, pos: g.position, baseY: g.position.y, taken: false, temp: true });
     }
 }
-G.onBribe = (from, vel) => throwBribe(from, vel);
+G.onThrow = (from, dir) => throwTea(from, dir);
+// Nişan: bilgisayarda ekranın ortasındaki nişangâhtan çıkan ışının ilk çarptığı yer;
+// telefonda karakterin önündeki (±40°, 26 m) en yakın düşman, yoksa düz ileri
+const ray = new THREE.Ray(), box3 = new THREE.Box3(), hitV = new THREE.Vector3(), camDir = new THREE.Vector3();
+G.aimTarget = (p) => {
+    if (input.touch) {
+        let best = null, bd = 26;
+        for (const e of G.enemies) {
+            if (e.dead || e.kind === 'duran' || !e.m.root.visible) continue;
+            const dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z, d = Math.hypot(dx, dz);
+            if (d < bd && Math.abs(angDiff(p.facing, Math.atan2(dx, dz))) < 0.7 && Math.abs(e.pos.y - p.pos.y) < 4) { bd = d; best = e; }
+        }
+        if (best) return best.pos.clone().setY(best.pos.y + 1.1);
+        return new THREE.Vector3(p.pos.x + Math.sin(p.facing) * 15, p.pos.y + 1.4, p.pos.z + Math.cos(p.facing) * 15);
+    }
+    camera.getWorldDirection(camDir);
+    ray.set(camera.position, camDir);
+    const minD = camera.position.distanceTo(p.pos) * 0.8;
+    let best = 80, pt = null;
+    const test = () => {
+        if (ray.intersectBox(box3, hitV)) { const d = hitV.distanceTo(camera.position); if (d > minD && d < best) { best = d; pt = hitV.clone(); } }
+    };
+    for (const e of G.enemies) {
+        if (e.dead || !e.m.root.visible) continue;
+        box3.min.set(e.pos.x - 0.45, e.pos.y, e.pos.z - 0.45); box3.max.set(e.pos.x + 0.45, e.pos.y + 1.95, e.pos.z + 0.45); test();
+    }
+    for (const a of G.world.solids) { if (!a.active || a.type === 'wall') continue; box3.min.copy(a.min); box3.max.copy(a.max); test(); }
+    if (G.boss && !G.boss.dead) { box3.setFromObject(G.boss.m.root); test(); }
+    return pt || camera.position.clone().addScaledVector(camDir, 60);
+};
+// Çay isabet edince nişangâh bir an kızarır
+let crossTimer = null;
+G.onTeaHit = (real) => {
+    const c = $('cross'); c.classList.add(real ? 'hit' : 'tink');
+    clearTimeout(crossTimer); crossTimer = setTimeout(() => c.classList.remove('hit', 'tink'), 140);
+};
 G.onKill = () => {
     updateHud();
     const left = Math.max(0, G.target - G.kills), bar = G.world.barricade;
@@ -195,7 +234,7 @@ function updateHud() {
 
 // --- OYUN AKIŞI ---
 function resetLevel() {
-    clearEnemies(scene); removeBoss(scene); clearFx();
+    clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards();
     const W = G.world;
     W.items = W.items.filter(it => { if (it.temp) { scene.remove(it.mesh); return false; } return true; });
     W.items.forEach(it => { it.taken = false; it.mesh.visible = true; });
@@ -226,7 +265,7 @@ function retry() {
     let at = START.clone();
     if (W.checkpoint.reached) at.set(0, 0, W.checkpoint.z - 1);
     if (G.boss) { at.set(0, 0, ARENA.z0 - 2); G.boss.hp = G.boss.maxHp; G.boss.pos.set(0, 0, -222); G.boss.fireT = 2.5; $('boss-fill').style.width = '100%'; }
-    G.projectiles.forEach(pr => pr.life = 0);
+    G.projectiles.forEach(pr => pr.life = 0); clearHazards();
     resetPlayer(p, at);
     p.collected = Math.min(p.collected, G.fidans);
     cam.yaw = 0; cam.target.copy(at).setY(1.6);
@@ -247,8 +286,8 @@ function hidePanels() { ['menu', 'pause', 'dead', 'won'].forEach(k => $(k).hidde
 function showHint() {
     const h = $('hint');
     h.innerHTML = input.touch || touchDevice
-        ? 'Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ rüşvet'
-        : 'WASD yürü · Fare kamera (tıkla) · Boşluk zıpla<br>F / sol tık balyoz · Shift / sağ tık kalkan · E rüşvet · P duraklat';
+        ? 'Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ çay at (öndekine nişan alır)'
+        : 'WASD yürü · Fare: kamera ve nişan (önce oyuna tıkla) · Boşluk zıpla<br>Sol tık çay at · F balyoz · Shift / sağ tık kalkan · P duraklat';
     h.classList.add('on'); setTimeout(() => h.classList.remove('on'), 7000);
 }
 
@@ -304,6 +343,7 @@ function step(dt) {
     updatePlayer(player, dt, cam.yaw);
     updateEnemies(dt);
     updateBoss(dt);
+    updateHazards(dt);
     if (G.state === 'play') updateLevel(dt);
     updateWorld(G.world, dt, G.time);
     updateFx(dt);
@@ -334,4 +374,4 @@ showPanel('menu');
 requestAnimationFrame(frame);
 // Test: ?test=<senaryo> (3d/js/test.js)
 const T = new URLSearchParams(location.search).get('test');
-if (T) import('./test.js?v=3').then(m => m.runTest(T, { G, startGame, retry, step, STEP, cam, updateCamera, render: () => renderer.render(scene, camera), calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));
+if (T) import('./test.js?v=4').then(m => m.runTest(T, { G, input, camera, startGame, retry, step, STEP, cam, updateCamera, render: () => renderer.render(scene, camera), calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

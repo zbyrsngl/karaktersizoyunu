@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>HIRHIZ 3D</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
 </head>
 <body class="in-menu">
@@ -24,6 +24,7 @@
     </div>
 </div>
 <div id="boss-bar" hidden><div class="boss-name">TOMA</div><div class="boss-track"><div id="boss-fill"></div></div></div>
+<div id="cross"></div>
 <div id="toast"></div>
 <div id="hint"></div>
 <div id="fps" hidden></div>
@@ -33,7 +34,7 @@
 <div id="joy"><div id="joy-knob"></div></div>
 <div id="pad">
     <div class="pb pt" id="b-shield"><b>△</b>KALKAN</div>
-    <div class="pb pl" id="b-bribe"><b>□</b>RÜŞVET</div>
+    <div class="pb pl" id="b-bribe"><b>□</b>ÇAY AT</div>
     <div class="pb pr" id="b-hammer"><b>○</b>BALYOZ</div>
     <div class="pb pd" id="b-jump"><b>✕</b>ZIPLA</div>
 </div>
@@ -48,7 +49,7 @@
         <button id="start" class="big">OYUNU BAŞLAT</button>
         <div class="row"><button class="chip snd"></button><a class="chip" href="../index.html">← 2D OYUN</a></div>
         <p id="menu-best" class="small"></p>
-        <p class="small">Bilgisayar: WASD yürü · fare kamera · Boşluk zıpla · F balyoz · Shift kalkan · E rüşvet<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
+        <p class="small">Bilgisayar: WASD yürü · fare kamera ve nişan · sol tık çay at · F balyoz · Boşluk zıpla · Shift / sağ tık kalkan<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
         <p class="small dim">Deneme sürümü: şimdilik yalnızca 1. bölüm 3D. Öteki bölümler sırayla gelecek.</p>
     </div>
 </div>
@@ -84,6 +85,6 @@
 </div>
 
 <script src="../js/fx_sheets.js?v=42"></script>
-<script type="module" src="js/main.js?v=3"></script>
+<script type="module" src="js/main.js?v=4"></script>
 </body>
 </html>

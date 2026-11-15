@@ -1,7 +1,7 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=3';
+import { box, mat, canvasTex, textSprite } from './util.js?v=4';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -170,7 +170,6 @@ export function buildHero(skin) {
     } else if (skin === 'kirmizi') {   // kırmızı yazlık elbise
         const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.36, 0.78, 8), mat(C.top));
         dress.position.y = 0.2; dress.castShadow = true; torso.add(dress);
-        const bag = box(0.24, 0.3, 0.08, '#f5f5f4', -0.33, 0.12, 0.05); torso.add(bag);   // beyaz bez çanta
     } else torso.add(box(0.5, 0.6, 0.28, C.top, 0, 0.3, 0));
     if (skin === 'carsi') {
         const t = frontText('ÇARŞI', 0.42, 0.14, '#f8fafc'); t.position.set(0, 0.36, 0.145); torso.add(t);
@@ -206,6 +205,7 @@ export function buildHero(skin) {
     }
     const armL = limb(torso, -0.32, 0.56, 0, 0.12, 0.5, 0.13, C.top);
     const armR = limb(torso, 0.32, 0.56, 0, 0.12, 0.5, 0.13, C.top);
+    if (skin === 'kirmizi') armL.add(box(0.26, 0.32, 0.1, '#f5f5f4', 0, -0.66, 0.06));   // beyaz bez çanta (savurur)
     armL.add(box(0.1, 0.1, 0.1, C.skin, 0, -0.53, 0, false));
     armR.add(box(0.1, 0.1, 0.1, C.skin, 0, -0.53, 0, false));
     let lid = null;

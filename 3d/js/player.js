@@ -1,13 +1,13 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=3';
-import { moveBody } from './physics.js?v=3';
-import { input } from './input.js?v=3';
-import { G, diff, toast } from './state.js?v=3';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=3';
-import { playSfx, beep } from './audio.js?v=3';
-import { clamp, damp, dampAngle, angDiff } from './util.js?v=3';
+import { buildHirhiz, walkPose } from './models.js?v=4';
+import { moveBody } from './physics.js?v=4';
+import { input } from './input.js?v=4';
+import { G, diff, toast } from './state.js?v=4';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=4';
+import { playSfx, beep } from './audio.js?v=4';
+import { clamp, damp, dampAngle, angDiff } from './util.js?v=4';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45;
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
@@ -26,7 +26,7 @@ export function createPlayer(scene) {
         pos: m.root.position, vel: new THREE.Vector3(), r: 0.32, h: PLAYER_H,
         facing: Math.PI, grounded: false, coyote: 0, buffer: 0, jumping: false,
         hp: diff().hp, maxHp: diff().hp, invuln: 0, mask: 0, slow: 0,
-        swing: 0, swingHit: false, bribeCd: 0, shield: false,
+        swing: 0, swingHit: false, throwCd: 0, throwT: 0, shield: false,
         squash: 0, phase: 0, dead: false, deadT: 0,
         safe: new THREE.Vector3(), lastGround: null, collected: 0
     };
@@ -43,7 +43,7 @@ export function resetPlayer(p, at) {
     m.body.rotation.set(0, 0, 0); m.body.position.set(0, 0, 0); m.body.scale.set(1, 1, 1);
     [m.legL, m.legR, m.armL, m.armR].forEach(l => l.rotation.set(0, 0, 0));
     m.hammer.rotation.set(-1, 0, 0);
-    p.squash = 0; p.phase = 0; p.swingHit = false; p.bribeCd = 0; p.shield = false;
+    p.squash = 0; p.phase = 0; p.swingHit = false; p.throwCd = 0; p.throwT = 0; p.shield = false;
     p.grounded = false; p.coyote = 0; p.buffer = 0; p.jumping = false;
     p.collected = 0; updateSack(p);
 }
@@ -114,7 +114,8 @@ export function updatePlayer(p, dt, camYaw) {
     }
     if (p.invuln > 0) p.invuln -= dt;
     if (p.slow > 0) p.slow -= dt;
-    if (p.bribeCd > 0) p.bribeCd -= dt;
+    if (p.throwCd > 0) p.throwCd -= dt;
+    if (p.throwT > 0) p.throwT -= dt;
     p.shield = input.shieldHeld && p.swing <= 0;
 
     // Yön
@@ -175,11 +176,15 @@ export function updatePlayer(p, dt, camYaw) {
         p.swing -= dt;
         if (!p.swingHit && el >= SWING_HIT) { p.swingHit = true; G.onHammer && G.onHammer(hammerPoint(p), p); }
     }
-    // Rüşvet
-    if (input.bribePressed && p.bribeCd <= 0 && !p.shield) {
-        p.bribeCd = 0.35;
-        const f = new THREE.Vector3(Math.sin(p.facing), 0, Math.cos(p.facing));
-        G.onBribe && G.onBribe(p.pos.clone().addScaledVector(f, 0.5).setY(p.pos.y + 1.2), f.multiplyScalar(13).setY(3.5).add(new THREE.Vector3(p.vel.x * 0.5, 0, p.vel.z * 0.5)));
+    // Çay paketi: nişangâhın gösterdiği yere (telefonda öndeki en yakın düşmana) atılır
+    if (input.throwPressed && p.throwCd <= 0 && !p.shield && p.swing <= 0) {
+        const aim = G.aimTarget && G.aimTarget(p);
+        if (aim) {
+            p.facing = Math.atan2(aim.x - p.pos.x, aim.z - p.pos.z);
+            const f = p.facing, from = new THREE.Vector3(p.pos.x + Math.sin(f) * 0.4 + Math.cos(f) * 0.3, p.pos.y + 1.5, p.pos.z + Math.cos(f) * 0.4 - Math.sin(f) * 0.3);
+            G.onThrow && G.onThrow(from, aim.clone().sub(from).normalize());
+            p.throwCd = 0.28; p.throwT = 0.2; beep('swing');
+        }
     }
 
     animate(p, dt, amt);
@@ -241,6 +246,7 @@ function animate(p, dt, amt) {
         else if (t < 0.45) { const k = (t - 0.28) / 0.17; aR = -3.3 + 2.2 * k; hR = -0.6 * k; }
         else { const k = (t - 0.45) / 0.55; aR = -1.1 + 0.85 * k; hR = -0.6 - 0.4 * k; }
     }
+    if (p.throwT > 0 && p.swing <= 0) { const k = 1 - p.throwT / 0.2; aR = -2.7 + 1.5 * k; }
     m.armR.rotation.x = aR; m.hammer.rotation.x = hR;
     m.armL.rotation.x = p.shield ? -1.45 : -Math.sin(p.phase) * 0.4 * swingK * (p.grounded ? 1 : 0);
     m.shield.visible = !p.shield; p.big.visible = p.shield;

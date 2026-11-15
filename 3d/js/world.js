@@ -3,7 +3,7 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, çınar fidanları, baret + maske gücü,
 // yarı yolda kontrol noktası bayrağı, sonunda barikat (11 kişi yenilince açılır) ve TOMA meydanı; arkada pankartlı AKM.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB, rand } from './util.js?v=3';
+import { box, mat, canvasTex, fitText, AABB, rand } from './util.js?v=4';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği

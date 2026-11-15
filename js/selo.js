@@ -71,7 +71,7 @@ function drawPrisonBg(time) {
 // --- CANAVAR: SELO ---
 // Replikler: karşılama "Seni başkan yaptırmayacağız!", bağlamadan önce "Bir türkü de benden!", AİHM yağmurundan önce "AİHM kararını uygulayın!",
 // öfkelenince "Bu duvarlar beni durduramaz!", her 3. darbede "Yaşasın halkların kardeşliği!" (Windows Türkçe yapay sesi Tolga, inceltildi)
-BOSS_TYPES.selo = { greet: 'selo_baskan', rageSfx: 'selo_duvar', hitSfx: 'selo_kardes', chantDelay: 2.2, say: "SENİ BAŞKAN YAPTIRMAYACAĞIZ!", w: 120, h: 205, scale: 1, hp: 24, arena: 900, nameKey: "seloName", stomp: 55, labelY: 40,
+BOSS_TYPES.selo = { greet: 'selo_giris', rageSfx: null, chantDelay: 2.2, say: "SENİ BAŞKAN YAPTIRMAYACAĞIZ!", w: 120, h: 205, scale: 1, hp: 24, arena: 900, nameKey: "seloName", stomp: 55, labelY: 40,
                     update: updateSelo, draw: drawSelo };
 
 function updateSelo(b) {
@@ -85,12 +85,7 @@ function updateSelo(b) {
             b.timer = 0; b.attacks++;
             b.next = ['saz', 'aihm', 'speech'][b.attacks % 3];
             b.state = 'crouch'; b.stateT = 30;
-            if (b.next === 'speech') {   // bağırır; şok dalgası cümlenin sonunda ("...YAPTIRMAYACAĞIZ!") gelir
-                const d = playSfx('selo_baskan', { vol: 1, rate: b.rage ? 1.12 : 1 });
-                b.stateT = Math.max(40, Math.round((d || 0.7) * 60));
-            }
-            if (b.next === 'saz') playSfx('selo_turku', { vol: 1 });
-            else if (b.next === 'aihm') playSfx('selo_aihm', { vol: 1 });
+            if (b.next === 'speech') b.stateT = 42;   // bağırır; şok dalgası cümlenin sonunda gelir (SELO'nun tek sesi girişte çalar)
             const [txt, col] = b.next === 'saz' ? ["♪ ♫ ♪", "#e879f9"] : b.next === 'aihm' ? [t("aihmCry"), "#60a5fa"] : ["SENİ BAŞKAN...", "#fde047"];
             createParticle(b.x + b.w / 2, b.y - 60, txt, col, 1.1);
         }
@@ -238,7 +233,7 @@ const CELL_W = 190, CELL_H = 260;
 const cellTalk = c => c.t > 34 && c.t < (c.talkEnd || 110) ? Math.abs(Math.sin(c.t * 0.4)) : 0;
 const JAILS = {
     // Selo gülümseyip bağlama çalar; AİHM "bırakın" der, Recep "tanımıyoruz" der
-    selo: { sign: "TUTUKLU", voice: 'selo_baskan',
+    selo: { sign: "TUTUKLU",
             figure: (ctx, c) => drawSeloFigure(ctx, { walk: 0, strum: c.t > 24, talk: cellTalk(c), wave: false }),
             events: { 70: (c, gy) => createParticle(c.x, gy - CELL_H - 40, t("aihmFree"), "#60a5fa", 2.2),
                       160: () => createParticle(player.x + player.w / 2, player.y - 40, t("noRecog"), "#ef4444", 2.2) },
@@ -388,4 +383,3 @@ const SELO_STORY = {
           e1: 'ФЕТÖ побеждён, Село за решёткой... но запрос об экстрадиции и решение ЕСПЧ всё ещё в пути.' }
 };
 for (const L in SELO_STORY) if (STORY_TEXT[L]) Object.assign(STORY_TEXT[L], SELO_STORY[L]);
-Object.assign(STORY_VOICES, { s9b: 'selo_baskan', s9d: 'selo_kitap' });   // Selo'nun replikleri seslendirildi (Türkçe)

@@ -3,16 +3,17 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=3';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=3';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=3';
-import { playSfx } from './audio.js?v=3';
-import { groundAt } from './physics.js?v=3';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=3';
-import { ARENA } from './world.js?v=3';
+import { G, diff, addScore, toast } from './state.js?v=4';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=4';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=4';
+import { playSfx } from './audio.js?v=4';
+import { groundAt } from './physics.js?v=4';
+import { makeCloud } from './hazards.js?v=4';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=4';
+import { ARENA } from './world.js?v=4';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
-const WATER_G = 19, GAS_G = 19, FIRE = 2.0, CLOUD_T = 3, CLOUD_R = 2.6;
+const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
 
 function sideTex(flip) {
     return canvasTex(512, 256, (g, W, H) => {
@@ -68,7 +69,7 @@ export function spawnBoss(scene, pos) {
     const hp = Math.max(3, Math.round(5 * diff().boss));
     const b = {
         m, pos: m.root.position, yaw: 0, speed: 0, hp, maxHp: hp, dead: false, deadT: 0,
-        fireT: 2.0, attacks: 0, flash: 0, stun: 0, clouds: [], aimYaw: 0, aimPitch: 0.4,
+        fireT: 2.0, attacks: 0, flash: 0, stun: 0, aimYaw: 0, aimPitch: 0.4,
         hitTest(pt) { const l = toLocal(this, pt); return Math.abs(l.x) < HX && Math.abs(l.z) < HZ && pt.y < ROOF + 0.5 && pt.y > 0; }
     };
     m.root.rotation.y = b.yaw;
@@ -97,7 +98,6 @@ function setBossBar(b) {
 export function removeBoss(scene) {
     const b = G.boss; if (!b) return;
     scene.remove(b.m.root);
-    b.clouds.forEach(c => scene.remove(c.g));
     G.boss = null;
     document.getElementById('boss-bar').hidden = true;
 }
@@ -105,7 +105,6 @@ export function removeBoss(scene) {
 export function updateBoss(dt) {
     const b = G.boss; if (!b) return;
     const p = G.player, m = b.m, S = diff();
-    updateClouds(b, dt);
     // Lambalar yanıp söner
     const blink = Math.floor(G.time * 5) % 2;
     m.lampB.material = mat(blink ? '#60a5fa' : '#1e3a8a'); m.lampR.material = mat(blink ? '#7f1d1d' : '#ef4444');
@@ -230,7 +229,7 @@ function updateWater(p, dt) {
 }
 function splash(pos) { burst(pos, { n: 10, color: ['#93c5fd', '#dbeafe', '#3b82f6'], speed: 3, up: 3.5, size: 0.12, life: 0.5 }); }
 
-// --- GAZ KAPSÜLÜ VE BULUT ---
+// --- GAZ KAPSÜLÜ (bulut hazards.js'te) ---
 const GAS_GEO = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
 function fireGas(b, from, vel) {
     const m = new THREE.Mesh(GAS_GEO, mat('#3f6212')); m.position.set(...from);
@@ -247,35 +246,6 @@ function updateGas(b, p, dt) {
         blockFx(p.pos.clone()); p.life = 0; return;
     }
     const g = groundAt(G.world.solids, p.pos.x, p.pos.z, p.pos.y + 0.8);
-    if (p.pos.y <= g + 0.1) { makeCloud(b, new THREE.Vector3(p.pos.x, g, p.pos.z)); p.life = 0; }
+    if (p.pos.y <= g + 0.1) { makeCloud(new THREE.Vector3(p.pos.x, g, p.pos.z)); p.life = 0; }
     else if (p.pos.y < -4) p.life = 0;
-}
-const CLOUD_MAT = new THREE.MeshLambertMaterial({ color: '#e5e7eb', transparent: true, opacity: 0.55, depthWrite: false });
-const CLOUD_GEO = new THREE.IcosahedronGeometry(1, 1);
-function makeCloud(b, pos) {
-    const g = new THREE.Group(); g.position.copy(pos);
-    for (let i = 0; i < 7; i++) {
-        const s = new THREE.Mesh(CLOUD_GEO, CLOUD_MAT);
-        const a = i / 7 * Math.PI * 2;
-        s.position.set(Math.cos(a) * 1.3 * (i ? 1 : 0), 0.8 + (i % 3) * 0.3, Math.sin(a) * 1.3 * (i ? 1 : 0));
-        s.scale.setScalar(rand(1.1, 1.5)); g.add(s);
-    }
-    G.scene.add(g);
-    b.clouds.push({ g, pos: g.position, t: CLOUD_T });
-    playSfx('hit', { rate: 0.5, vol: 0.4 });
-}
-function updateClouds(b, dt) {
-    const pl = G.player;
-    for (const c of b.clouds) {
-        c.t -= dt;
-        const k = Math.min(1, c.t / 0.6, (CLOUD_T - c.t) / 0.3 + 0.2);
-        c.g.scale.setScalar(Math.max(0.01, k)); c.g.rotation.y += dt * 0.6;
-        const dx = pl.pos.x - c.pos.x, dz = pl.pos.z - c.pos.z;
-        if (c.t > 0 && !pl.dead && Math.hypot(dx, dz) < CLOUD_R && pl.pos.y < c.pos.y + 2.5) {
-            if (pl.mask > 0) continue;
-            if (!(pl.slow > 0)) floatText('BİBER GAZI!', pl.pos.clone().setY(pl.pos.y + 2.4), '#e5e7eb', 0.4, 0.9);
-            pl.slow = 0.15;
-        }
-    }
-    b.clouds = b.clouds.filter(c => { if (c.t <= 0) { G.scene.remove(c.g); return false; } return true; });
 }

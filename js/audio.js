@@ -69,10 +69,7 @@ const SFX_FILES = {
     sonpeygamber: ['sfx/sonpeygamber.mp3'],
     lutuf: ['sfx/lutuf.mp3'],
     hashasi: ['sfx/hashasi.mp3'],                           // 6. bölüm sonu: HIRHIZ "Bunlar haşhaşi! Bunlar sülük!" (Tolga)
-    selo_aihm: ['sfx/selo_aihm.mp3'], selo_turku: ['sfx/selo_turku.mp3'],   // 9. bölüm SELO'nun yeni replikleri (Tolga, inceltildi)
-    selo_duvar: ['sfx/selo_duvar.mp3'], selo_kardes: ['sfx/selo_kardes.mp3'],                               // 5. bölüm sonu: HIRHIZ "15 Temmuz Allah'ın bir lütfü!" (Tolga, kalınlaştırılıp yankılandı)                 // 4. bölüm sonu: kutlamaya gelen adam                          // 3. bölüm: sayaç sıfırlama sesi (kodla üretildi: tıkırtı + zil)
-    selo_baskan: ['sfx/selo_baskan.mp3'],                   // 9. bölüm SELO: "Seni başkan yaptırmayacağız!" (Windows Türkçe yapay sesi Tolga, inceltildi)
-    selo_kitap: ['sfx/selo_kitap.mp3'],
+    selo_giris: ['sfx/selo_giris.mp3'],                     // 9. bölüm SELO'nun tek sesi: canavar gelince (kullanıcının verdiği ses)
     saygili_namus: ['sfx/saygili_namus.mp3'],               // 2. bölüm SAYGILI: "Biz bu ülkenin namusunu kurtardık!" (Tolga, kalınlaştırılıp yankılandı)
     ekrem_guzel: ['sfx/ekrem_guzel.mp3'],                   // 10. bölüm EKREM: "Her şey çok güzel olacak!"
     ekrem_aday: ['sfx/ekrem_aday.mp3'],                     // hikâyede: "15 milyon oyla aday seçildim..."                     // hikâyede: "Burada da kitap yazarım..."                           // 2. bölüm canavarı ölünce ara sahne
