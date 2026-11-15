@@ -15,7 +15,10 @@ const FILES = {
     savci: ['../sfx/savci.mp3'],              // 4. bölüm sonu: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!"
     peygamber: ['../sfx/sonpeygamber.mp3'],   // 4. bölüm sonu: kutlamaya gelen adam
     lutuf: ['../sfx/lutuf.mp3'],              // 5. bölüm sonu: HIRHIZ "15 Temmuz Allah'ın bir lütfü!"
-    granny: ['../sfx/gotununkili.mp3']        // 1. bölüm sonu: koşarak gelen teyzelerin tezahüratı
+    granny: ['../sfx/gotununkili.mp3'],       // 1. bölüm sonu: koşarak gelen teyzelerin tezahüratı
+    hashasi: ['../sfx/hashasi.mp3'],          // 6. bölüm sonu: HIRHIZ "Bunlar haşhaşi! Bunlar sülük!"
+    selo: ['../sfx/selo_giris.mp3'],          // 9. bölüm SELO gelince (kullanıcının verdiği sesin 25-35 sn'si)
+    ekrem: ['../sfx/ekrem_guzel.mp3']         // 10. bölüm EKREM: "Her şey çok güzel olacak!"
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 

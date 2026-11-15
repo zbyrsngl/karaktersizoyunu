@@ -87,7 +87,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=11').then(() => {});
+            import('./player.js?v=12').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -200,7 +200,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=11').then(async o => {
+            import('./outro.js?v=12').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));
@@ -243,6 +243,74 @@ export function runTest(name, H) {
                 for (let i = 0; i < 20; i++) { step(STEP); p.invuln = 1; }
             }
             say(`${b && b.name} atışla öldü=${b && b.dead} atış=${n}`);
+        }
+        if (name === 'flight') {   // 6. bölüm: jetleri vur → tanker → düşür → haşhaşi sahnesi → karne
+            const M = G.level.mode; let t = 0, shots = 0, sawTanker = false;
+            const Q = new URLSearchParams(location.search), shotAt = +(Q.get('at') || 0);
+            while (G.state === 'play' && t < 120) {
+                p.invuln = 1; p.hp = 9;
+                if (Math.floor(t * 60) % 9 === 0) { H.input.throwPressed = true; shots++; }
+                step(STEP); updateCamera(STEP); t += STEP;
+                if (G.boss) sawTanker = true;
+                if (shotAt && t > shotAt) break;
+            }
+            if (shotAt) { render(); say(`uçuş t=${t.toFixed(1)} kills=${G.kills} tanker=${sawTanker} durum=${G.state}`); }
+            else say(`kills=${G.kills} topla=${G.collect} tanker=${sawTanker} durum=${G.state} süre=${t.toFixed(1)} atış=${shots}`);
+        }
+        if (name === 'flighthit') {   // kalkansız füze can götürür, kalkanla durur
+            let t = 0; const hp0 = p.hp;
+            while (t < 25 && p.hp === hp0) { step(STEP); updateCamera(STEP); t += STEP; }
+            const hit = hp0 - p.hp; p.invuln = 0; key('ShiftLeft', true); const hp1 = p.hp; t = 0;
+            while (t < 15) { step(STEP); updateCamera(STEP); t += STEP; p.invuln = 0; }
+            key('ShiftLeft', false); render();
+            say(`füze can götürdü=${hit} kalkanla kayıp=${hp1 - p.hp} durum=${G.state}`);
+        }
+        if (name === 'puzzle') {   // yanlış tahmin, sonra doğru şifre → karne
+            const M = G.level.mode, code = M.code();
+            const wrong = '0123'.split('').filter(c => true).join('') === code ? '4567' : '0123';
+            [...wrong].forEach(c => M.press(c)); M.press('✔');
+            [...code].forEach(c => M.press(c)); M.press('✔');
+            run(0.3); const pre = G.state;
+            setTimeout(() => { render(); say(`önce=${pre} sonra=${G.state} yıldız=${G.level.stars()} ${G.level.wonDetail()}`); }, 2600);
+        }
+        if (name === 'bossfight') {   // 8-10: kapıyı aç, canavarın saldırılarını izle, sonra yen ve bölüm sonu sahnesini oynat
+            const Q = new URLSearchParams(location.search), watch = +(Q.get('watch') || 8), shotAt = +(Q.get('at') || 0), shotWatch = Q.get('wshot');
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -190); p.hp = 99; run(0.5);
+            const b = G.boss, seen = new Set(), types = new Set(); let t = 0, maxY = 0, hits0 = G.livesLost;
+            if (Q.get('pz')) p.pos.set(+(Q.get('px') || 0), 0, +Q.get('pz'));
+            if (Q.get('shelf')) { const [sx, sz] = Q.get('shelf').split(',').map(Number); p.pos.set(sx, 1.81, sz); }
+            while (t < watch) {
+                step(STEP); updateCamera(STEP); t += STEP; p.hp = 99;
+                seen.add(b.st); G.projectiles.forEach(q => types.add(q.type)); maxY = Math.max(maxY, b.pos.y);
+                if (shotWatch && t > +shotWatch) break;
+            }
+            const hits = G.livesLost - hits0;
+            if (shotWatch) { cam.yaw = Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z) + (+Q.get('yo') || 0.9); cam.pitch = +(Q.get('pitch') || 0.45); for (let i = 0; i < 40; i++) updateCamera(STEP); render(); say(`${b.name} st=${b.st} hp=${b.hp} b=${b.pos.x.toFixed(1)},${b.pos.y.toFixed(1)},${b.pos.z.toFixed(1)} p=${p.pos.x.toFixed(1)},${p.pos.y.toFixed(1)},${p.pos.z.toFixed(1)} maxY=${maxY.toFixed(1)}`); }
+            else {
+                let n = 0, rerun = false;
+                while (!b.dead && n < 400) { b.hurtT = 0; b.guard = 0; if (b.st === 'talk') b.t = 0; G.onHammer(b.pos.clone().setY(b.pos.y + 1.2), p); if (b.rerun) rerun = true; n++; step(STEP); }
+                t = 0; const ost = new Set();
+                while (G.state !== 'won' && t < 25) { step(STEP); updateCamera(STEP); t += STEP; p.invuln = 1; p.hp = 99; if (shotAt && G.outro && G.outro.t > shotAt) break; }
+                if (shotAt) { cam.yaw = Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z) + 0.6; cam.pitch = 0.3; for (let i = 0; i < 40; i++) updateCamera(STEP); }
+                render();
+                say(`${b.name} hal=${[...seen].join('/')} mermi=${[...types].join('/')} yükseklik=${maxY.toFixed(1)} can kaybı=${hits} vuruş=${n} tekrar=${rerun} durum=${G.state} sahne=${t.toFixed(1)}s`);
+            }
+        }
+        if (name === 'moderetry') {   // uçuşta düş, tekrar dene; EKREM seçim tekrarındayken öl, tekrar dene
+            let t = 0;
+            if (G.level.mode) {
+                p.hp = 1; while (!p.dead && t < 40) { step(STEP); updateCamera(STEP); t += STEP; }
+                const died = p.dead; run(1.6); const st = G.state; H.retry(); run(1);
+                say(`öldü=${died} panel=${st} sonra=${G.state} can=${p.hp} ölü=${p.dead}`);
+            } else {
+                G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+                run(1.8); p.pos.set(0, 0, -190); run(0.5);
+                const b = G.boss; while (!b.rerun) { b.hurtT = 0; b.guard = 0; if (b.st === 'talk') b.t = 0; G.onHammer(b.pos.clone().setY(1.2), p); step(STEP); }
+                p.hp = 1; p.invuln = 0; b.guard = 0; while (!p.dead && t < 60) { step(STEP); t += STEP; }
+                run(1.6); H.retry(); run(0.5);
+                say(`öldü=${p.dead} sonra=${G.state} canavar=${G.boss && G.boss.name} can=${G.boss && G.boss.hp}/${G.boss && G.boss.maxHp} tekrar=${G.boss && G.boss.rerun}`);
+            }
         }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');

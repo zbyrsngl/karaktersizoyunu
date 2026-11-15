@@ -4,11 +4,12 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G } from './state.js?v=11';
-import { limb, walkPose, sharpen } from './models.js?v=11';
-import { playSfx } from './audio.js?v=11';
-import { box, mat, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=11';
-import { ARENA } from './world.js?v=11';
+import { G, toast } from './state.js?v=12';
+import { burst } from './fx.js?v=12';
+import { limb, walkPose, sharpen } from './models.js?v=12';
+import { playSfx } from './audio.js?v=12';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=12';
+import { ARENA } from './world.js?v=12';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
 const HEADS = {};
@@ -243,4 +244,72 @@ export function cengizOutro(scene) {
 export function peygamberOutro(scene) {
     return walkerOutro(scene, { build: buildPeygamber, sfx: 'peygamber', text: 'Eğer son peygamber Hz. Muhammet olmasaydı...',
                                 pre: { sfx: 'savci', text: 'Bir savcı 2 polisle hepinizi bitiririm!' } });
+}
+
+// --- 8. BÖLÜM SONU: FETÖ ölür ve mezara girer ---
+// Devrilmiş FETÖ'nün altında mezar açılır (yanında kazılan toprak yığını), içine iner, toprakla örtülür (karlı tümsek),
+// başında mezar taşı yerden yükselir: "FETÖ 1941 - 2024"; üstte "FETÖ öldü ve mezara girdi!"
+const GRAVE = { open: 0.4, sink: 1.4, fill: 2.4, stone: 3.3, end: 6.2 };
+const ease = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+export function graveOutro(scene) {
+    const b = G.boss, m = b && b.m;
+    const o = { t: 0, objs: [] };
+    if (b) b.graving = true;   // ölü FETÖ'nün fiziği dursun (mezara inerken zeminden itilmesin)
+    if (!m) { o.update = () => true; o.remove = () => {}; return o; }
+    // Raf altında kalmasın: açık bir yere kayar
+    const solids = G.world.solids, from = b.pos.clone();
+    let x = from.x, z = from.z;
+    const blocked = (x, z) => solids.some(a => a.active && a.type !== 'ground' && a.type !== 'wall' && x + 1 > a.min.x && x - 1 < a.max.x && z + 1.6 > a.min.z && z - 1.6 < a.max.z);
+    for (let k = 0; k < 30 && blocked(x, z); k++) x += x > 0 ? -1 : 1;
+    x = clamp(x, -ARENA.hw + 2, ARENA.hw - 2); z = clamp(z, ARENA.z1 + 2.5, ARENA.z0 - 2.5);
+    const yaw = m.root.rotation.y;
+    // Gövde yatınca baş yerel -Z'de: mezarın ortası gövdenin ortası
+    const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const center = new THREE.Vector3(x, 0, z).addScaledVector(fwd, 0.95);
+    const add = (obj) => { scene.add(obj); o.objs.push(obj); return obj; };
+    const hole = add(new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.6), new THREE.MeshBasicMaterial({ color: '#1c1917' })));
+    hole.rotation.set(-Math.PI / 2, 0, yaw); hole.position.copy(center).setY(0.03); hole.scale.set(0.01, 0.01, 1);
+    const pile = add(new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#78350f')));
+    const side = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    pile.position.copy(center).addScaledVector(side, 1.6); pile.scale.setScalar(0.01);
+    const mound = add(new THREE.Group()); mound.position.copy(center); mound.rotation.y = yaw; mound.scale.set(1, 0.01, 1);
+    const dirt = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat('#6b4423')); dirt.scale.set(0.75, 0.45, 1.45); mound.add(dirt);
+    const snow = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 4), mat('#f8fafc')); snow.scale.set(0.62, 0.42, 1.25); snow.position.y = 0.04; mound.add(snow);
+    // Mezar taşı (başın ucunda), yazı kameraya bakan yüzde
+    const stone = add(new THREE.Group());
+    stone.position.copy(center).addScaledVector(fwd, 1.75); stone.rotation.y = Math.atan2(G.camera.position.x - stone.position.x, G.camera.position.z - stone.position.z);
+    const tex = canvasTex(128, 192, (g, W, H) => {
+        g.fillStyle = '#9ca3af'; g.fillRect(0, 0, W, H);
+        g.fillStyle = '#1f2937'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.font = 'bold 38px Georgia, serif'; g.fillText('FETÖ', W / 2, 70);
+        g.font = 'bold 20px Georgia, serif'; g.fillText('1941 - 2024', W / 2, 112);
+        g.fillRect(34, 136, 60, 3);
+    });
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.3, 0.22), [mat('#9ca3af'), mat('#9ca3af'), mat('#9ca3af'), mat('#9ca3af'), new THREE.MeshLambertMaterial({ map: tex }), mat('#9ca3af')]);
+    slab.position.y = 0.65; slab.castShadow = true; stone.add(slab);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.475, 0.475, 0.22, 16, 1, false, 0, Math.PI), mat('#9ca3af')); top.rotation.set(Math.PI / 2, 0, Math.PI / 2); top.position.y = 1.3; stone.add(top);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.43, 0.26, 16, 1, false, 0, Math.PI), mat('#f8fafc')); cap.rotation.set(Math.PI / 2, 0, Math.PI / 2); cap.position.y = 1.36; cap.scale.set(1, 1, 0.4); stone.add(cap);
+    stone.position.y = -1.7;
+    o.update = (dt) => {
+        o.t += dt; const t = o.t;
+        // açık yere kayar, yere iner
+        const k0 = ease(t / 0.4);
+        b.pos.x = from.x + (x - from.x) * k0; b.pos.z = from.z + (z - from.z) * k0;
+        const openK = ease((t - GRAVE.open) / 0.6), sinkK = ease((t - GRAVE.sink) / 1.0), fillK = ease((t - GRAVE.fill) / 0.9), stoneK = ease((t - GRAVE.stone) / 0.9);
+        if (t < GRAVE.sink) b.pos.y = Math.max(0, from.y * (1 - k0));
+        hole.scale.set(Math.max(0.01, openK * (1 - fillK)), Math.max(0.01, openK * (1 - fillK)), 1);
+        hole.visible = fillK < 1;
+        pile.scale.set(Math.max(0.01, openK * (1 - fillK)), Math.max(0.01, openK * (1 - fillK) * 0.9), Math.max(0.01, openK * (1 - fillK)));
+        if (t > GRAVE.sink) b.pos.y = -2.2 * sinkK;
+        m.root.visible = sinkK < 0.98;
+        mound.scale.set(1, Math.max(0.01, fillK), 1);
+        stone.position.y = -1.7 * (1 - stoneK);
+        if (t > GRAVE.open && t < GRAVE.sink && Math.random() < 0.3) burst(center.clone().setY(0.2), { n: 2, color: ['#78350f', '#57534e'], speed: 2, up: 4, size: 0.12, life: 0.6 });
+        if (t > GRAVE.fill && t < GRAVE.stone && Math.random() < 0.6) burst(center.clone().setY(0.6), { n: 3, color: ['#78350f', '#6b4423', '#f8fafc'], speed: 2, up: 3, size: 0.14, life: 0.6 });
+        if (!o.e1 && t > GRAVE.fill) { o.e1 = true; playSfx('hit', { rate: 0.35, vol: 0.8 }); }
+        if (!o.e2 && t > GRAVE.stone + 0.6) { o.e2 = true; playSfx('hit', { rate: 0.6, vol: 0.8 }); toast('FETÖ öldü ve mezara girdi!', 3200, '#fde047'); }
+        return t > GRAVE.end;
+    };
+    o.remove = () => o.objs.forEach(obj => scene.remove(obj));
+    return o;
 }

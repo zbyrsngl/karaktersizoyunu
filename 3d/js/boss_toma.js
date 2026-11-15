@@ -3,15 +3,15 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=11';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=11';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=11';
-import { playSfx } from './audio.js?v=11';
-import { groundAt } from './physics.js?v=11';
-import { makeCloud } from './hazards.js?v=11';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=11';
-import { ARENA } from './world.js?v=11';
-import { showBossBar, setBossBar } from './boss_core.js?v=11';
+import { G, diff, addScore, toast } from './state.js?v=12';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=12';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=12';
+import { playSfx } from './audio.js?v=12';
+import { groundAt } from './physics.js?v=12';
+import { makeCloud } from './hazards.js?v=12';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=12';
+import { ARENA } from './world.js?v=12';
+import { showBossBar, setBossBar } from './boss_core.js?v=12';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;

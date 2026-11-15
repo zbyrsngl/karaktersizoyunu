@@ -3,7 +3,7 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=11';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=12';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği
@@ -73,6 +73,16 @@ function textures() {
     TEX.dirt = canvasTex(32, 32, (g) => {
         g.fillStyle = '#6b4f35'; g.fillRect(0, 0, 32, 32);
         for (let i = 0; i < 60; i++) { g.fillStyle = i % 2 ? '#5a4029' : '#7a5c40'; g.fillRect(Math.random() * 32 | 0, Math.random() * 32 | 0, 2, 2); }
+    }, { repeat: [1, 1], pixel: true });
+    TEX.snow = canvasTex(64, 64, (g) => {   // kar (8. bölüm)
+        g.fillStyle = '#eef2f7'; g.fillRect(0, 0, 64, 64);
+        for (let i = 0; i < 200; i++) { g.fillStyle = ['#e2e8f0', '#f8fafc', '#dbe3ee'][i % 3]; g.fillRect(Math.random() * 64 | 0, Math.random() * 64 | 0, 2, 2); }
+    }, { repeat: [1, 1], pixel: true });
+    TEX.slabs = canvasTex(64, 64, (g) => {   // cezaevi avlusu / meydan beton plakaları (9-10. bölüm)
+        g.fillStyle = '#8f8a84'; g.fillRect(0, 0, 64, 64);
+        g.fillStyle = '#a19c95'; g.fillRect(1, 1, 30, 30); g.fillRect(33, 33, 30, 30);
+        g.fillStyle = '#9a958e'; g.fillRect(33, 1, 30, 30); g.fillRect(1, 33, 30, 30);
+        for (let i = 0; i < 80; i++) { g.fillStyle = i % 2 ? '#857f78' : '#aaa59e'; g.fillRect(Math.random() * 64 | 0, Math.random() * 64 | 0, 1, 1); }
     }, { repeat: [1, 1], pixel: true });
     TEX.gold = canvasTex(32, 32, (g) => {
         g.fillStyle = '#ca8a04'; g.fillRect(0, 0, 32, 32); g.fillStyle = '#facc15'; g.fillRect(2, 2, 28, 28);

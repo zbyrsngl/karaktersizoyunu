@@ -6,10 +6,10 @@
 //   TANKIN ÜSTÜNDEKİ NİŞANCI: tankın kulesinde diz çöker, lazerle izler
 // Yenilen asker silahını bırakır, elleri arkadan kelepçelenir ve götürülür: "TUTUKLANDI!"
 import * as THREE from 'three';
-import { limb } from './models.js?v=11';
-import { box, mat, canvasTex } from './util.js?v=11';
-import { TYPES } from './enemies.js?v=11';
-import { POLICE_AI } from './police.js?v=11';
+import { limb } from './models.js?v=12';
+import { box, mat, canvasTex } from './util.js?v=12';
+import { TYPES } from './enemies.js?v=12';
+import { POLICE_AI } from './police.js?v=12';
 
 const OLIVE = '#4d5b2a', OLIVE_D = '#3a4520', SKIN = '#e8b48f';
 let camoTex = null, flagTex = null;

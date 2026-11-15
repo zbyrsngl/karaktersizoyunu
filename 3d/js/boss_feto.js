@@ -5,18 +5,19 @@
 //   BASTON (her üçüncü): bastonu havaya kaldırır ("HOOOP!"), yere vurur → yerde şok dalgası (üstünden zıpla)
 // Canı yarıya inince "YA ALLAH!" diye öfkelenir (sfx/feto2_greet.mp3), hızlanır.
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
+// 8. bölüm FETÖ: SON (opts.son): "YA ALLAH!" diye gelir, daha hızlı kovalar, oyuncu rafa çıkınca zıplayıp peşinden gelir (moveBody fiziği).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=11';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=11';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=11';
-import { playSfx } from './audio.js?v=11';
-import { makeRing } from './hazards.js?v=11';
-import { limb, walkPose } from './models.js?v=11';
-import { groundAt } from './physics.js?v=11';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=11';
-import { ARENA } from './world.js?v=11';
-import { hitsPlayer, killProj } from './enemies.js?v=11';
-import { showBossBar, setBossBar } from './boss_core.js?v=11';
+import { G, diff, addScore, toast } from './state.js?v=12';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=12';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=12';
+import { playSfx } from './audio.js?v=12';
+import { makeRing } from './hazards.js?v=12';
+import { limb, walkPose } from './models.js?v=12';
+import { groundAt, moveBody } from './physics.js?v=12';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=12';
+import { ARENA } from './world.js?v=12';
+import { hitsPlayer, killProj } from './enemies.js?v=12';
+import { showBossBar, setBossBar } from './boss_core.js?v=12';
 
 const TOP = 1.9, SKIN = '#e8c4a0';
 
@@ -74,20 +75,29 @@ function buildFeto() {
     return { root, body, legL, legR, armL, armR, torso, head, cane, cash, brows, mouth };
 }
 
-export function spawnFeto(scene, pos) {
+export function spawnFeto(scene, pos, opts = {}) {
     const m = buildFeto();
     m.root.position.copy(pos); scene.add(m.root);
-    const hp = Math.max(10, Math.round(20 * diff().boss));
+    const son = !!opts.son;
+    const hp = Math.max(10, Math.round((son ? 24 : 20) * diff().boss));
     const b = {
-        m, root: m.root, pos: m.root.position, name: 'FETÖ', hp, maxHp: hp, dead: false, deadT: 0,
+        m, root: m.root, pos: m.root.position, name: son ? 'FETÖ: SON' : 'FETÖ', hp, maxHp: hp, dead: false, deadT: 0, son, home: pos.clone(),
+        vel: new THREE.Vector3(), grounded: true, jumpCd: 0,
         facing: 0, st: 'talk', t: 0, timer: 1.2, attacks: 0, phase: 0, hurtT: 0, rage: false, bubble: null,
         update: dt => update(b, dt),
         hitTest: pt => Math.abs(pt.x - b.pos.x) < 0.55 && Math.abs(pt.z - b.pos.z) < 0.55 && pt.y > b.pos.y && pt.y < b.pos.y + TOP + 0.2,
         onHammer: point => damage(b, 2, point, 'hammer'),
         onAmmo: p => damage(b, 1, p.pos, 'ammo'),
         onRemove: () => clearBubble(b),
-        reset: () => { b.hp = b.maxHp; b.pos.set(0, 0, -218); b.st = 'walk'; b.timer = 1.5; b.rage = false; setBossBar(b); }
+        reset: () => { b.hp = b.maxHp; b.pos.copy(b.home); b.vel.set(0, 0, 0); b.st = 'walk'; b.timer = 1.5; b.rage = false; setBossBar(b); }
     };
+    if (son) {   // 8. bölüm: FETÖ "YA ALLAH!" diye bağırarak gelir
+        b.t = Math.min(2.5, (playSfx('yaallah', { vol: 1 }) || 1.5) + 0.4);
+        floatText('YA ALLAH!', b.pos.clone().setY(TOP + 1), '#ef4444', 0.8, 2);
+        toast('BÖLÜM SONU CANAVARI: FETÖ: SON!', 2600, '#fca5a5');
+        G.boss = b; showBossBar(b);
+        return b;
+    }
     // Karşılaşma: HIRHIZ konuşur (balon başında), FETÖ bekler
     const dur = playSfx('hasret', { vol: 1 }) || 2.5;
     b.t = Math.min(4, dur + 0.3);
@@ -108,6 +118,7 @@ function update(b, dt) {
     if (b.dead) {
         b.deadT += dt;
         m.body.rotation.x = -Math.min(Math.PI / 2, b.deadT * 3);
+        if (b.son && !b.graving) { b.vel.set(0, Math.max(b.vel.y - 30 * dt, -22), 0); const r = moveBody({ pos: b.pos, vel: b.vel, r: 0.4, h: 0.5 }, dt, G.world.solids); if (b.pos.y < -6) b.pos.y = 0; }
         if (b.deadT > 3 && !b.reported) { b.reported = true; G.onBossDefeated && G.onBossDefeated(); }
         return;
     }
@@ -115,19 +126,21 @@ function update(b, dt) {
     b.facing = dampAngle(b.facing, toP, 4, dt);
     b.t -= dt;
     const sp = (b.rage ? 1.3 : 1) * S.speed;
+    if (b.son) chase(b, dt, d, toP, sp);
     if (b.st === 'talk') {
         m.armL.rotation.x = -0.5 + Math.sin(G.time * 3) * 0.2;
         if (b.t <= 0) { clearBubble(b); pose(b); b.st = 'walk'; }
     } else if (b.st === 'walk') {
         m.armR.rotation.x = -0.45;   // eli bastonun sapında
-        if (d > 2.6) {
+        if (b.son) { if (b.moving) { b.phase += dt * 7; walkPose(m, b.phase, 0.7); } else walkPose(m, b.phase, 0); }
+        else if (d > 2.6) {
             b.pos.x = clamp(b.pos.x + Math.sin(toP) * 0.9 * sp * dt, -ARENA.hw + 1, ARENA.hw - 1);
             b.pos.z = clamp(b.pos.z + Math.cos(toP) * 0.9 * sp * dt, ARENA.z1 + 1, ARENA.z0 - 1);
             b.phase += dt * 4.5; walkPose(m, b.phase, 0.5);
         } else walkPose(m, b.phase, 0);
         b.timer -= dt;
         if (!p.dead && d < 30 && b.timer <= 0) {
-            b.attacks++; b.next = b.attacks % 3 === 0 ? 'slam' : 'volley';
+            b.attacks++; b.next = b.attacks % 3 === 0 && b.grounded ? 'slam' : 'volley';
             b.st = 'crouch'; b.t = b.next === 'slam' ? 0.57 : 0.5;
             floatText(b.next === 'slam' ? 'HOOOP!' : 'AL!', b.pos.clone().setY(TOP + 0.5), '#fde047', 0.5, 0.9);
         }
@@ -160,6 +173,27 @@ function update(b, dt) {
         const head = b.pos.y + TOP;
         if (p.vel.y < 0 && p.pos.y > head - 0.5 && p.pos.y < head + 0.5) { bouncePlayer(12); damage(b, 2, b.pos.clone().setY(head), 'stomp'); }
         else if (p.pos.y < head - 0.5 && b.st !== 'talk') hurtPlayer(b.pos, { knock: 7 });
+    }
+}
+
+// FETÖ: SON kovalar: yürür (rafların kenarına çarpar), oyuncu yukarıdaysa ya da önü kapalıysa zıplar; raftan aşağı yürüyüp iner
+const FETO_BODY = { r: 0.4, h: 1.9 };
+function chase(b, dt, d, toP, sp) {
+    const p = G.player;
+    const walking = b.st === 'walk' && b.t <= 0 && d > 2.0;
+    const v = walking ? 1.75 * sp * (b.grounded ? 1 : 2.4) : 0;
+    b.vel.x = Math.sin(toP) * v; b.vel.z = Math.cos(toP) * v;
+    b.vel.y = Math.max(b.vel.y - 30 * dt, -22);
+    const res = moveBody({ pos: b.pos, vel: b.vel, r: FETO_BODY.r, h: FETO_BODY.h }, dt, G.world.solids);
+    b.grounded = res.grounded; b.moving = v > 0;
+    b.jumpCd -= dt;
+    if (b.pos.y < -6) { b.pos.copy(b.home); b.vel.set(0, 0, 0); }
+    if (b.grounded && b.st === 'walk' && !p.dead && b.jumpCd <= 0) {
+        const above = p.pos.y > b.pos.y + 1 && d < 6;
+        if (above || (res.wallHit && walking)) {
+            b.vel.y = 13.8; b.grounded = false; b.jumpCd = 0.9;
+            floatText('HOP!', b.pos.clone().setY(b.pos.y + TOP + 0.5), '#fde047', 0.45, 0.7);
+        }
     }
 }
 
@@ -237,6 +271,6 @@ function defeat(b) {
     spawnFx('confetti', b.pos.clone().setY(3.2).add(new THREE.Vector3(2, 0, 0)), 2, 0.6);
     burst(b.pos.clone().setY(1.3), { n: 30, color: ['#e30a17', '#ffffff', '#a3e635', '#3b3f46'], speed: 7, up: 8, size: 0.2, life: 1.2 });
     playSfx('boom', { vol: 0.9 }); addTrauma(0.9);
-    floatText('HASRET BİTTİ!', b.pos.clone().setY(3.8), '#fde047', 0.8, 2.5);
+    floatText(b.son ? 'FETÖ: SON!' : 'HASRET BİTTİ!', b.pos.clone().setY(b.pos.y + 3.8), '#fde047', 0.8, 2.5);
     G.projectiles.forEach(p => { if (p.type === 'dollar1') p.life = 0; });
 }
