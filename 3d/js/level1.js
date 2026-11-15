@@ -2,10 +2,10 @@
 // Topçu Kışlası inşaatı çukurları, çınar fidanları, baret + maske, Gezi kahramanları (gezi.js), Duran Adam,
 // barikat (11 kişi yenilince iner), canavar TOMA (boss_toma.js); arkada pankartlı AKM, penguenler.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=8';
-import { T1, T2, HW, ARENA, banner, signBoard, entrySign } from './world.js?v=8';
-import { spawnToma } from './boss_toma.js?v=8';
-import './gezi.js?v=8';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=9';
+import { T1, T2, HW, ARENA, banner, signBoard, entrySign } from './world.js?v=9';
+import { spawnToma } from './boss_toma.js?v=9';
+import './gezi.js?v=9';
 
 const BANNERS = [['ÇAPULCU', '#dc2626'], ['HER YER TAKSİM', '#111827'], ['DİREN GEZİ', '#16a34a'], ['ÇAPULCUYUZ', '#7c3aed']];
 

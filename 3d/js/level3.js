@@ -3,11 +3,11 @@
 // Kasetler toplanır (hepsi "MONTAJ!"), polisler rüşvetle susturulur; villa balkonlarındaki SINAYPIRCILAR'a ancak rüşvet atarak ulaşılır.
 // Demir kapıdan geçince canavar DEV ÇELİK KASA (boss_kasa.js); yenilince Cengiz gelir (outro.js).
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=8';
-import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=8';
-import { spawnKasa } from './boss_kasa.js?v=8';
-import { cengizOutro } from './outro.js?v=8';
-import './police.js?v=8';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=9';
+import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=9';
+import { spawnKasa } from './boss_kasa.js?v=9';
+import { cengizOutro } from './outro.js?v=9';
+import './police.js?v=9';
 
 const NEWS = ["'SIFIRLA' SES KAYDI İNTERNETE DÜŞTÜ", "KAYITLARA 'MONTAJ' DEDİ", "KAYITTA: '30 MİLYON AVRO DAHA VAR'"];
 const BALCONY_X = HW + 1.4, BALCONY_Y = 3.2, SNIPERS_Z = [-48, -92, -160];

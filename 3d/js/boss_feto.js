@@ -6,56 +6,71 @@
 // Canı yarıya inince "YA ALLAH!" diye öfkelenir (sfx/feto2_greet.mp3), hızlanır.
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=8';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=8';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=8';
-import { playSfx } from './audio.js?v=8';
-import { makeRing } from './hazards.js?v=8';
-import { limb, walkPose } from './models.js?v=8';
-import { groundAt } from './physics.js?v=8';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=8';
-import { ARENA } from './world.js?v=8';
-import { hitsPlayer, killProj } from './enemies.js?v=8';
-import { showBossBar, setBossBar } from './boss_core.js?v=8';
+import { G, diff, addScore, toast } from './state.js?v=9';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=9';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=9';
+import { playSfx } from './audio.js?v=9';
+import { makeRing } from './hazards.js?v=9';
+import { limb, walkPose } from './models.js?v=9';
+import { groundAt } from './physics.js?v=9';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=9';
+import { ARENA } from './world.js?v=9';
+import { hitsPlayer, killProj } from './enemies.js?v=9';
+import { showBossBar, setBossBar } from './boss_core.js?v=9';
 
-const TOP = 1.85, SKIN = '#e8c4a0';
+const TOP = 1.9, SKIN = '#e8c4a0';
 
+const TILT = 0.25;   // kambur: gövde öne eğik
 function buildFeto() {
     const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-    const legL = limb(body, -0.12, 0.68, 0, 0.19, 0.66, 0.21, '#1f2430', '#0b0b0b');
-    const legR = limb(body, 0.12, 0.68, 0, 0.19, 0.66, 0.21, '#2a303c', '#0b0b0b');
-    const torso = new THREE.Group(); torso.position.y = 0.68; torso.rotation.x = 0.32; body.add(torso);   // kambur
-    torso.add(box(0.58, 0.66, 0.36, '#3b3f46', 0, 0.33, 0));
-    torso.add(box(0.62, 0.3, 0.4, '#3b3f46', 0, -0.05, 0));                                   // palto eteği
-    torso.add(box(0.16, 0.26, 0.02, '#f8fafc', 0.02, 0.5, 0.185, false));
-    torso.add(box(0.05, 0.3, 0.02, '#7f1d1d', 0.02, 0.42, 0.195, false));                       // kravat
-    for (let i = 0; i < 3; i++) torso.add(box(0.04, 0.04, 0.02, '#111827', -0.06, 0.25 - i * 0.12, 0.185, false));
-    const head = new THREE.Group(); head.position.set(0, 0.7, 0.08); head.rotation.x = -0.3; torso.add(head);
-    head.add(box(0.14, 0.12, 0.14, '#d9ae86', 0, 0.02, 0));
-    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), mat(SKIN)); skull.scale.set(1, 1.25, 1); skull.position.y = 0.27; skull.castShadow = true; head.add(skull);
+    const COAT = '#3b3f46', COAT_D = '#2b2f36';
+    const legL = limb(body, -0.12, 0.7, 0, 0.19, 0.68, 0.21, '#1f2430', '#0b0b0b');
+    const legR = limb(body, 0.12, 0.7, 0, 0.19, 0.68, 0.21, '#2a303c', '#0b0b0b');
+    // Uzun palto: etek dizlere kadar iner (gövdeye bağlı, bacaklar altından görünür)
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.38, 0.5, 10), mat(COAT)); skirt.position.y = 0.52; skirt.castShadow = true; body.add(skirt);
+    const torso = new THREE.Group(); torso.position.y = 0.72; torso.rotation.x = TILT; body.add(torso);
+    const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.31, 0.62, 10), mat(COAT)); chest.position.y = 0.3; chest.castShadow = true; torso.add(chest);
+    const hump = new THREE.Mesh(new THREE.SphereGeometry(0.27, 10, 8), mat(COAT)); hump.scale.set(1.1, 0.8, 0.8); hump.position.set(0, 0.56, -0.08); torso.add(hump);   // kambur sırt
+    torso.add(box(0.15, 0.24, 0.03, '#f8fafc', 0, 0.48, 0.28, false));                         // gömlek
+    torso.add(box(0.05, 0.26, 0.03, '#7f1d1d', 0, 0.42, 0.295, false));                        // kırmızı kravat
+    [-1, 1].forEach(s => { const l = box(0.09, 0.3, 0.03, COAT_D, s * 0.1, 0.44, 0.285, false); l.rotation.z = s * 0.35; torso.add(l); });   // yakalar
+    for (let i = 0; i < 3; i++) torso.add(box(0.04, 0.04, 0.03, '#111827', -0.07, 0.24 - i * 0.12, 0.3, false));
+    // Kafa: dazlak, iri burun, sarkık göz kapakları, gür beyaz kaşlar, kulakların üstünde beyaz saçlar
+    const head = new THREE.Group(); head.position.set(0, 0.66, 0.12); head.rotation.x = -TILT - 0.05; torso.add(head);
+    head.add(box(0.13, 0.12, 0.13, '#d9ae86', 0, 0.03, 0));
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(SKIN)); skull.scale.set(1, 1.18, 1.02); skull.position.y = 0.27; skull.castShadow = true; head.add(skull);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: '#fff7ed', transparent: true, opacity: 0.45 })); shine.scale.set(1.4, 0.5, 1); shine.position.set(-0.05, 0.47, 0.06); head.add(shine);
+    const hairM = mat('#e5e7eb');
+    for (let i = 0; i < 9; i++) {   // arkada nal biçiminde beyaz saç
+        const a = Math.PI * 0.2 + i / 8 * Math.PI * 1.6, h = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), hairM);
+        h.position.set(Math.cos(a) * 0.19, 0.24 + Math.sin(i) * 0.01, -Math.sin(a) * 0.17 - 0.02); head.add(h);
+    }
     [-1, 1].forEach(s => {
-        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), mat(SKIN)); ear.scale.set(0.6, 1.2, 1); ear.position.set(s * 0.2, 0.28, 0); head.add(ear);
-        [[0.17, 0.36, -0.04], [0.2, 0.28, -0.06], [0.18, 0.2, -0.04]].forEach(([x, y, z]) => {   // kulakların üstünde beyaz saçlar
-            const h = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), mat('#e5e7eb')); h.position.set(s * x, y, z); head.add(h);
-        });
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), mat('#e0b48f')); ear.scale.set(0.5, 1.2, 0.9); ear.position.set(s * 0.205, 0.26, 0.01); head.add(ear);
     });
     const brows = [];
     [-1, 1].forEach(s => {
-        const b = box(0.13, 0.04, 0.04, '#f3f4f6', s * 0.08, 0.36, 0.19, false); head.add(b); brows.push(b);   // gür beyaz kaşlar
-        head.add(box(0.06, 0.035, 0.02, '#ffffff', s * 0.08, 0.31, 0.2, false));
-        head.add(box(0.025, 0.025, 0.02, '#1c1917', s * 0.08, 0.31, 0.21, false));
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.045, 0.06), mat('#f3f4f6')); b.position.set(s * 0.075, 0.355, 0.17); head.add(b); brows.push(b);
+        head.add(box(0.07, 0.035, 0.02, '#ffffff', s * 0.075, 0.305, 0.19, false));           // göz akı
+        head.add(box(0.028, 0.028, 0.02, '#1c1917', s * 0.072, 0.302, 0.198, false));         // göz bebeği
+        head.add(box(0.08, 0.022, 0.03, '#d9ae86', s * 0.075, 0.322, 0.188, false));          // sarkık göz kapağı
+        head.add(box(0.06, 0.02, 0.02, '#c99a74', s * 0.075, 0.275, 0.19, false));            // göz altı torbası
     });
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.12, 6), mat('#e0b48f')); nose.rotation.x = Math.PI / 2; nose.position.set(0, 0.25, 0.23); head.add(nose);
-    const mouth = box(0.1, 0.02, 0.02, '#8a5a3c', 0, 0.16, 0.2, false); head.add(mouth);
-    // Kollar: sol elde 1 dolarlar, sağ elde baston
-    const armL = limb(torso, -0.36, 0.6, 0, 0.14, 0.5, 0.16, '#2b2f36');
-    const armR = limb(torso, 0.36, 0.6, 0, 0.14, 0.5, 0.16, '#353a42');
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), mat('#e0b08a')); nose.scale.set(0.9, 1.3, 1.1); nose.position.set(0, 0.245, 0.2); head.add(nose);
+    [-1, 1].forEach(s => head.add(box(0.012, 0.09, 0.02, '#b08968', s * 0.07, 0.19, 0.178, false)));   // yanak çizgileri
+    const mouth = box(0.09, 0.018, 0.02, '#8a5a3c', 0, 0.165, 0.19, false); head.add(mouth);
+    // Kollar: sol elde 1 dolarlar, sağ el bastonun sapında
+    const armL = limb(torso, -0.36, 0.58, 0, 0.14, 0.5, 0.16, COAT_D);
+    const armR = limb(torso, 0.36, 0.58, 0, 0.14, 0.5, 0.16, '#353a42');
     armL.add(box(0.1, 0.1, 0.1, SKIN, 0, -0.53, 0, false)); armR.add(box(0.1, 0.1, 0.1, SKIN, 0, -0.53, 0, false));
-    const cane = new THREE.Group(); cane.position.y = -0.55; armR.add(cane);
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.95, 6), mat('#6b3f1d')); stick.position.y = -0.47; stick.castShadow = true; cane.add(stick);
-    const crook = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 5, 10, Math.PI), mat('#6b3f1d')); crook.position.set(0.07, 0, 0); cane.add(crook);
+    // Baston: elin içinde; sap elin üstünde, çubuk aşağı (update her karede dik tutar)
+    const cane = new THREE.Group(); cane.position.y = -0.53; armR.add(cane);
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.84, 6), mat('#6b3f1d')); stick.position.y = -0.4; stick.castShadow = true; cane.add(stick);
+    const crook = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 5, 10, Math.PI), mat('#6b3f1d')); crook.position.set(0, 0.02, 0.06); crook.rotation.y = Math.PI / 2; cane.add(crook);
+    cane.add(box(0.03, 0.03, 0.03, '#d4d4d8', 0, -0.81, 0, false));                             // ucu
     const cash = new THREE.Group(); cash.position.y = -0.58; armL.add(cash); cash.visible = false;
     for (let i = 0; i < 3; i++) cash.add(box(0.2, 0.01, 0.09, '#a3e635', i * 0.03, i * 0.02, 0, false));
+    root.scale.setScalar(1.05);
     return { root, body, legL, legR, armL, armR, torso, head, cane, cash, brows, mouth };
 }
 
@@ -104,7 +119,7 @@ function update(b, dt) {
         m.armL.rotation.x = -0.5 + Math.sin(G.time * 3) * 0.2;
         if (b.t <= 0) { clearBubble(b); pose(b); b.st = 'walk'; }
     } else if (b.st === 'walk') {
-        m.armR.rotation.x = -0.25;   // baston yere dayalı
+        m.armR.rotation.x = -0.45;   // eli bastonun sapında
         if (d > 2.6) {
             b.pos.x = clamp(b.pos.x + Math.sin(toP) * 0.9 * sp * dt, -ARENA.hw + 1, ARENA.hw - 1);
             b.pos.z = clamp(b.pos.z + Math.cos(toP) * 0.9 * sp * dt, ARENA.z1 + 1, ARENA.z0 - 1);
@@ -119,7 +134,7 @@ function update(b, dt) {
     } else if (b.st === 'crouch') {   // hazırlanır: baston havaya kalkar ya da el geriye gider
         const k = 1 - Math.max(0, b.t) / (b.next === 'slam' ? 0.57 : 0.5);
         m.body.position.y = -0.08 * k;
-        if (b.next === 'slam') m.armR.rotation.x = -0.25 - 2.6 * k;
+        if (b.next === 'slam') m.armR.rotation.x = -0.45 - 2.4 * k;
         else { m.armL.rotation.x = 1.2 * k; m.cash.visible = true; }
         if (b.t <= 0) {
             if (b.next === 'volley') { volley(b); m.armL.rotation.x = -1.6; }
@@ -131,10 +146,14 @@ function update(b, dt) {
         if (b.t <= 0) { pose(b); b.st = 'walk'; b.timer = (b.rage ? 0.9 : 1.4) * S.fire; }
     }
     m.root.rotation.y = b.facing;
+    // Baston: yürürken yere dik (kolun ve kamburun açısını telafi eder); bastonla vururken kolla aynı doğrultuda havaya kalkar
+    const up = b.st === 'crouch' && b.next === 'slam' ? 1 - Math.max(0, b.t) / 0.57 : 0;
+    const keep = -(TILT + m.armR.rotation.x);
+    m.cane.rotation.x = b.st === 'recover' && b.next === 'slam' ? keep - 0.9 : keep * (1 - up);
     // Kaşlar: kızınca çatılır
     const angry = b.st === 'crouch' || b.rage;
     m.brows.forEach((br, i) => { br.rotation.z = (i ? -1 : 1) * (angry ? 0.35 : -0.15); });
-    m.mouth.scale.y = b.st === 'crouch' || b.st === 'talk' ? 3 : 1;
+    m.mouth.scale.y = 0.018 * (b.st === 'crouch' || b.st === 'talk' ? 3 : 1);   // box() birim küpü ölçekler: asıl yükseklikle çarp
 
     // Temas: üstüne zıplarsa hasar, yandan değerse can kaybı
     if (!p.dead && Math.abs(dx) < 0.75 && Math.abs(dz) < 0.75) {

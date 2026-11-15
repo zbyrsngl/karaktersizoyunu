@@ -1,7 +1,7 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=8';
+import { box, mat, canvasTex, textSprite } from './util.js?v=9';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -37,18 +37,20 @@ function getHeadTex() {
 }
 
 // Keskinleştirme: sonuç = asıl + 1.1 × (asıl − bulanık); kenar yumuşak kalsın diye saydam pikseller atlanır
-function sharpen(x, w, h) {
+// tint: [r, g, b] renk düzeltme çarpanları (ör. video karesindeki mor/pembe ton); amt: keskinlik, blur: bulanıklık yarıçapı
+export function sharpen(x, w, h, { amt = 1.1, con = 1.08, blur = 3, tint = null } = {}) {
     const src = x.getImageData(0, 0, w, h), s = src.data;
     const b = document.createElement('canvas'); b.width = w; b.height = h;
     const bx = b.getContext('2d', { willReadFrequently: true });
-    bx.filter = 'blur(3px)'; bx.drawImage(x.canvas, 0, 0);
+    bx.filter = `blur(${blur}px)`; bx.drawImage(x.canvas, 0, 0);
     const bl = bx.getImageData(0, 0, w, h).data;
-    const AMT = 1.1, CON = 1.08;
+    const AMT = amt, CON = con;
     for (let i = 0; i < s.length; i += 4) {
         if (s[i + 3] < 250) continue;
         for (let k = 0; k < 3; k++) {
             let v = s[i + k] + AMT * (s[i + k] - bl[i + k]);
             v = (v - 128) * CON + 128;
+            if (tint) v *= tint[k];
             s[i + k] = v < 0 ? 0 : v > 255 ? 255 : v;
         }
     }

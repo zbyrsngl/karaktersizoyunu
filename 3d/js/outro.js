@@ -4,24 +4,28 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G } from './state.js?v=8';
-import { limb, walkPose } from './models.js?v=8';
-import { playSfx } from './audio.js?v=8';
-import { box, mat, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=8';
-import { ARENA } from './world.js?v=8';
+import { G } from './state.js?v=9';
+import { limb, walkPose, sharpen } from './models.js?v=9';
+import { playSfx } from './audio.js?v=9';
+import { box, mat, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=9';
+import { ARENA } from './world.js?v=9';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
 const HEADS = {};
-export function photoHead(src, [sx, sy, sw, sh], [cx, cy, rx, ry]) {
+// fix: keskinleştirme ve renk düzeltme ayarları (models.js sharpen)
+export function photoHead(src, [sx, sy, sw, sh], [cx, cy, rx, ry], fix = null) {
     if (HEADS[src]) return HEADS[src];
     const K = 3, c = document.createElement('canvas'); c.width = sw * K; c.height = sh * K;
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     const img = new Image();
     img.onload = () => {
-        const x = c.getContext('2d');
-        x.imageSmoothingQuality = 'high'; x.scale(K, K);
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.imageSmoothingQuality = 'high';
+        x.save(); x.scale(K, K);
         x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); x.clip();
         x.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        x.restore();
+        if (fix) sharpen(x, c.width, c.height, fix);
         tex.needsUpdate = true;
     };
     img.src = src;
@@ -49,7 +53,7 @@ function suitMan({ suit, suitD, shirt, tie, tex, faceW, faceH, pin }) {
 // Cengiz: kolları göğsünde kavuşturulmuş
 function buildCengiz() {
     const m = suitMan({ suit: '#3f3f46', suitD: '#27272a', shirt: '#f8fafc', tie: '#1f2937', faceW: 0.74, faceH: 0.94,
-                        tex: photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]) });
+                        tex: photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51], { amt: 0.8, con: 1.05, blur: 3 }) });
     m.pose = (t, talking, walking) => {
         if (walking) { m.armL.rotation.set(Math.sin(t * 8) * 0.4, 0, 0); m.armR.rotation.set(-Math.sin(t * 8) * 0.4, 0, 0); return; }
         m.armL.rotation.set(-1.45, 0, 0.8); m.armR.rotation.set(-1.3, 0, -0.8);   // önce içe, sonra öne: eller göğüste buluşur
@@ -60,7 +64,8 @@ function buildCengiz() {
 // "Son peygamber" adamı: gri takım, bir eli havada işaret parmağı yukarıda (konuşurken sallar), öbür elinde mikrofon
 function buildPeygamber() {
     const m = suitMan({ suit: '#4b5563', suitD: '#374151', shirt: '#e0f2fe', tie: '#111827', pin: '#b91c1c', faceW: 0.7, faceH: 0.99,
-                        tex: photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77]) });
+                        tex: photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77],
+                                       { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] }) });   // video karesi: bulanık ve mor tonlu → keskinleştir, rengi düzelt
     const finger = box(0.04, 0.16, 0.04, '#e0a98a', 0, -0.65, 0, false); m.armR.add(finger);
     const mic = new THREE.Group(); mic.position.y = -0.55; m.armL.add(mic);
     mic.add(box(0.06, 0.26, 0.06, '#111827', 0, 0.12, 0.05));

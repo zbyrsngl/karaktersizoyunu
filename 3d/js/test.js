@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 // HIRHIZ 3D test senaryoları (yalnızca ?test=... ile yüklenir). Sonuç sayfa başlığına ve #fps kutusuna yazılır.
 const key = (code, down) => dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code }));
 
@@ -86,7 +87,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=8').then(() => {});
+            import('./player.js?v=9').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -196,13 +197,30 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=8').then(async o => {
-                const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77]);
+            import('./outro.js?v=9').then(async o => {
+                const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));
                 [t1, t2].forEach((t, i) => { const im = document.createElement('img'); im.src = t.image.toDataURL(); im.style.cssText = `position:fixed;left:${40 + i * 300}px;top:80px;width:252px;background:#0f0;z-index:99`; document.body.appendChild(im); });
                 say('kafa ' + t1.image.width + 'x' + t1.image.height);
             });
+        }
+        if (name === 'fetoshot') {   // canavara yakından bak: ?st=walk|crouch|slam
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -192); p.hp = 99; run(5);
+            const b = G.boss, st = new URLSearchParams(location.search).get('st') || 'walk';
+            p.pos.set(b.pos.x + 1.2, 0, b.pos.z + 3.2); b.timer = 99;
+            if (st !== 'walk') { b.st = 'crouch'; b.next = st === 'slam' ? 'slam' : 'volley'; b.t = 0.2; }
+            for (let i = 0; i < 20; i++) { b.update(STEP); if (st !== 'walk') b.t = 0.2; }
+            p.pos.set(b.pos.x + 6, 0, b.pos.z + 6); b.facing = +(new URLSearchParams(location.search).get('face') || 0);
+            for (let i = 0; i < 3; i++) b.update(0.001);
+            b.root.rotation.y = b.facing; b.root.visible = true;
+            if (new URLSearchParams(location.search).get('hide')) b.m.cane.visible = false;
+            const near = []; G.scene.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHexString() === '6b3f1d') near.push(o.parent === b.m.cane ? 'baston' : (o.parent && o.parent.type) + '@' + o.getWorldPosition(new THREE.Vector3()).toArray().map(v => v.toFixed(1)).join(',')); });
+            const ang = b.facing + (+(new URLSearchParams(location.search).get('yaw') || 0.4)), dist = 3.4;
+            G.freezeCam = true;
+            H.camera.position.set(b.pos.x + Math.sin(ang) * dist, 1.5, b.pos.z + Math.cos(ang) * dist); H.camera.lookAt(b.pos.x, 1.1, b.pos.z);
+            render(); say('feto ' + st + ' kahverengi: ' + near.join(' | '));
         }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');

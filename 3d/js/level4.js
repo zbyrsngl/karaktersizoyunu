@@ -4,13 +4,13 @@
 // bayraklı kalabalık. Darbeci askerler (soldiers.js) kelepçe atılarak tutuklanır. Tank barikatı açılınca canavar FETÖ (boss_feto.js);
 // yenilince HIRHIZ konuşur, ardından "son peygamber" adamı gelir (outro.js).
 import * as THREE from 'three';
-import { G } from './state.js?v=8';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=8';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=8';
-import { spawnFeto } from './boss_feto.js?v=8';
-import { peygamberOutro } from './outro.js?v=8';
-import { playSfx } from './audio.js?v=8';
-import './soldiers.js?v=8';
+import { G } from './state.js?v=9';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=9';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=9';
+import { spawnFeto } from './boss_feto.js?v=9';
+import { peygamberOutro } from './outro.js?v=9';
+import { playSfx } from './audio.js?v=9';
+import './soldiers.js?v=9';
 
 const TANKS = [[3.5, -46], [-3.5, -84], [3.5, -120], [-3.5, -158]];   // yoldaki tanklar (kulelerine çıkılır)
 const HULL = 1.5, TURRET = 2.3;
