@@ -4,12 +4,12 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=16';
-import { burst } from './fx.js?v=16';
-import { limb, walkPose, sharpen } from './models.js?v=16';
-import { playSfx } from './audio.js?v=16';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=16';
-import { ARENA } from './world.js?v=16';
+import { G, toast } from './state.js?v=17';
+import { burst } from './fx.js?v=17';
+import { limb, walkPose, sharpen } from './models.js?v=17';
+import { playSfx } from './audio.js?v=17';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=17';
+import { ARENA } from './world.js?v=17';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
 const HEADS = {};
@@ -132,6 +132,24 @@ function buildEgemen() {
             mouth.scale.y = 1 + Math.abs(Math.sin(t * 13)) * 1.6;
             m.faceGroup.rotation.z = Math.sin(t * 5) * 0.06;
         } else { m.armR.rotation.set(-2.4, 0, 0.45); m.armL.rotation.set(0, 0, 0.1); mouth.scale.y = 1; m.faceGroup.rotation.z = 0; }
+    };
+    return m;
+}
+
+// "Yalarım" amca (5. bölüm sonu; 2D'de 2. bölüm sonundaydı): yaşlı, bıyıklı, koyu ceketli; kafa resimler/yalarim.png'den.
+// Hafif kambur; konuşurken bir elini sallar, öbür eli belinde.
+function buildYalarim() {
+    const m = suitMan({ suit: '#44403c', suitD: '#292524', shirt: '#d6d3d1', tie: '#57534e', faceW: 0.8, faceH: 0.9,
+                        tex: photoHead('../resimler/yalarim.png', [18, 0, 100, 112], [50, 52, 42, 52], { amt: 0.9, con: 1.06, blur: 3 }) });
+    m.torso.rotation.x = 0.1;   // yaşlı: hafif öne eğik
+    m.pose = (t, talking, walking) => {
+        if (walking) { m.armL.rotation.set(Math.sin(t * 6) * 0.3, 0, 0); m.armR.rotation.set(-Math.sin(t * 6) * 0.3, 0, 0); return; }
+        if (talking) {
+            const w = Math.sin(t * 7);
+            m.armR.rotation.set(-1.6 + w * 0.35, 0, 0.25 + w * 0.15);   // eli havada, sallar
+            m.armL.rotation.set(-0.3, 0, -0.5);                          // eli belinde
+            m.faceGroup.rotation.z = Math.sin(t * 6) * 0.06;
+        } else { m.armR.rotation.set(0, 0, 0.05); m.armL.rotation.set(0, 0, -0.05); m.faceGroup.rotation.z = 0; }
     };
     return m;
 }
@@ -296,6 +314,11 @@ export function selfOutro(sfx, text) {
 // 2. bölüm sonu: dörtlü çete kurtuldu, Egemen Bağış'a benzeyen karakter gelip HIRHIZ'ı kutlar (makara sesinin ilk 10 sn'si)
 export function egemenOutro(scene) {
     return walkerOutro(scene, { build: buildEgemen, sfx: 'makara', text: 'Tebrikler HIRHIZ! Dörtlü çete kurtuldu!' });
+}
+// 5. bölüm sonu: önce HIRHIZ "15 Temmuz Allah'ın bir lütfü!", sonra yalarım amca gelip kutlar
+export function yalarimOutro(scene) {
+    return walkerOutro(scene, { build: buildYalarim, sfx: 'yalarim', text: 'YALARIM, ISTIRIRIM bi de..',
+                                pre: { sfx: 'lutuf', text: "15 Temmuz Allah'ın bir lütfü!" } });
 }
 export function cengizOutro(scene) {
     return walkerOutro(scene, { build: buildCengiz, sfx: 'cengiz', text: 'Bu milletin a. koyacağız' });

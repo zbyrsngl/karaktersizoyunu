@@ -2,15 +2,15 @@
 // Gece sahil yolu (tahta iskele), solda ay ışıklı deniz ve ışıklı yatlar, sağda oteller ve palmiyeler.
 // Telefonun şarjı azalır (bitince 1 can gider), yoldaki şarj aletleri doldurur. Mini tanklar (tanks.js) ve polisler rüşvetle teslim alınır;
 // cankurtaran kulelerinde nişancılar. Kum torbalı kontrol noktası açılınca canavar DARBE TANKI (boss_darbetank.js);
-// yenilince HIRHIZ: "15 Temmuz Allah'ın bir lütfü!" (outro.js selfOutro).
+// yenilince HIRHIZ: "15 Temmuz Allah'ın bir lütfü!", sonra yalarım amca gelir (outro.js yalarimOutro).
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=16';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=16';
-import { getHeadTex } from './models.js?v=16';
-import { spawnDarbeTank } from './boss_darbetank.js?v=16';
-import { selfOutro } from './outro.js?v=16';
-import './police.js?v=16';
-import './tanks.js?v=16';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=17';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=17';
+import { getHeadTex } from './models.js?v=17';
+import { spawnDarbeTank } from './boss_darbetank.js?v=17';
+import { yalarimOutro } from './outro.js?v=17';
+import './police.js?v=17';
+import './tanks.js?v=17';
 
 const TOWERS = [-52, -122], TOWER_X = -4, DECK = 2.6;
 const NEWS = ['CANLI: CUMHURBAŞKANI FACETIME İLE BAĞLANDI', "BOĞAZ KÖPRÜSÜ'NDE TANKLAR", "TRT'DE DARBE BİLDİRİSİ OKUNDU"];
@@ -53,7 +53,7 @@ export const LEVEL5 = {
     target: 11, cry: 'GÖZALTI İPTAL!', ammo: 'bribe', ammoName: 'RÜŞVET',
     gateWho: 'DÜŞMAN', gateColor: '#365314', gateOpen: "11 DÜŞMAN TESLİM! KONTROL NOKTASI AÇILDI — DARBE TANKI'NA GİT!",
     boss: (scene) => spawnDarbeTank(scene, new THREE.Vector3(0, 0, -220)),
-    outro: () => selfOutro('lutuf', "15 Temmuz Allah'ın bir lütfü!"),
+    outro: (scene) => yalarimOutro(scene),   // HIRHIZ "15 Temmuz Allah'ın bir lütfü!", ardından yalarım amca gelir
     wonTitle: 'BÖLÜM 5 TAMAM!', wonNote: 'FaceTime bağlantısı kopmadı! Şimdi uçağa!',
     buildGate(g) {   // kum torbalı askeri kontrol noktası
         for (let r = 0; r < 4; r++) for (let i = 0; i < 11; i++) {

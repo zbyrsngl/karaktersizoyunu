@@ -3,7 +3,7 @@ let ac = null, master = null, musicGain = null, voiceBus = null, muted = false;
 const BUF = {}, GAIN = {};
 // Konuşmalar: dosyalar çok farklı seviyede kaydedilmiş (bazısı -35 dB), yüklenirken aynı seviyeye getirilir
 // ve çalarken müzik kısılır (ducking).
-const VOICES = new Set(['saygili', 'makara', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'granny', 'hashasi', 'selo', 'ekrem']);
+const VOICES = new Set(['saygili', 'makara', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'yalarim', 'granny', 'hashasi', 'selo', 'ekrem']);
 const VOICE_RMS = 0.28;     // hedef ortalama seviye (~ -11 dB; tepeleri sıkıştırıcı tutar)
 const MUSIC_VOL = 0.35, MUSIC_DUCK = 0.08;
 let duckUntil = 0;
@@ -37,7 +37,8 @@ const FILES = {
     yaallah: ['../sfx/feto2_greet.mp3'],      // FETÖ öfkelenince "Ya Allah!"
     savci: ['../sfx/savci.mp3'],              // 4. bölüm sonu: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!"
     peygamber: ['../sfx/sonpeygamber.mp3'],   // 4. bölüm sonu: kutlamaya gelen adam
-    lutuf: ['../sfx/lutuf.mp3'],              // 5. bölüm sonu: HIRHIZ "15 Temmuz Allah'ın bir lütfü!"
+    lutuf: ['../sfx/lutuf.mp3'],
+    yalarim: ['../sfx/yalarim.mp3'],          // 5. bölüm sonu: yalarım amca (2D'de 2. bölüm sonundaydı)              // 5. bölüm sonu: HIRHIZ "15 Temmuz Allah'ın bir lütfü!"
     granny: ['../sfx/gotununkili.mp3'],       // 1. bölüm sonu: koşarak gelen teyzelerin tezahüratı
     hashasi: ['../sfx/hashasi.mp3'],          // 6. bölüm sonu: HIRHIZ "Bunlar haşhaşi! Bunlar sülük!"
     selo: ['../sfx/selo_giris.mp3'],          // 9. bölüm SELO gelince (kullanıcının verdiği sesin 25-35 sn'si)
