@@ -138,7 +138,10 @@ function killEnemy(en) {
         if(en.hurt > 0) return;
         en.hp--; en.hurt = 24;
         hitStop = Math.max(hitStop, 2);
-        if(en.kind === 'riot') en.x += (Math.sign(en.x + en.w / 2 - (player.x + player.w / 2)) || 1) * 30;
+        if(en.kind === 'riot') {
+            en.x += (Math.sign(en.x + en.w / 2 - (player.x + player.w / 2)) || 1) * 30;
+            if(en.atk === 'wind' || en.atk === 'charge') { en.atk = 'rest'; en.atkT = RIOT_REST; }   // vurulunca hücumu yarıda kalır
+        }
         createParticle(en.x + en.w / 2, en.y, "-1", "#fca5a5", 0.8);
         playSfx('hit', { rate: 1.2, vol: 0.6 });
         return;
@@ -173,10 +176,61 @@ function enemyContact(en) {
     }
 }
 
-// --- ÇEVİK KUVVET: kalkanlı, ateş etmez, oyuncunun üstüne yürür ---
+// --- ÇEVİK KUVVET: kalkanlı, ateş etmez, oyuncunun üstüne yürür ve KALKAN HÜCUMU yapar ---
 // Önden gelen paraları kalkanla sektirir; kafasına zıplanarak, arkadan (yavaş döner) ya da balyozla öldürülür.
+// Hücum: önündeki oyuncuya 'wind' (geriye yaslanır, başında "!") → 'charge' (kalkanla hızla atılır) → 'rest' (soluklanır,
+// kalkan aşağıda: önden rüşvet de işler). Üstünden zıplanırsa arkası açık kalır; oyuncu kalkanla karşılarsa geri seker, uzun sersemler.
+const RIOT_WIND = 40, RIOT_CHARGE = 30, RIOT_REST = 70, RIOT_STUN = 110, RIOT_COOLDOWN = 130;
+function riotStartAttack(en) {
+    en.atk = 'wind'; en.atkT = Math.round(RIOT_WIND * diff().fire);   // kolayda uyarı uzun, zorda kısa
+    playSfx('hit', { rate: 2.6, vol: 0.25 });
+}
+function updateRiotAttack(en, toPlayer) {
+    en.atkT--;
+    if (en.atk === 'wind') {
+        en.lean += (-0.14 - en.lean) * 0.2;   // geriye yaslanır
+        en.lastSpeed = 0;
+        if (en.atkT <= 0) { en.atk = 'charge'; en.atkT = RIOT_CHARGE; playSfx('hit', { rate: 0.55, vol: 0.5 }); }
+        return;
+    }
+    if (en.atk === 'charge') {
+        en.lean += (0.22 - en.lean) * 0.3;    // öne eğilip kalkanla atılır
+        const sp = 10 * diff().speed;
+        const nx = en.x + en.dir * sp;
+        if (Math.abs(nx - en.homeX) < 560 && nx > 0 && nx < WORLD_WIDTH - en.w) en.x = nx; else en.atkT = 0;
+        en.walkCycle += 0.5; en.lastSpeed = sp;
+        if (en.atkT % 3 === 0) createParticle(en.x + en.w / 2 - en.dir * 30, en.y + en.h - 6);   // ayak tozu
+        // Oyuncu kalkanla ve hücuma dönük karşılarsa: polis geri seker ve uzun sersemler
+        if (riotTouches(en) && player.shield && player.dir === -en.dir && !player.isDying) {
+            en.x -= en.dir * 70; player.x += en.dir * 25;
+            en.atk = 'rest'; en.atkT = RIOT_STUN; en.stunned = true;
+            hitStop = Math.max(hitStop, 4); camShake = Math.max(camShake, 6);
+            spawnFx('block', player.x + player.w / 2 + player.dir * 95, player.y + player.h - 130, 1.8, player.dir < 0);
+            playSfx('hit', { rate: 1.4, vol: 0.7 });
+            return;
+        }
+        if (en.atkT <= 0) { en.atk = 'rest'; en.atkT = RIOT_REST; }
+        return;
+    }
+    // 'rest': soluklanır, kalkan aşağıda
+    en.lean += (0 - en.lean) * 0.15;
+    en.lastSpeed = 0;
+    if (en.atkT <= 0) { en.atk = null; en.stunned = false; en.atkCd = Math.round(RIOT_COOLDOWN * diff().fire * (0.8 + Math.random() * 0.5)); }
+}
+// enemyContact'tan biraz geniş: kalkan karşılaması temastan (can kaybı) önce yakalanır
+function riotTouches(en) {
+    return player.x + 30 < en.x + en.w - 30 && player.x + player.w - 30 > en.x - 12 && player.y + player.h > en.y && player.y < en.y + en.h;
+}
 function updateRiot(en) {
     const toPlayer = (player.x + player.w / 2) - (en.x + en.w / 2);
+    if (en.lean === undefined) { en.lean = 0; en.atk = null; en.atkCd = 60 + Math.floor(Math.random() * 90); }
+    if (en.atk) { updateRiotAttack(en, toPlayer); return; }
+    en.lean *= 0.85;
+    if (en.atkCd > 0) en.atkCd--;
+    // Önündeki oyuncu yakın ve aynı yükseklikteyse hücuma hazırlanır
+    const dist = Math.abs(toPlayer), ahead = Math.sign(toPlayer) === en.dir;
+    if (!player.isDying && en.atkCd <= 0 && en.hurt <= 0 && ahead && dist > 150 && dist < 430 && en.turnT === 0
+        && Math.abs((player.y + player.h) - (en.y + en.h)) < 120) { riotStartAttack(en); return; }
     let speed = en.speed;
     if (!player.isDying && Math.abs(toPlayer) < 700) {
         // Ağır kalkanla yavaş döner: oyuncu arkasına geçerse ~0,7 sn arkası açık kalır
@@ -212,9 +266,10 @@ function drawRiot(ctx, en) {
     const legs = drawLegs(ctx, 0, -h, h, 1, en.walkCycle, moving, false, RIOT_LEGS);
     ctx.translate(0, -h + legs.drop);
     ctx.lineCap = "round"; ctx.lineJoin = "round";
-    // Arka kol: havaya kalkık cop
+    // Arka kol: havaya kalkık cop (hazırlanırken daha da kalkar, soluklanırken iner)
     const sw = moving ? Math.sin(en.walkCycle) * 0.2 : 0;
-    ctx.save(); ctx.translate(-14, 56); ctx.rotate(-2.4 + sw);
+    const copA = en.atk === 'wind' ? -2.9 : en.atk === 'rest' ? -0.5 : -2.4;
+    ctx.save(); ctx.translate(-14, 56); ctx.rotate(copA + sw);
     ctx.strokeStyle = "#111827"; ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 40); ctx.stroke();
     ctx.strokeStyle = "#0a0a0a"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(0, 40); ctx.lineTo(0, 78); ctx.stroke();
     ctx.restore();
@@ -233,7 +288,7 @@ function drawRiot(ctx, en) {
     ctx.beginPath(); ctx.roundRect(2, 22, 22, 22, 5); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(12, 30, 2.4, 0, Math.PI * 2); ctx.fill();
     // Ön kol + şeffaf kalkan
-    const bob = moving ? Math.sin(en.walkCycle * 2) * 2 : 0;
+    const bob = (moving ? Math.sin(en.walkCycle * 2) * 2 : 0) + (en.atk === 'rest' ? 34 : 0);   // soluklanırken kalkan aşağıda
     ctx.strokeStyle = "#1f2937"; ctx.lineWidth = 13;
     ctx.beginPath(); ctx.moveTo(10, 58); ctx.lineTo(26, 84); ctx.stroke();
     ctx.fillStyle = "rgba(186,230,253,0.42)"; ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 3;

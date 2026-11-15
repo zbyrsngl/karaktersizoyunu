@@ -141,7 +141,7 @@ function update() {
         enemies.forEach(en => {
             if(!en.dead && p.active && p.x > en.x && p.x < en.x + en.w && p.y > en.y && p.y < en.y + en.h) {
                 if(LEVELS[currentLevel].noBribe) { p.active = false; refuseBribe(en, p); }   // 1. bölüm: "Biz rüşvet almayız!"
-                else if(en.kind === 'riot' && p.vx * en.dir < 0) riotBlock(p);   // kalkana önden çarptı
+                else if(en.kind === 'riot' && p.vx * en.dir < 0 && en.atk !== 'rest') riotBlock(p);   // kalkana önden çarptı (soluklanırken kalkan aşağıda)
                 else { p.active = false; killEnemy(en); }
             }
         });

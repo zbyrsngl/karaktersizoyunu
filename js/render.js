@@ -314,6 +314,7 @@ function draw() {
         const leaves = en.dead && enemyLeaves(en) && en.kind !== 'tank';   // 4. bölümde tutuklanan asker kelepçeli yürüyüp gider
         if(en.dead) (leaves ? applyExilePose : applyDeathPose)(ctx, en);
         else if(en.hurt > 0 && Math.floor(en.hurt / 4) % 2) ctx.globalAlpha = 0.4;   // vurulunca yanıp söner
+        if(!en.dead && en.lean) { const fx = en.x + en.w / 2, fy = en.y + en.h; ctx.translate(fx, fy); ctx.rotate(en.lean * en.dir); ctx.translate(-fx, -fy); }   // kalkan hücumu: yaslanma/eğilme
         if(LEVELS[currentLevel].army && drawArmy(ctx, en)) {}   // 4. bölüm: darbeci askerler (js/temmuz.js)
         else if(en.skin) drawGeziHero(ctx, en);   // 1. bölüm: Gezi kahramanları
         else if(en.kind === 'duran') drawDuran(ctx, en);
@@ -325,7 +326,7 @@ function draw() {
         if(leaves) drawSuitcase(ctx, en);
         ctx.restore();
     });
-    enemies.forEach(en => { if(en.kind === 'sniper') drawSniperLaser(ctx, en); });
+    enemies.forEach(en => { if(en.kind === 'sniper') drawSniperLaser(ctx, en); if(en.atk && !en.dead) drawRiotWarn(ctx, en); });
     drawSeloCell(ctx);   // 9. bölüm: hücredeki Selo
     if(boss) drawBoss(ctx, boss);
     grannies.forEach(g => drawGranny(ctx, g));
@@ -388,6 +389,20 @@ function drawParticles(ctx) {
         }
     });
 
+}
+
+// Kalkan hücumu uyarısı: hazırlanırken başında yanıp sönen kırmızı "!", sersemlemişken dönen yıldızlar
+function drawRiotWarn(ctx, en) {
+    const x = en.x + en.w / 2, y = en.y - 26;
+    ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (en.atk === 'wind' && Math.floor(en.atkT / 5) % 2 === 0) {
+        ctx.font = "bold 54px Arial"; ctx.lineWidth = 6; ctx.strokeStyle = "#fff"; ctx.fillStyle = "#dc2626";
+        ctx.strokeText("!", x, y); ctx.fillText("!", x, y);
+    } else if (en.atk === 'rest' && en.stunned) {
+        ctx.font = "22px Arial"; ctx.fillStyle = "#fde047";
+        for (let i = 0; i < 3; i++) { const a = en.atkT * 0.12 + i * 2.1; ctx.fillText("★", x + Math.cos(a) * 30, y + 10 + Math.sin(a) * 9); }
+    }
+    ctx.restore();
 }
 
 // Duraklatma ekranı ve beyaz parlama
