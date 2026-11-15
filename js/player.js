@@ -293,7 +293,16 @@ function shieldBlocks(p) {
 }
 function blockProjectile(p) {
     p.active = false;
-    for (let i = 0; i < 6; i++) {
+    // Kalkanın dış yüzünde, saldırının geldiği yükseklikte altın kıvılcım yıldızı (pixelfx).
+    // Kalkan ortası ayakların ortasından ~60 önde, ~158 yukarıda (drawRecep); dış yüzü ~35 daha önde.
+    let fx = p.x, fy = p.y;
+    if (!isFlight()) {
+        const cy = player.y + player.h - 158;
+        fx = player.x + player.w / 2 + player.dir * 95;
+        fy = Math.max(cy - 55, Math.min(cy + 40, p.y));
+    }
+    spawnFx('block', fx, fy, 1.6, player.dir < 0);
+    for (let i = 0; i < 3; i++) {
         particles.push({ x: p.x, y: p.y, vx: -player.dir * (2 + Math.random() * 4), vy: (Math.random() - 0.5) * 6,
                          life: 0.35, maxLife: 0.35, size: 3 + Math.random() * 3, text: null, color: "#fde047" });
     }

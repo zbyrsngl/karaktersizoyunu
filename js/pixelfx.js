@@ -3,7 +3,7 @@
 // oyunla aynı sabit adımda (1/60 s) ilerler, vuruş donmasında durur ve köşeli piksel olarak büyütülüp çizilir.
 
 const FX_IMGS = {};
-for (const name in FX_SHEETS) { const img = new Image(); img.src = `resimler/fx/${name}.png?v=40`; FX_IMGS[name] = img; }
+for (const name in FX_SHEETS) { const img = new Image(); img.src = `resimler/fx/${name}.png?v=41`; FX_IMGS[name] = img; }
 
 const FX_MAX = 24;   // aynı anda en fazla efekt (telefon performansı)
 let fxList = [];
