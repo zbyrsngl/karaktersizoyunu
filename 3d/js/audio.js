@@ -7,7 +7,9 @@ const FILES = {
     boom: ['../explosion.wav'],
     ouch: ['../sfx/ahh.mp3'],
     cry: ['../sfx/uufff.mp3'],
-    saygili: ['../sfx/saygili_giris.mp3']    // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
+    saygili: ['../sfx/saygili_giris.mp3'],   // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
+    sifirla: ['../sfx/sifirla.mp3'],          // 3. bölüm: kaset alınınca ve kasa sıfırlarken
+    cengiz: ['../sfx/milletinminakoycaz.mp3'] // 3. bölüm sonu: Cengiz
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 

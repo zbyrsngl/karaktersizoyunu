@@ -6,17 +6,17 @@
 //   SIÇRAMA: üstüne sıçrar, inince yerde şok dalgası yayılır (zıpla!); inişte sersemler → kafasına zıpla!
 // Hasar: kafasına zıplamak ya da balyoz (1 can). Rüşvet işlemez. Canı yarıya inince öfkelenir.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=6';
-import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=6';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=6';
-import { playSfx, beep } from './audio.js?v=6';
-import { makeRing } from './hazards.js?v=6';
-import { walkPose } from './models.js?v=6';
-import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=6';
-import { ARENA } from './world.js?v=6';
-import { buildPolice } from './police.js?v=6';
-import { throwLob } from './enemies.js?v=6';
-import { showBossBar, setBossBar } from './boss_core.js?v=6';
+import { G, diff, addScore, toast } from './state.js?v=7';
+import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=7';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=7';
+import { playSfx, beep } from './audio.js?v=7';
+import { makeRing } from './hazards.js?v=7';
+import { walkPose } from './models.js?v=7';
+import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=7';
+import { ARENA } from './world.js?v=7';
+import { buildPolice } from './police.js?v=7';
+import { throwLob } from './enemies.js?v=7';
+import { showBossBar, setBossBar } from './boss_core.js?v=7';
 
 const K = 1.35, TOP = 2.65, REACH = 2.9, LEAP_G = 26;
 const CUFF_GEO = new THREE.TorusGeometry(0.13, 0.035, 6, 12);
@@ -56,6 +56,7 @@ function update(b, dt) {
     m.root.visible = !(b.hurtT > 0 && Math.floor(b.hurtT * 14) % 2 === 0);
     if (b.dead) {
         b.deadT += dt;
+        if (b.deadT > 3.2 && !b.reported) { b.reported = true; G.onBossDefeated && G.onBossDefeated(); }
         m.body.rotation.x = -Math.min(Math.PI / 2, b.deadT * 3);
         return;
     }
@@ -209,5 +210,4 @@ function defeat(b) {
     playSfx('boom', { vol: 0.9 }); addTrauma(0.9);
     floatText('DOSYA KAPANDI!', b.pos.clone().setY(4.2), '#86efac', 0.8, 2.5);
     G.projectiles.forEach(p => { if (p.type === 'cuffs') p.life = 0; });
-    setTimeout(() => G.onBossDefeated && G.onBossDefeated(), 3200);
 }

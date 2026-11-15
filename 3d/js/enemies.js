@@ -4,13 +4,13 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { walkPose, nameLabel } from './models.js?v=6';
-import { G, diff, addScore } from './state.js?v=6';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=6';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=6';
-import { playSfx } from './audio.js?v=6';
-import { groundAt } from './physics.js?v=6';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=6';
+import { walkPose, nameLabel } from './models.js?v=7';
+import { G, diff, addScore } from './state.js?v=7';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=7';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=7';
+import { playSfx } from './audio.js?v=7';
+import { groundAt } from './physics.js?v=7';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=7';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -215,10 +215,11 @@ export function shootAt(mesh, from, to, speed, life = 2) {
     G.projectiles.push({ type: 'bullet', mesh, pos: mesh.position, vel: v, life, ownGeo: false, update: updateStraight });
 }
 // Kavisli atış: oyuncunun gideceği yere düşecek hız. onLand(yer noktası) düşünce çağrılır; hurtsOnHit: doğrudan çarparsa can götürür
-export function throwLob(from, mesh, { type = 'lob', onLand = null, hurtsOnHit = true, trail = null, lead = 0.5, g = LOB_G } = {}) {
-    const p = G.player;
-    const d = Math.hypot(p.pos.x - from.x, p.pos.z - from.z), T = 0.6 + d / 13;
-    const tx = p.pos.x + p.vel.x * T * lead, tz = p.pos.z + p.vel.z * T * lead;
+// to: hedef nokta verilirse oyuncu yerine oraya atılır (yelpaze atışları)
+export function throwLob(from, mesh, { type = 'lob', onLand = null, hurtsOnHit = true, trail = null, lead = 0.5, g = LOB_G, to = null } = {}) {
+    const p = G.player, aim = to || p.pos;
+    const d = Math.hypot(aim.x - from.x, aim.z - from.z), T = 0.6 + d / 13;
+    const tx = aim.x + p.vel.x * T * lead, tz = aim.z + p.vel.z * T * lead;
     const gy = groundAt(G.world.solids, tx, tz, p.pos.y + 0.2);
     const ty = gy > -10 ? gy : p.pos.y;
     const vel = new THREE.Vector3((tx - from.x) / T, (ty - from.y) / T + 0.5 * g * T, (tz - from.z) / T);
@@ -226,7 +227,7 @@ export function throwLob(from, mesh, { type = 'lob', onLand = null, hurtsOnHit =
     G.projectiles.push({ type, mesh, pos: mesh.position, vel, life: 4, ownGeo: false, g, onLand, hurtsOnHit, trail, update: updateLob });
 }
 
-function hitsPlayer(p, pad = 0.55) {
+export function hitsPlayer(p, pad = 0.55) {
     const pl = G.player;
     return !pl.dead && Math.abs(p.pos.x - pl.pos.x) < pad && Math.abs(p.pos.z - pl.pos.z) < pad && p.pos.y > pl.pos.y - 0.1 && p.pos.y < pl.pos.y + pl.h;
 }

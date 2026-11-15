@@ -3,7 +3,7 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=6';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=7';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği
@@ -40,6 +40,19 @@ function textures() {
         for (let i = 0; i < 300; i++) { g.fillStyle = i % 2 ? '#4b4b53' : '#36363d'; g.fillRect(3 * k + Math.random() * 10 * k, Math.random() * H, 2, 2); }
         g.fillStyle = '#e5e7eb'; g.fillRect(3 * k, 0, 2, H); g.fillRect(13 * k - 2, 0, 2, H);
         g.fillStyle = '#facc15'; g.fillRect(8 * k - 2, 4, 4, H / 2 - 8);
+    }, { repeat: [1, 1], pixel: true });
+    TEX.cobble = canvasTex(64, 64, (g) => {   // Arnavut kaldırımı
+        g.fillStyle = '#57534e'; g.fillRect(0, 0, 64, 64);
+        for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+            g.fillStyle = ['#a8a29e', '#9c958f', '#b5aea6', '#8f8983'][(x * 3 + y) % 4];
+            g.fillRect(x * 16 + (y % 2 ? 8 : 0) + 1, y * 16 + 1, 14, 14); g.fillRect(x * 16 + (y % 2 ? 8 : 0) - 63, y * 16 + 1, 14, 14);
+        }
+    }, { repeat: [1, 1], pixel: true });
+    TEX.marble = canvasTex(64, 64, (g) => {   // mermer karolar
+        g.fillStyle = '#e7e5e4'; g.fillRect(0, 0, 64, 64);
+        g.fillStyle = '#f5f5f4'; g.fillRect(1, 1, 30, 30); g.fillRect(33, 33, 30, 30);
+        g.fillStyle = '#d6d3d1'; g.fillRect(33, 1, 30, 30); g.fillRect(1, 33, 30, 30);
+        g.strokeStyle = 'rgba(120,113,108,0.35)'; g.beginPath(); g.moveTo(4, 20); g.lineTo(26, 6); g.moveTo(38, 54); g.lineTo(60, 40); g.stroke();
     }, { repeat: [1, 1], pixel: true });
     TEX.brick = canvasTex(64, 64, (g) => {
         g.fillStyle = '#7c2d12'; g.fillRect(0, 0, 64, 64);
@@ -156,7 +169,23 @@ function makeHeart() {   // can (+1)
     g.add(glowBall('#fca5a5', 0.55, 0.6));
     return g;
 }
-const ITEM_MAKERS = { fidan: makeFidan, mask: makeMask, bag: makeBag, shoebox: makeShoebox, heart: makeHeart };
+let tapeTex = null;
+function makeTape() {   // kaset: turuncu etiketinde "SIFIRLA", makaralar (3. bölüm)
+    tapeTex = tapeTex || canvasTex(80, 52, (g) => {
+        g.fillStyle = '#111827'; g.fillRect(0, 0, 80, 52);
+        g.fillStyle = '#f59e0b'; g.fillRect(6, 6, 68, 22);
+        g.fillStyle = '#111827'; g.font = 'bold 13px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SIFIRLA', 40, 17);
+        g.fillStyle = '#e5e7eb'; [24, 56].forEach(x => { g.beginPath(); g.arc(x, 39, 8, 0, Math.PI * 2); g.fill(); });
+        g.fillStyle = '#4b5563'; g.fillRect(30, 35, 20, 8);
+    }, { pixel: true });
+    const g = new THREE.Group();
+    const face = new THREE.MeshLambertMaterial({ map: tapeTex });
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.4, 0.1), [mat('#111827'), mat('#111827'), mat('#111827'), mat('#111827'), face, face]);
+    b.position.y = 0.45; b.castShadow = true; g.add(b);
+    g.add(glowBall('#fbbf24', 0.6, 0.45));
+    return g;
+}
+const ITEM_MAKERS = { fidan: makeFidan, mask: makeMask, bag: makeBag, shoebox: makeShoebox, heart: makeHeart, tape: makeTape };
 export function makeItem(kind) { return ITEM_MAKERS[kind](); }
 
 // L: bölüm verisi (level1.js, level2.js)

@@ -3,15 +3,15 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=6';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=6';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=6';
-import { playSfx } from './audio.js?v=6';
-import { groundAt } from './physics.js?v=6';
-import { makeCloud } from './hazards.js?v=6';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=6';
-import { ARENA } from './world.js?v=6';
-import { showBossBar, setBossBar } from './boss_core.js?v=6';
+import { G, diff, addScore, toast } from './state.js?v=7';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=7';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=7';
+import { playSfx } from './audio.js?v=7';
+import { groundAt } from './physics.js?v=7';
+import { makeCloud } from './hazards.js?v=7';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=7';
+import { ARENA } from './world.js?v=7';
+import { showBossBar, setBossBar } from './boss_core.js?v=7';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
@@ -107,6 +107,7 @@ function updateToma(b, dt) {
     m.lampB.material = mat(blink ? '#60a5fa' : '#1e3a8a'); m.lampR.material = mat(blink ? '#7f1d1d' : '#ef4444');
     if (b.dead) {
         b.deadT += dt;
+        if (b.deadT > 3.2 && !b.reported) { b.reported = true; G.onBossDefeated && G.onBossDefeated(); }   // oyun zamanıyla (duraklatınca beklesin)
         m.body.rotation.z = Math.min(0.12, b.deadT * 0.2);
         if (Math.random() < dt * 8) burst(b.pos.clone().setY(2.6), { n: 2, color: ['#57534e', '#a8a29e'], speed: 0.6, up: 3, gravity: -1, size: 0.3, life: 1.2 });
         return;
@@ -198,7 +199,6 @@ function defeat(b) {
     playSfx('boom', { vol: 0.9 }); addTrauma(0.9);
     floatText('TOMA SUSTU!', b.pos.clone().setY(4.5), '#fde047', 0.8, 2.5);
     G.projectiles.forEach(p => { if (p.type === 'water' || p.type === 'tgas') p.life = 0; });
-    setTimeout(() => G.onBossDefeated && G.onBossDefeated(), 3200);
 }
 
 // --- SU ---

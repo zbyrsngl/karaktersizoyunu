@@ -86,7 +86,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=6').then(() => {});
+            import('./player.js?v=7').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -100,7 +100,7 @@ export function runTest(name, H) {
         }
         if (name === 'attacks') {   // her kahramanın saldırısı: 1 düşman + oyuncu (bol canlı), olan biteni say
             const seen = {};
-            for (const skin of (G.level.id === 2 ? ['police', 'riot', 'gas', 'sniper'] : ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere'])) {
+            for (const skin of (G.level.id >= 2 ? ['police', 'riot', 'gas', 'sniper'] : ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere'])) {
                 const e = G.enemies.find(x => x.skin === skin && !x.dead);
                 G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') { x.st = 'idle'; x.cd = 99; } });
                 p.pos.set(e.pos.x, 0, e.pos.z - (skin === 'sniper' ? 12 : 6)); p.vel.set(0, 0, 0); p.hp = 99; p.maxHp = 99; p.invuln = 0; p.dead = false;
@@ -162,6 +162,37 @@ export function runTest(name, H) {
             p.pos.set(0, 0, -5); p.facing = 0; key('ShiftLeft', true); run(0.3);
             cam.yaw = Math.PI * 0.8; cam.pitch = 0.15; for (let i = 0; i < 40; i++) { step(STEP); updateCamera(STEP); cam.dist = 4; cam.yaw = Math.PI * 0.8; p.facing = 0; }
             p.m.root.rotation.y = 0; render(); say('kalkan=' + p.shield + ' big rotY=' + p.big.rotation.y.toFixed(2) + ' q=' + p.big.quaternion.toArray().map(v => v.toFixed(2)));
+        }
+        if (name === 'outro') {   // canavar yenilince bölüm sonu sahnesi ve karne
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -192); p.hp = 99; run(0.5);
+            const b = G.boss; b.hp = 1; b.door = 1; b.st = 'exposed'; b.t = 5;
+            G.onHammer(b.pos.clone().setY(1.2), p);
+            let t = 0; const seen = new Set();
+            const shotAt = +(new URLSearchParams(location.search).get('talk') || 0);
+            while (G.state !== 'won' && t < 25) {
+                step(STEP); updateCamera(STEP); t += STEP; if (G.outro) seen.add(G.outro.st); p.invuln = 1;
+                if (shotAt && G.outro && G.outro.st === 'talk' && G.outro.t > shotAt) { cam.yaw = Math.atan2(G.outro.m.root.position.x - p.pos.x, G.outro.m.root.position.z - p.pos.z) + Math.PI + 0.6; for (let i = 0; i < 30; i++) updateCamera(STEP); break; }
+            }
+            render(); say(`kasa öldü=${b.dead} sahne=${[...seen].join('/')} durum=${G.state} süre=${t.toFixed(1)}`);
+        }
+        if (name === 'kasa') {   // kapak kapalıyken zırhlı, açıkken vurulur
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -192); p.hp = 99; run(0.5);
+            const b = G.boss, hp0 = b.hp; b.st = 'walk'; b.door = 0;
+            G.onHammer(b.pos.clone().setY(1.2), p); const closed = b.hp;
+            b.door = 1; b.st = 'exposed'; b.t = 5; b.hurtT = 0;
+            G.onHammer(b.pos.clone().setY(1.2), p); const open = b.hp;
+            let seenRain = false, seenVolley = false; b.st = 'walk'; b.timer = 0;
+            for (let i = 0; i < 60 * 8; i++) { step(STEP); p.invuln = 1; G.projectiles.forEach(q => { if (q.type === 'rain') seenRain = true; if (q.type === 'dollar') seenVolley = true; }); }
+            say(`can ${hp0} → kapalı ${closed} → açık ${open} · yelpaze=${seenVolley} yağmur=${seenRain}`);
+        }
+        if (name === 'kasashot') {
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -192); p.hp = 99; run(0.5);
+            const b = G.boss; p.pos.set(b.pos.x + 1.5, 0, b.pos.z + 5.5); b.st = 'exposed'; b.t = 9; b.door = 1;
+            for (let i = 0; i < 40; i++) { step(STEP); p.invuln = 1; cam.yaw = 0.2; cam.pitch = 0.12; cam.dist = 6; updateCamera(STEP); }
+            render(); say('kasa');
         }
         if (name === 'tencere') {   // kalkanla karşılayınca sersemlemeli, can gitmemeli
             const e = G.enemies.find(x => x.kind === 'tencere');
