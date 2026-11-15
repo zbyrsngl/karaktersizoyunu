@@ -73,3 +73,15 @@ body.touch #cross, body.in-menu #cross { display: none; }
 
 /* Bölüm seçimi */
 #levels .chip { font-size: 12px; }
+
+/* 5. bölüm: telefon şarjı */
+#battery { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,.55); padding: 4px 10px; border-radius: 10px; pointer-events: none; font-size: 18px; }
+.bat-track { position: relative; width: 150px; height: 20px; border: 2px solid #fff; border-radius: 4px; }
+.bat-track::after { content: ''; position: absolute; right: -7px; top: 5px; width: 5px; height: 8px; background: #fff; }
+#bat-fill { height: 100%; width: 100%; background: #4ade80; }
+#bat-text { position: absolute; inset: 0; text-align: center; font: bold 13px Arial; line-height: 16px; color: #000; }
+#battery.low { animation: batblink .5s steps(2) infinite; }
+@keyframes batblink { 50% { opacity: .45; } }
+body.in-menu #battery { visibility: hidden; }
+#battery[hidden] { display: none; }   /* display:flex yukarıda; hidden özniteliği ancak böyle gizler */

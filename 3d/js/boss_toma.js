@@ -3,15 +3,15 @@
 // her üçüncü atış gaz kapsülü (bulut 3 sn kalır, içindekini yavaşlatır; baret + maske korur).
 // Yalnızca ÜSTÜNE ZIPLAYINCA hasar alır; canı yarıya inince öfkelenir (iki kat hızlı ateş, daha hızlı sürer).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=9';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=9';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=9';
-import { playSfx } from './audio.js?v=9';
-import { groundAt } from './physics.js?v=9';
-import { makeCloud } from './hazards.js?v=9';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=9';
-import { ARENA } from './world.js?v=9';
-import { showBossBar, setBossBar } from './boss_core.js?v=9';
+import { G, diff, addScore, toast } from './state.js?v=11';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=11';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=11';
+import { playSfx } from './audio.js?v=11';
+import { groundAt } from './physics.js?v=11';
+import { makeCloud } from './hazards.js?v=11';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=11';
+import { ARENA } from './world.js?v=11';
+import { showBossBar, setBossBar } from './boss_core.js?v=11';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
@@ -75,12 +75,12 @@ export function spawnToma(scene, pos) {
     };
     m.root.rotation.y = b.yaw;
     b.root = m.root; b.name = 'TOMA'; b.update = dt => updateToma(b, dt);
-    b.onHammer = onArmor; b.onAmmo = p => onArmor(p.pos);
-    b.reset = () => { b.hp = b.maxHp; b.pos.set(0, 0, -222); b.fireT = 2.5; setBossBar(b); };
+    b.onHammer = onArmor; b.onAmmo = p => shot(b, p.pos);   // balyoz işlemez; çay paketi az da olsa işler
+    b.reset = () => { b.ragedTxt = false; b.hp = b.maxHp; b.pos.set(0, 0, -222); b.fireT = 2.5; setBossBar(b); };
     G.boss = b;
     toast('BÖLÜM SONU CANAVARI: TOMA!', 2600, '#fca5a5');
     floatText('HER YER TAKSİM!', pos.clone().setY(4.2), '#f8fafc', 0.7, 2.2);
-    floatText('ÜSTÜNE ZIPLA!', pos.clone().setY(3.4), '#fde047', 0.5, 2.6);
+    floatText('ÜSTÜNE ZIPLA YA DA ÇAY AT!', pos.clone().setY(3.4), '#fde047', 0.5, 2.6);
     showBossBar(b);
     playSfx('boom', { rate: 0.6, vol: 0.4 });
     return b;
@@ -185,8 +185,22 @@ function stomp(b) {
     playSfx('hit', { rate: 0.7, vol: 0.9 }); addTrauma(0.5); G.hitStop = 0.1;
     spawnFx('pow', b.pos.clone().setY(ROOF + 0.6), 1.6);
     burst(b.pos.clone().setY(ROOF), { n: 12, color: ['#93c5fd', '#f8fafc', '#fde047'], speed: 4, up: 5 });
-    if (b.hp === Math.floor(b.maxHp / 2)) floatText('TOMA ÖFKELENDİ!', b.pos.clone().setY(4), '#ef4444', 0.6, 1.6);
+    rageCheck(b);
     if (b.hp <= 0) defeat(b);
+}
+// Çay paketi: her isabet çeyrek can (4 çay = 1 zıplama); üstüne zıplamak hâlâ en hızlı yol
+function shot(b, point) {
+    if (b.dead) return;
+    b.hp = Math.max(0, b.hp - 0.25);
+    setBossBar(b);
+    playSfx('hit', { rate: 1.3, vol: 0.45 });
+    spawnFx('hit', point.clone(), 0.9);
+    burst(point, { n: 5, color: ['#14532d', '#78350f', '#f8fafc'], speed: 2, up: 2, size: 0.08 });
+    rageCheck(b);
+    if (b.hp <= 0.001) defeat(b);
+}
+function rageCheck(b) {
+    if (!b.ragedTxt && b.hp <= b.maxHp / 2) { b.ragedTxt = true; floatText('TOMA ÖFKELENDİ!', b.pos.clone().setY(4), '#ef4444', 0.6, 1.6); }
 }
 
 function defeat(b) {

@@ -6,17 +6,17 @@
 // Canı yarıya inince "YA ALLAH!" diye öfkelenir (sfx/feto2_greet.mp3), hızlanır.
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=9';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=9';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=9';
-import { playSfx } from './audio.js?v=9';
-import { makeRing } from './hazards.js?v=9';
-import { limb, walkPose } from './models.js?v=9';
-import { groundAt } from './physics.js?v=9';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=9';
-import { ARENA } from './world.js?v=9';
-import { hitsPlayer, killProj } from './enemies.js?v=9';
-import { showBossBar, setBossBar } from './boss_core.js?v=9';
+import { G, diff, addScore, toast } from './state.js?v=11';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=11';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=11';
+import { playSfx } from './audio.js?v=11';
+import { makeRing } from './hazards.js?v=11';
+import { limb, walkPose } from './models.js?v=11';
+import { groundAt } from './physics.js?v=11';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=11';
+import { ARENA } from './world.js?v=11';
+import { hitsPlayer, killProj } from './enemies.js?v=11';
+import { showBossBar, setBossBar } from './boss_core.js?v=11';
 
 const TOP = 1.9, SKIN = '#e8c4a0';
 

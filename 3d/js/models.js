@@ -1,7 +1,7 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=9';
+import { box, mat, canvasTex, textSprite } from './util.js?v=11';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -16,7 +16,7 @@ const RECEP_HEAD = { x: 36, y: 8, w: 120, h: 162,
     clip: [[0,0],[194,0],[194,150],[150,152],[142,158],[132,163],[120,164],[108,168],[98,165],
            [88,160],[78,157],[68,154],[64,145],[63,132],[55,128],[0,128]] };
 let headTex = null;
-function getHeadTex() {
+export function getHeadTex() {
     if (headTex) return headTex;
     // Fotoğraf küçük (194x259): 4 kat büyütülür, keskinleştirilir (unsharp mask) ve hafif kontrast verilir
     const K = 4, c = document.createElement('canvas'); c.width = RECEP_HEAD.w * K; c.height = RECEP_HEAD.h * K;

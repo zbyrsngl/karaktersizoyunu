@@ -3,7 +3,7 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=9';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=11';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği
@@ -53,6 +53,15 @@ function textures() {
         g.fillStyle = '#f5f5f4'; g.fillRect(1, 1, 30, 30); g.fillRect(33, 33, 30, 30);
         g.fillStyle = '#d6d3d1'; g.fillRect(33, 1, 30, 30); g.fillRect(1, 33, 30, 30);
         g.strokeStyle = 'rgba(120,113,108,0.35)'; g.beginPath(); g.moveTo(4, 20); g.lineTo(26, 6); g.moveTo(38, 54); g.lineTo(60, 40); g.stroke();
+    }, { repeat: [1, 1], pixel: true });
+    TEX.sand = canvasTex(64, 64, (g) => {   // kum
+        g.fillStyle = '#d6c08a'; g.fillRect(0, 0, 64, 64);
+        for (let i = 0; i < 260; i++) { g.fillStyle = ['#c9b07a', '#e2cf9c', '#bfa46c'][i % 3]; g.fillRect(Math.random() * 64 | 0, Math.random() * 64 | 0, 2, 2); }
+    }, { repeat: [1, 1], pixel: true });
+    TEX.boards = canvasTex(64, 64, (g) => {   // tahta iskele / sahil yürüyüş yolu
+        g.fillStyle = '#7c5a3a'; g.fillRect(0, 0, 64, 64);
+        for (let i = 0; i < 4; i++) { g.fillStyle = ['#8b6a47', '#76563a', '#94724d', '#6f5134'][i]; g.fillRect(0, i * 16 + 1, 64, 14); }
+        g.fillStyle = '#3f2d1d'; for (let i = 0; i < 4; i++) g.fillRect((i * 23) % 64, i * 16 + 6, 2, 2);
     }, { repeat: [1, 1], pixel: true });
     TEX.brick = canvasTex(64, 64, (g) => {
         g.fillStyle = '#7c2d12'; g.fillRect(0, 0, 64, 64);
@@ -185,7 +194,17 @@ function makeTape() {   // kaset: turuncu etiketinde "SIFIRLA", makaralar (3. b�
     g.add(glowBall('#fbbf24', 0.6, 0.45));
     return g;
 }
-const ITEM_MAKERS = { fidan: makeFidan, mask: makeMask, bag: makeBag, shoebox: makeShoebox, heart: makeHeart, tape: makeTape };
+function makeCharger() {   // şarj aleti: beyaz fiş, kablo, yeşil şimşek (5. bölüm)
+    const g = new THREE.Group();
+    g.add(box(0.42, 0.42, 0.2, '#f8fafc', 0, 0.55, 0));
+    g.add(box(0.06, 0.18, 0.06, '#9ca3af', -0.1, 0.84, 0, false)); g.add(box(0.06, 0.18, 0.06, '#9ca3af', 0.1, 0.84, 0, false));
+    const bolt = new THREE.Shape(); bolt.moveTo(0.03, 0.15); bolt.lineTo(-0.09, -0.01); bolt.lineTo(0, -0.01); bolt.lineTo(-0.03, -0.15); bolt.lineTo(0.09, 0.03); bolt.lineTo(0, 0.03); bolt.closePath();
+    const b = new THREE.Mesh(new THREE.ShapeGeometry(bolt), new THREE.MeshBasicMaterial({ color: '#16a34a', side: THREE.DoubleSide })); b.position.set(0, 0.55, 0.11); g.add(b);
+    const cable = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 5, 12, Math.PI * 1.2), mat('#f8fafc')); cable.position.set(0.1, 0.3, 0); g.add(cable);
+    g.add(glowBall('#4ade80', 0.6, 0.55));
+    return g;
+}
+const ITEM_MAKERS = { fidan: makeFidan, mask: makeMask, bag: makeBag, shoebox: makeShoebox, heart: makeHeart, tape: makeTape, charger: makeCharger };
 export function makeItem(kind) { return ITEM_MAKERS[kind](); }
 
 // L: bölüm verisi (level1.js, level2.js)

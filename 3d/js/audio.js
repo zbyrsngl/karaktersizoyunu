@@ -13,7 +13,9 @@ const FILES = {
     hasret: ['../sfx/hasret.mp3'],            // 4. bölüm: FETÖ gelince HIRHIZ "Hocam gel, bu hasret bitsin!"
     yaallah: ['../sfx/feto2_greet.mp3'],      // FETÖ öfkelenince "Ya Allah!"
     savci: ['../sfx/savci.mp3'],              // 4. bölüm sonu: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!"
-    peygamber: ['../sfx/sonpeygamber.mp3']    // 4. bölüm sonu: kutlamaya gelen adam
+    peygamber: ['../sfx/sonpeygamber.mp3'],   // 4. bölüm sonu: kutlamaya gelen adam
+    lutuf: ['../sfx/lutuf.mp3'],              // 5. bölüm sonu: HIRHIZ "15 Temmuz Allah'ın bir lütfü!"
+    granny: ['../sfx/gotununkili.mp3']        // 1. bölüm sonu: koşarak gelen teyzelerin tezahüratı
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 

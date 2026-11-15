@@ -4,11 +4,11 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G } from './state.js?v=9';
-import { limb, walkPose, sharpen } from './models.js?v=9';
-import { playSfx } from './audio.js?v=9';
-import { box, mat, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=9';
-import { ARENA } from './world.js?v=9';
+import { G } from './state.js?v=11';
+import { limb, walkPose, sharpen } from './models.js?v=11';
+import { playSfx } from './audio.js?v=11';
+import { box, mat, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=11';
+import { ARENA } from './world.js?v=11';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
 const HEADS = {};
@@ -138,6 +138,102 @@ function walkerOutro(scene, { build, sfx, text, pre }) {
         return false;
     };
     o.remove = () => { setBubble(null); if (o.m) scene.remove(o.m.root); };
+    return o;
+}
+
+// --- 1. BÖLÜM SONU: BAŞÖRTÜLÜ TEYZELER ---
+// İki yandan koşarak gelirler, HIRHIZ'ın çevresinde dururlar; zıplayıp terlik sallayarak tezahürat ederler (2 kez).
+const GRANNY_LOOKS = [
+    { scarf: '#f8fafc', dots: '#60a5fa', cardigan: '#7f1d1d', skirt: '#1e3a8a' },
+    { scarf: '#fde68a', dots: '#b45309', cardigan: '#14532d', skirt: '#3f3f46' },
+    { scarf: '#fbcfe8', dots: '#be185d', cardigan: '#78350f', skirt: '#4c1d95' },
+    { scarf: '#bbf7d0', dots: '#15803d', cardigan: '#1e3a8a', skirt: '#7f1d1d' },
+    { scarf: '#e9d5ff', dots: '#7e22ce', cardigan: '#57534e', skirt: '#0f766e' },
+    { scarf: '#fed7aa', dots: '#c2410c', cardigan: '#334155', skirt: '#713f12' }
+];
+function buildGranny(L, glasses) {
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+    const legL = limb(body, -0.08, 0.42, 0, 0.1, 0.4, 0.1, '#b08968', '#1c1917');
+    const legR = limb(body, 0.08, 0.42, 0, 0.1, 0.4, 0.1, '#b08968', '#1c1917');
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.32, 0.62, 10), mat(L.skirt)); skirt.position.y = 0.6; skirt.castShadow = true; body.add(skirt);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; body.add(box(0.04, 0.04, 0.02, '#e5e7eb', Math.sin(a) * 0.27, 0.45 + (i % 2) * 0.18, Math.cos(a) * 0.27, false)); }   // puanlar
+    const torso = new THREE.Group(); torso.position.y = 0.9; torso.rotation.x = 0.12; body.add(torso);   // hafif kambur
+    torso.add(box(0.4, 0.42, 0.28, L.cardigan, 0, 0.21, 0));
+    [0.32, 0.22, 0.12].forEach(y => torso.add(box(0.03, 0.03, 0.02, '#e7e5e4', 0.06, y, 0.145, false)));
+    const head = new THREE.Group(); head.position.y = 0.46; head.rotation.x = -0.12; torso.add(head);
+    const scarf = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), mat(L.scarf)); scarf.scale.set(1, 1.1, 1); scarf.position.y = 0.17; head.add(scarf);
+    const tail = box(0.16, 0.22, 0.06, L.scarf, 0, 0.02, -0.15); tail.rotation.x = 0.3; head.add(tail);
+    for (let i = 0; i < 6; i++) { const a = i * 1.1; head.add(box(0.03, 0.03, 0.02, L.dots, Math.sin(a) * 0.17, 0.2 + (i % 3) * 0.05, Math.cos(a) * 0.17 - 0.02, false)); }
+    head.add(box(0.2, 0.22, 0.06, '#f1c9a5', 0, 0.15, 0.13));                                     // yüz
+    head.add(box(0.24, 0.05, 0.06, L.scarf, 0, 0.27, 0.13, false));                               // alın bandı
+    head.add(box(0.06, 0.06, 0.04, L.scarf, 0, 0.02, 0.15, false));                               // çene düğümü
+    head.add(box(0.05, 0.015, 0.02, '#7c5a3c', -0.05, 0.18, 0.165, false)); head.add(box(0.05, 0.015, 0.02, '#7c5a3c', 0.05, 0.18, 0.165, false));
+    head.add(box(0.035, 0.035, 0.03, '#e0a98a', 0, 0.14, 0.175, false));                          // burun
+    const mouth = box(0.06, 0.02, 0.02, '#4a1d0f', 0, 0.09, 0.165, false); head.add(mouth);
+    if (glasses) [-0.05, 0.05].forEach(x => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 4, 10), mat('#44403c')); r.position.set(x, 0.18, 0.17); head.add(r); });
+    const armL = limb(torso, -0.24, 0.38, 0, 0.09, 0.36, 0.1, L.cardigan);
+    const armR = limb(torso, 0.24, 0.38, 0, 0.09, 0.36, 0.1, L.cardigan);
+    armL.add(box(0.08, 0.08, 0.08, '#f1c9a5', 0, -0.38, 0, false)); armR.add(box(0.08, 0.08, 0.08, '#f1c9a5', 0, -0.38, 0, false));
+    const slipper = new THREE.Group(); slipper.position.y = -0.42; slipper.visible = false; armR.add(slipper);   // terlik
+    slipper.add(box(0.1, 0.26, 0.04, '#a16207', 0, -0.1, 0)); slipper.add(box(0.11, 0.04, 0.06, '#f472b6', 0, -0.04, 0.02, false));
+    return { root, body, legL, legR, armL, armR, torso, head, mouth, slipper };
+}
+export function grannyOutro(scene) {
+    const p = G.player, cx = p.pos.x, cz = p.pos.z;
+    const gs = GRANNY_LOOKS.map((L, i) => {
+        const side = i % 2 ? 1 : -1, row = Math.floor(i / 2);
+        const m = buildGranny(L, i % 3 === 0);
+        m.root.position.set(clamp(cx + side * (11 + row * 2), -ARENA.hw + 0.8, ARENA.hw - 0.8), 0, clamp(cz - 1.5 - row * 1.2, ARENA.z1 + 1, ARENA.z0 - 1));
+        scene.add(m.root);
+        // HIRHIZ'ın önünde yarım daire
+        const a = side * (0.42 + row * 0.5), r = 2.7 + row * 0.3;
+        const goal = new THREE.Vector3(clamp(cx + Math.sin(Math.PI + a) * r, -ARENA.hw + 0.8, ARENA.hw - 0.8), 0, cz + Math.cos(Math.PI + a) * r);
+        return { m, goal, st: 'run', phase: i * 1.3, speed: 4.2 + row * 0.5, facing: side < 0 ? Math.PI / 2 : -Math.PI / 2 };
+    });
+    const o = { st: 'run', t: 0, chants: 2, nextChant: 0.9, endAt: Infinity };
+    o.update = (dt) => {
+        o.t += dt;
+        gs.forEach(g => {
+            const pos = g.m.root.position;
+            if (g.st === 'run') {
+                const dx = g.goal.x - pos.x, dz = g.goal.z - pos.z, d = Math.hypot(dx, dz);
+                if (d > 0.08) {
+                    const s = Math.min(d, g.speed * dt); pos.x += dx / d * s; pos.z += dz / d * s;
+                    g.facing = dampAngle(g.facing, Math.atan2(dx, dz), 10, dt);
+                    g.phase += dt * 14; walkPose(g.m, g.phase, 1);
+                    g.m.armL.rotation.x = Math.sin(g.phase) * 0.6; g.m.armR.rotation.x = -Math.sin(g.phase) * 0.6;
+                } else { g.st = 'party'; g.m.slipper.visible = true; walkPose(g.m, 0, 0); }
+            } else {   // zıplar, terliği havada sallar, bağırır
+                g.phase += dt * 9;
+                g.facing = dampAngle(g.facing, Math.atan2(cx - pos.x, cz - pos.z), 6, dt);
+                pos.y = Math.abs(Math.sin(g.phase)) * 0.28;
+                g.m.armR.rotation.set(-2.6 + Math.sin(g.phase * 2) * 0.45, 0, 0);
+                g.m.armL.rotation.set(-0.4, 0, -0.4);
+                g.m.mouth.scale.y = 0.02 * (2 + Math.abs(Math.sin(g.phase * 2)) * 3);   // box(): asıl yükseklikle çarp
+            }
+            g.m.root.rotation.y = g.facing;
+        });
+        // Tezahürat iki kez; bitince bölüm biter
+        if (o.chants > 0 && o.t >= o.nextChant) {
+            o.chants--;
+            const d = playSfx('granny', { vol: 1 }) || 1.6;
+            o.nextChant = o.t + d + 0.5;
+            if (o.chants === 0) o.endAt = o.t + d + 1.0;
+        }
+        return o.t > Math.max(3.5, o.endAt);
+    };
+    o.remove = () => gs.forEach(g => scene.remove(g.m.root));
+    return o;
+}
+
+// Yalnızca HIRHIZ konuşur (başında balon), sonra bölüm biter (5. bölüm: "15 Temmuz Allah'ın bir lütfü!")
+export function selfOutro(sfx, text) {
+    const p = G.player;
+    const o = { st: 'talk', t: 0 };
+    o.len = (playSfx(sfx, { vol: 1 }) || 3) + 0.8;
+    o.bubble = bubble(text); p.m.root.add(o.bubble);
+    o.update = (dt) => { o.t += dt; if (o.t > o.len) { o.st = 'done'; return true; } return false; };
+    o.remove = () => { if (o.bubble) { o.bubble.parent && o.bubble.parent.remove(o.bubble); disposeSprite(o.bubble); o.bubble = null; } };
     return o;
 }
 

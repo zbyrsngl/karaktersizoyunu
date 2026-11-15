@@ -4,13 +4,13 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { walkPose, nameLabel } from './models.js?v=9';
-import { G, diff, addScore } from './state.js?v=9';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=9';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=9';
-import { playSfx } from './audio.js?v=9';
-import { groundAt } from './physics.js?v=9';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=9';
+import { walkPose, nameLabel } from './models.js?v=11';
+import { G, diff, addScore } from './state.js?v=11';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=11';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=11';
+import { playSfx } from './audio.js?v=11';
+import { groundAt } from './physics.js?v=11';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=11';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -149,8 +149,9 @@ export function damageEnemy(e, power = 2, how = 'hammer') {
     e.T.onDeath && e.T.onDeath(e);
     G.kills++;
     addScore(e.T.score || 3000);
-    const bribed = how === 'ammo' && G.level.ammo === 'bribe' && e.T.bribable;
-    floatText(bribed ? 'DOSYA KAPANDI!' : G.level.cry, e.pos.clone().setY(e.pos.y + 2.5), bribed ? '#86efac' : e.T.arrest ? '#fca5a5' : '#f8fafc', 0.5);
+    const bribed = (how === 'ammo' && G.level.ammo === 'bribe' && e.T.bribable) || e.T.alwaysLeave;   // tank her durumda teslim olur
+    const txt = e.T.deathText || (bribed ? 'DOSYA KAPANDI!' : G.level.cry);
+    floatText(txt, e.pos.clone().setY(e.pos.y + 2.5), bribed ? '#86efac' : e.T.arrest ? '#fca5a5' : '#f8fafc', 0.5);
     if (bribed) { e.leave = true; resetPose(e); e.m.armR.rotation.x = -2.6; burst(e.pos.clone().setY(e.pos.y + 2), { n: 8, color: ['#22c55e', '#16a34a'], speed: 2, up: 3 }); }
     else if (e.T.arrest) arrest(e);   // 4. bölüm: darbeci asker silahını bırakır, elleri arkadan kelepçelenir, götürülür
     else spawnFx('poof', e.pos.clone().setY(e.pos.y + 0.05), 1.6);
