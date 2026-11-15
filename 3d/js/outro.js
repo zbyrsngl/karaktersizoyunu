@@ -4,12 +4,12 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=15';
-import { burst } from './fx.js?v=15';
-import { limb, walkPose, sharpen } from './models.js?v=15';
-import { playSfx } from './audio.js?v=15';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=15';
-import { ARENA } from './world.js?v=15';
+import { G, toast } from './state.js?v=16';
+import { burst } from './fx.js?v=16';
+import { limb, walkPose, sharpen } from './models.js?v=16';
+import { playSfx } from './audio.js?v=16';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=16';
+import { ARENA } from './world.js?v=16';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre)
 const HEADS = {};
@@ -46,8 +46,10 @@ function suitMan({ suit, suitD, shirt, tie, tex, faceW, faceH, pin }) {
     const armR = limb(torso, 0.36, 0.6, 0, 0.15, 0.5, 0.16, suit);
     armL.add(box(0.11, 0.11, 0.11, '#e0a98a', 0, -0.53, 0, false)); armR.add(box(0.11, 0.11, 0.11, '#e0a98a', 0, -0.53, 0, false));
     const faceGroup = new THREE.Group(); faceGroup.position.y = 0.66; torso.add(faceGroup);
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(faceW, faceH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
-    face.position.y = faceH * 0.45; faceGroup.add(face);
+    if (tex) {   // fotoğraf kafa; yoksa kafayı çağıran çizer
+        const face = new THREE.Mesh(new THREE.PlaneGeometry(faceW, faceH), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
+        face.position.y = faceH * 0.45; faceGroup.add(face);
+    }
     return { root, body, legL, legR, armL, armR, torso, faceGroup };
 }
 
@@ -78,6 +80,58 @@ function buildPeygamber() {
         m.armR.rotation.set(-2.85 + pump * 0.2, 0, -0.15);      // havada, yumruğunu sallar
         m.armL.rotation.set(-2.1, 0, 0.7);                      // mikrofon çenesinde
         m.faceGroup.rotation.z = talking ? Math.sin(t * 9) * 0.06 - 0.03 : 0;
+    };
+    return m;
+}
+
+// Egemen Bağış'a benzeyen karikatür (2. bölüm sonu): lacivert takım, AB bayrağı rozeti, yuvarlak dolgun yüz,
+// geriye taranmış koyu saç (alnı açık), kalın kaşlar, kocaman gülümseme. Elinde küçük AB bayrağı; konuşurken alkışlar, bayrak sallar.
+function buildEgemen() {
+    const SKIN = '#e2a882', SKIND = '#cf916b';
+    const m = suitMan({ suit: '#1e2a4a', suitD: '#16203a', shirt: '#f8fafc', tie: '#2563eb', faceW: 0, faceH: 0 });
+    const pin = new THREE.Group(); pin.position.set(-0.19, 0.5, 0.18); m.torso.add(pin);   // AB rozeti
+    pin.add(box(0.08, 0.06, 0.015, '#1d4ed8', 0, 0, 0, false));
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; pin.add(box(0.01, 0.01, 0.01, '#facc15', Math.cos(a) * 0.022, Math.sin(a) * 0.018, 0.01, false)); }
+    const h = m.faceGroup;
+    h.add(box(0.16, 0.08, 0.14, SKIN, 0, 0.03, 0, false));                                     // boyun
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), mat(SKIN)); skull.scale.set(1.08, 1.12, 1); skull.position.y = 0.26; skull.castShadow = true; h.add(skull);
+    [-1, 1].forEach(sx => {
+        const ch = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), mat(SKIN)); ch.position.set(sx * 0.12, 0.17, 0.11); h.add(ch);   // dolgun yanaklar
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), mat(SKIND)); ear.scale.set(0.6, 1, 0.8); ear.position.set(sx * 0.215, 0.26, 0); h.add(ear);
+        h.add(box(0.1, 0.028, 0.03, '#1c1917', sx * 0.075, 0.33, 0.19, false));               // kalın kaşlar
+        h.add(box(0.06, 0.016, 0.02, '#1c1917', sx * 0.07, 0.285, 0.196, false));              // gülerken kısılmış gözler
+        h.add(box(0.05, 0.03, 0.02, '#f0b79a', sx * 0.15, 0.2, 0.17, false));                  // al yanak
+    });
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.212, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.4), mat('#1c1917'));
+    hair.scale.set(1.08, 1.12, 1); hair.position.set(0, 0.27, -0.025); hair.rotation.x = -0.38; h.add(hair);   // geriye taralı, alın açık
+    [-1, 1].forEach(sx => h.add(box(0.03, 0.13, 0.12, '#1c1917', sx * 0.2, 0.31, -0.04, false)));   // şakaklar
+    h.add(box(0.012, 0.012, 0.16, '#3f3a36', -0.07, 0.43, 0.02, false));                       // yan ayrım
+    h.add(box(0.06, 0.08, 0.06, SKIND, 0, 0.24, 0.205, false));                                // burun
+    const mouth = new THREE.Group(); mouth.position.set(0, 0.155, 0.19); h.add(mouth);       // kocaman gülümseme
+    mouth.add(box(0.15, 0.045, 0.03, '#7f1d1d', 0, 0, 0, false));
+    mouth.add(box(0.13, 0.022, 0.032, '#f8fafc', 0, 0.008, 0.002, false));
+    [-1, 1].forEach(sx => { const c = box(0.04, 0.02, 0.03, '#7f1d1d', sx * 0.085, 0.015, 0, false); c.rotation.z = sx * 0.6; mouth.add(c); });
+    h.add(box(0.12, 0.05, 0.05, SKIN, 0, 0.09, 0.15, false));                                  // çene
+    const flag = new THREE.Group(); flag.position.y = -0.56; m.armR.add(flag);              // küçük AB bayrağı
+    flag.add(box(0.025, 0.5, 0.025, '#a8a29e', 0, 0.2, 0));
+    const cloth = new THREE.Group(); cloth.position.set(0, 0.38, 0); flag.add(cloth);
+    cloth.add(box(0.3, 0.2, 0.012, '#1d4ed8', 0.16, 0, 0, false));
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; cloth.add(box(0.018, 0.018, 0.02, '#facc15', 0.16 + Math.cos(a) * 0.06, Math.sin(a) * 0.06, 0, false)); }
+    m.turnMax = 0.8;
+    m.pose = (t, talking, walking) => {
+        if (walking) {
+            m.armL.rotation.set(Math.sin(t * 8) * 0.4, 0, 0);
+            m.armR.rotation.set(-2.5 + Math.sin(t * 8) * 0.15, 0, 0.45);                     // yürürken bayrak havada
+            cloth.rotation.y = Math.sin(t * 6) * 0.5; mouth.scale.y = 1; return;
+        }
+        if (talking) {   // bayrağı sallar, öbür eliyle göğsüne vurup alkışlar gibi
+            const w = Math.sin(t * 10);
+            m.armR.rotation.set(-2.6 + w * 0.2, 0, 0.55 + w * 0.2);   // kol yana açık: yüzü kapatmasın
+            m.armL.rotation.set(-0.7 - Math.abs(Math.sin(t * 7)) * 0.35, 0, -0.35);   // yumruğunu sallar
+            cloth.rotation.y = w * 0.6;
+            mouth.scale.y = 1 + Math.abs(Math.sin(t * 13)) * 1.6;
+            m.faceGroup.rotation.z = Math.sin(t * 5) * 0.06;
+        } else { m.armR.rotation.set(-2.4, 0, 0.45); m.armL.rotation.set(0, 0, 0.1); mouth.scale.y = 1; m.faceGroup.rotation.z = 0; }
     };
     return m;
 }
@@ -135,7 +189,8 @@ function walkerOutro(scene, { build, sfx, text, pre }) {
         } else if (o.st === 'done') return true;
         m.root.rotation.y = o.facing;
         const c = G.camera.position;
-        m.faceGroup.rotation.y = Math.atan2(c.x - pos.x, c.z - pos.z) - o.facing;
+        const turn = Math.atan2(Math.sin(Math.atan2(c.x - pos.x, c.z - pos.z) - o.facing), Math.cos(Math.atan2(c.x - pos.x, c.z - pos.z) - o.facing));
+        m.faceGroup.rotation.y = m.turnMax ? clamp(turn, -m.turnMax, m.turnMax) : turn;   // çizilmiş kafa boynu kırmasın
         return false;
     };
     o.remove = () => { setBubble(null); if (o.m) scene.remove(o.m.root); };
@@ -238,6 +293,10 @@ export function selfOutro(sfx, text) {
     return o;
 }
 
+// 2. bölüm sonu: dörtlü çete kurtuldu, Egemen Bağış'a benzeyen karakter gelip HIRHIZ'ı kutlar (makara sesinin ilk 10 sn'si)
+export function egemenOutro(scene) {
+    return walkerOutro(scene, { build: buildEgemen, sfx: 'makara', text: 'Tebrikler HIRHIZ! Dörtlü çete kurtuldu!' });
+}
 export function cengizOutro(scene) {
     return walkerOutro(scene, { build: buildCengiz, sfx: 'cengiz', text: 'Bu milletin a. koyacağız' });
 }

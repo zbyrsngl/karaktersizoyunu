@@ -3,7 +3,7 @@ let ac = null, master = null, musicGain = null, voiceBus = null, muted = false;
 const BUF = {}, GAIN = {};
 // Konuşmalar: dosyalar çok farklı seviyede kaydedilmiş (bazısı -35 dB), yüklenirken aynı seviyeye getirilir
 // ve çalarken müzik kısılır (ducking).
-const VOICES = new Set(['saygili', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'granny', 'hashasi', 'selo', 'ekrem']);
+const VOICES = new Set(['saygili', 'makara', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'granny', 'hashasi', 'selo', 'ekrem']);
 const VOICE_RMS = 0.28;     // hedef ortalama seviye (~ -11 dB; tepeleri sıkıştırıcı tutar)
 const MUSIC_VOL = 0.35, MUSIC_DUCK = 0.08;
 let duckUntil = 0;
@@ -29,7 +29,8 @@ const FILES = {
     boom: ['../explosion.wav'],
     ouch: ['../sfx/ahh.mp3'],
     cry: ['../sfx/uufff.mp3'],
-    saygili: ['../sfx/saygili_giris.mp3'],   // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
+    saygili: ['../sfx/saygili_giris.mp3'],
+    makara: ['../sfx/makara_giris.mp3'],      // 2. bölüm sonu: Egemen Bağış'a benzeyen karakter kutlar (makara.mp3'ün ilk 10 sn'si)   // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
     sifirla: ['../sfx/sifirla.mp3'],          // 3. bölüm: kaset alınınca ve kasa sıfırlarken
     cengiz: ['../sfx/milletinminakoycaz.mp3'], // 3. bölüm sonu: Cengiz
     hasret: ['../sfx/hasret.mp3'],            // 4. bölüm: FETÖ gelince HIRHIZ "Hocam gel, bu hasret bitsin!"

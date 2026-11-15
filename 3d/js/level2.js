@@ -3,11 +3,12 @@
 // "son dakika" ekranları, muhabirler, ayakkabı kutusu yığınları. Yolun üstünde iki asma köprü: üstlerinde SINAYPIRCI.
 // 17/25 polisleri (police.js) rüşvetle susturulur; ayakkabı kutuları toplanır; kapıdan geçince canavar SAYGILI (boss_saygili.js).
 import * as THREE from 'three';
-import { G } from './state.js?v=15';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=15';
-import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=15';
-import { spawnSaygili } from './boss_saygili.js?v=15';
-import './police.js?v=15';
+import { G } from './state.js?v=16';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=16';
+import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=16';
+import { spawnSaygili } from './boss_saygili.js?v=16';
+import { egemenOutro } from './outro.js?v=16';
+import './police.js?v=16';
 
 const BRIDGES = [-52, -122];                 // köprülerin z konumu; tabliye 2.3–2.6 m (altından yürünür, üstüne zıplanır)
 const DECK_LO = 2.3, DECK_HI = 2.6;
@@ -50,6 +51,7 @@ export const LEVEL2 = {
     target: 11, cry: 'GÖZALTI İPTAL!', ammo: 'bribe', ammoName: 'RÜŞVET',
     gateWho: 'POLİS', gateColor: '#1e3a8a', gateOpen: "11 POLİS SUSTU! KAPI AÇILDI — SAYGILI'YA GİT!",
     boss: (scene) => spawnSaygili(scene, new THREE.Vector3(0, 0, -218)),
+    outro: (scene) => egemenOutro(scene),   // Egemen Bağış'a benzeyen karakter gelip kutlar
     wonTitle: 'BÖLÜM 2 TAMAM!', wonNote: "4'lü çete ve Bilal kurtuldu, dosya kapandı!",
     buildGate(g) {   // kırmızı-beyaz polis bariyerleri, iki kat
         const stripe = canvasTex(64, 16, (c) => { for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#f8fafc' : '#dc2626'; c.fillRect(i * 8, 0, 8, 16); } }, { pixel: true });

@@ -32,7 +32,7 @@ export function runTest(name, H) {
             res.push(`${G.level.id}:pad${vis('pad')}`); say(res.join(' '));
         }
         if (name === 'ses') {   // konuşma seslerinin yükseltme katsayıları ve müziğin Web Audio'dan geçmesi
-            import('./audio.js?v=15').then(A => { A.unlockAudio(); setTimeout(() => {
+            import('./audio.js?v=16').then(A => { A.unlockAudio(); setTimeout(() => {
                 const D = A.audioDebug(), r = [];
                 for (const k of ['hasret', 'yaallah', 'savci', 'peygamber', 'cengiz', 'selo', 'saygili', 'ekrem']) r.push(k + '=' + (D.gains[k] ? D.gains[k][0].toFixed(2) : '-'));
                 say('müzik=' + D.music + ' ' + r.join(' '));
@@ -112,7 +112,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=15').then(() => {});
+            import('./player.js?v=16').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -204,7 +204,13 @@ export function runTest(name, H) {
                 if (party && G.outro && G.outro.t > party) { cam.yaw = 0.4; cam.pitch = 0.25; for (let i = 0; i < 40; i++) { updateCamera(STEP); cam.dist = 5.5; } break; }
                 if (shotAt && G.outro && G.outro.st === 'talk' && G.outro.t > shotAt) { cam.yaw = Math.atan2(G.outro.m.root.position.x - p.pos.x, G.outro.m.root.position.z - p.pos.z) + Math.PI + 0.6; for (let i = 0; i < 30; i++) { updateCamera(STEP); if (new URLSearchParams(location.search).get('near')) { cam.dist = 3.2; cam.pitch = 0.05; } } break; }
             }
-            render(); say(`kasa öldü=${b.dead} sahne=${[...seen].join('/')} durum=${G.state} süre=${t.toFixed(1)}`);
+            const yuz = new URLSearchParams(location.search).get('yuz');
+            if (yuz && G.outro && G.outro.m) {   // karakterin yüzüne yakın çekim (yuz=açı)
+                const r = G.outro.m.root, f = r.rotation.y + (+yuz || 0), hp = r.position.clone().setY(1.55 + (+(new URLSearchParams(location.search).get('yuk')) || 0));
+                G.camera.position.set(hp.x + Math.sin(f) * (+(new URLSearchParams(location.search).get('uzak')) || 2.4), 1.75 + (+(new URLSearchParams(location.search).get('yuk')) || 0), hp.z + Math.cos(f) * (+(new URLSearchParams(location.search).get('uzak')) || 2.4)); G.camera.lookAt(hp);
+                const R = H.renderer || null; if (R) R.render(G.scene, G.camera); else render();
+            } else render();
+            say(`kasa öldü=${b.dead} sahne=${[...seen].join('/')} durum=${G.state} süre=${t.toFixed(1)}`);
         }
         if (name === 'kasa') {   // kapak kapalıyken zırhlı, açıkken vurulur
             G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
@@ -225,7 +231,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=15').then(async o => {
+            import('./outro.js?v=16').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));

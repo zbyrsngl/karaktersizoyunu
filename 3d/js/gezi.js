@@ -6,14 +6,14 @@
 //   Tencere Tava (3 can): kalkan hücumu ya da tencereye vurup yerde yayılan ses dalgası (üstünden zıpla)
 //   Duran Adam: hiç kıpırdamaz, hiçbir şey işlemez
 import * as THREE from 'three';
-import { buildHero, walkPose } from './models.js?v=15';
-import { G, diff } from './state.js?v=15';
-import { hurtPlayer, blockFx } from './player.js?v=15';
-import { burst, floatText, addTrauma } from './fx.js?v=15';
-import { playSfx, beep } from './audio.js?v=15';
-import { makeCloud, makeFire, makeRing } from './hazards.js?v=15';
-import { angDiff, dampAngle, textSprite, mat } from './util.js?v=15';
-import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, throwLob } from './enemies.js?v=15';
+import { buildHero, walkPose } from './models.js?v=16';
+import { G, diff } from './state.js?v=16';
+import { hurtPlayer, blockFx } from './player.js?v=16';
+import { burst, floatText, addTrauma } from './fx.js?v=16';
+import { playSfx, beep } from './audio.js?v=16';
+import { makeCloud, makeFire, makeRing } from './hazards.js?v=16';
+import { angDiff, dampAngle, textSprite, mat } from './util.js?v=16';
+import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, throwLob } from './enemies.js?v=16';
 
 const SLOGANS = ['HER YER TAKSİM!', 'DİRENİŞ!', 'ÇAPULCUYUZ!', 'HÜKÜMET İSTİFA!'];
 const FLARE_GEO = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6), CAN_GEO = new THREE.CylinderGeometry(0.09, 0.09, 0.32, 8);
