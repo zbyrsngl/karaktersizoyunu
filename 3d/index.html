@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>HIRHIZ 3D</title>
+    <link rel="stylesheet" href="style.css?v=1">
+    <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+</head>
+<body class="in-menu">
+<canvas id="c"></canvas>
+
+<!-- Oyun bilgileri -->
+<div id="hud">
+    <div class="hud-l">
+        <div id="hearts"></div>
+        <div class="hud-row">💰 <span id="score">0</span></div>
+    </div>
+    <div class="hud-r">
+        <div class="hud-row">✊ <span id="kills">0 / 11</span></div>
+        <div class="hud-row">🌱 <span id="fidans">0 / 10</span></div>
+    </div>
+</div>
+<div id="boss-bar" hidden><div class="boss-name">TOMA</div><div class="boss-track"><div id="boss-fill"></div></div></div>
+<div id="toast"></div>
+<div id="hint"></div>
+<div id="fps" hidden></div>
+<button id="pause-btn" type="button" aria-label="duraklat">⏸</button>
+
+<!-- Dokunmatik kontroller -->
+<div id="joy"><div id="joy-knob"></div></div>
+<div id="pad">
+    <div class="pb pt" id="b-shield"><b>△</b>KALKAN</div>
+    <div class="pb pl" id="b-bribe"><b>□</b>RÜŞVET</div>
+    <div class="pb pr" id="b-hammer"><b>○</b>BALYOZ</div>
+    <div class="pb pd" id="b-jump"><b>✕</b>ZIPLA</div>
+</div>
+
+<!-- Menüler -->
+<div id="menu" class="panel">
+    <div class="card">
+        <h1>HIRHIZ <span>3D</span></h1>
+        <p class="sub">1. BÖLÜM · GEZİ PARKI</p>
+        <p class="desc">11 kişiyi yen, barikatı aç, TOMA'nın üstüne zıpla!</p>
+        <div id="diff" class="row"></div>
+        <button id="start" class="big">OYUNU BAŞLAT</button>
+        <div class="row"><button class="chip snd"></button><a class="chip" href="../index.html">← 2D OYUN</a></div>
+        <p id="menu-best" class="small"></p>
+        <p class="small">Bilgisayar: WASD yürü · fare kamera · Boşluk zıpla · F balyoz · Shift kalkan · E rüşvet<br>Telefon: solda yürü, sağda sürükle kamera, düğmeler sağ altta</p>
+        <p class="small dim">Deneme sürümü: şimdilik yalnızca 1. bölüm 3D. Öteki bölümler sırayla gelecek.</p>
+    </div>
+</div>
+<div id="pause" class="panel" hidden>
+    <div class="card">
+        <h2>DURAKLATILDI</h2>
+        <button id="resume" class="big">DEVAM ET</button>
+        <button id="restart" class="mid">↻ BÖLÜMÜ BAŞTAN BAŞLAT (R)</button>
+        <div class="row"><button class="chip snd"></button><button class="chip to-menu">ANA MENÜ</button></div>
+    </div>
+</div>
+<div id="dead" class="panel" hidden>
+    <div class="card">
+        <h2 class="red">YAKALANDIN!</h2>
+        <p class="desc">Canın bitti.</p>
+        <button id="retry" class="big">TEKRAR DENE</button>
+        <button id="dead-restart" class="mid">↻ BAŞTAN BAŞLAT</button>
+        <div class="row"><button class="chip to-menu">ANA MENÜ</button></div>
+    </div>
+</div>
+<div id="won" class="panel" hidden>
+    <div class="card">
+        <h2 class="green">BÖLÜM 1 TAMAM!</h2>
+        <p class="desc">Park boşaltıldı, TOMA sustu!</p>
+        <div id="won-stars" class="stars"></div>
+        <div class="score-big">💰 <span id="won-score"></span></div>
+        <p id="won-detail" class="small"></p>
+        <p id="won-best" class="small gold"></p>
+        <button id="again" class="big">TEKRAR OYNA</button>
+        <div class="row"><button class="chip to-menu">ANA MENÜ</button><a class="chip" href="../index.html">← 2D OYUN</a></div>
+        <p class="small dim">2. bölüm 3D'de yakında.</p>
+    </div>
+</div>
+
+<script src="../js/fx_sheets.js?v=42"></script>
+<script type="module" src="js/main.js?v=1"></script>
+</body>
+</html>
