@@ -4,16 +4,16 @@
 //   VRRROOOM! (her üçüncü): titreyerek hazırlanır, sonra dümdüz hızla ileri sürer (yolundan çekil ya da kalkanla karşıla)
 // Hasar: üstüne zıplamak 2, balyoz 1, rüşvet 1. Yenilince kapağından beyaz bayrak çıkar: TESLİM!
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=14';
-import { hurtPlayer, blockFx, bouncePlayer } from './player.js?v=14';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=14';
-import { playSfx } from './audio.js?v=14';
-import { makeFire } from './hazards.js?v=14';
-import { box, mat, angDiff, dampAngle, clamp, rand } from './util.js?v=14';
-import { ARENA } from './world.js?v=14';
-import { throwLob } from './enemies.js?v=14';
-import { showBossBar, setBossBar } from './boss_core.js?v=14';
-import { tankCamo } from './tanks.js?v=14';
+import { G, diff, addScore, toast } from './state.js?v=15';
+import { hurtPlayer, blockFx, bouncePlayer } from './player.js?v=15';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=15';
+import { playSfx } from './audio.js?v=15';
+import { makeFire } from './hazards.js?v=15';
+import { box, mat, angDiff, dampAngle, clamp, rand } from './util.js?v=15';
+import { ARENA } from './world.js?v=15';
+import { throwLob } from './enemies.js?v=15';
+import { showBossBar, setBossBar } from './boss_core.js?v=15';
+import { tankCamo } from './tanks.js?v=15';
 
 const HX = 1.55, HZ = 3.0, HULL_TOP = 1.5, TOP = 2.35;
 

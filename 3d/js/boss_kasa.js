@@ -5,15 +5,15 @@
 //   SIFIRLA!: üstteki sayaç sıfırlanır (sıfırlama sesi), oyuncunun çevresine gökten dolar yağar (kalkan yukarıdan da korur)
 // Saldırıdan sonra kapak bir süre AÇIK kalır: o sırada balyoz (1), kapaktan içeri rüşvet (1) ya da üstüne zıplamak (2) işler.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=14';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=14';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=14';
-import { playSfx } from './audio.js?v=14';
-import { groundAt } from './physics.js?v=14';
-import { box, mat, canvasTex, angDiff, dampAngle, clamp, rand } from './util.js?v=14';
-import { ARENA } from './world.js?v=14';
-import { throwLob, hitsPlayer, killProj } from './enemies.js?v=14';
-import { showBossBar, setBossBar } from './boss_core.js?v=14';
+import { G, diff, addScore, toast } from './state.js?v=15';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=15';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=15';
+import { playSfx } from './audio.js?v=15';
+import { groundAt } from './physics.js?v=15';
+import { box, mat, canvasTex, angDiff, dampAngle, clamp, rand } from './util.js?v=15';
+import { ARENA } from './world.js?v=15';
+import { throwLob, hitsPlayer, killProj } from './enemies.js?v=15';
+import { showBossBar, setBossBar } from './boss_core.js?v=15';
 
 const HX = 1.1, HZ = 0.8, TOP = 2.4;          // gövdenin yarı eni, yarı derinliği, tepe yüksekliği
 const OPEN_T = 0.57, EXPOSED_T = 1.9, RESET_T = 0.85;
