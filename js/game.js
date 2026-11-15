@@ -218,6 +218,14 @@ function setUserPause(on) {
     const m = $('bg-music');
     if(on) m.pause(); else m.play().catch(()=>{});
     $('pause-btn').textContent = on ? '▶' : '⏸';
+    $('restart-btn').style.display = on ? 'block' : 'none';
+}
+// Duraklatma menüsünden bölümü baştan başlat: puan bölüm başındaki hâline döner, kontrol noktaları silinir
+function restartFromPause() {
+    if(!userPaused || player.isDying || levelEnding || levelCompleted) return;   // ölüm sonrası kendi yeniden başlatması var
+    setUserPause(false);
+    score = levelStartScore; $('score').innerText = score;
+    goToLevel(currentLevel);   // hikâye zaten görüldü: doğrudan bölüm kurulur, karne sıfırlanır
 }
 
 let startLevelChoice = 1;   // bölüm seçme ekranından seçilen bölüm

@@ -50,6 +50,8 @@ canvas {
 .howto-powers span { background: #1f2937; border: 1px solid #374151; border-radius: 999px; padding: 4px 12px; }
 #howto-ok { display: block; margin: 20px auto 4px; padding: 14px 48px; font-size: 22px; }
 .best-line { color: var(--gold); font-size: 20px; font-weight: bold; margin: 0 0 16px; min-height: 1em; }
+#restart-btn { position: absolute; left: 50%; top: calc(50% + 90px); transform: translateX(-50%); z-index: 40; padding: 12px 26px; border-radius: 12px; border: 2px solid var(--gold); background: rgba(0,0,0,0.55); color: var(--gold); font-size: 20px; font-weight: bold; cursor: pointer; display: none; white-space: nowrap; }
+#restart-btn:active { filter: brightness(1.4); }
 #pause-btn { position: absolute; top: 16px; right: 16px; z-index: 40; width: 48px; height: 48px; border-radius: 12px; border: 2px solid var(--gold); background: rgba(0,0,0,0.45); color: var(--gold); font-size: 22px; cursor: pointer; display: none; }
 
 #ui-layer { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
@@ -145,6 +147,7 @@ canvas {
     #pause-btn, #help-btn { top: calc(6px + env(safe-area-inset-top)); width: 36px; height: 36px; font-size: 16px; border-radius: 9px; }
     #pause-btn { right: calc(10px + env(safe-area-inset-right)); }
     #help-btn { right: calc(54px + env(safe-area-inset-right)); }
+    #restart-btn { top: calc(50% + 30px); padding: 8px 18px; font-size: 15px; border-radius: 9px; }
 
     #joystick-wrapper { width: 150px; height: 150px; bottom: calc(10px + env(safe-area-inset-bottom)); left: calc(14px + env(safe-area-inset-left)); }
     #joystick-stick { width: 62px; height: 62px; opacity: 0.9; }

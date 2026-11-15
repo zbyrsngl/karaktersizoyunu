@@ -5,6 +5,7 @@ document.querySelectorAll('.lang-btn[data-lang]').forEach(b => b.addEventListene
 applyLang(lang);
 updateBestUi();
 $('pause-btn').addEventListener('click', () => setUserPause(!userPaused));
+$('restart-btn').addEventListener('click', restartFromPause);
 // Başka sekmeye geçince oyun kendiliğinden durur
 document.addEventListener('visibilitychange', () => { if(document.hidden) { setUserPause(true); saveBest(); } });
 
@@ -17,7 +18,7 @@ window.onkeydown = e => {
     if($('howto').style.display === 'flex') { if(e.key === 'Escape' || e.key === 'Enter') closeHowto(); return; }
     if(pz && gameStarted && !levelCompleted && !paused) { puzzleKey(e); return; }   // 7. bölüm bulmacası
     if(e.key === 'Escape' || k === 'p') { setUserPause(!userPaused); return; }
-    if(userPaused) return;
+    if(userPaused) { if(k === 'r') restartFromPause(); return; }
     if(k==='a' || e.key==='ArrowLeft') keys.a=true; if(k==='d' || e.key==='ArrowRight') keys.d=true; if(k==='s' || e.key==='ArrowDown') keys.s=true;
     if(k==='w' || e.key==='ArrowUp') keys.w=true;
     if(e.key===' ' && !e.repeat) { jumpHeld = true; jump(); } if(e.key==='Enter') shoot(); if(k==='f' && !e.repeat) hammer();
