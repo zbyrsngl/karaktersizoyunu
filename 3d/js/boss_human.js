@@ -5,17 +5,18 @@
 //   EKREM: ♥ kalpler · ✔ oy pusulası yağmuru; yenilince "YSK: SEÇİM İPTAL!" → SEÇİM TEKRARI (daha büyük, 22 can, + şok dalgası, + maraton koşusu)
 // Yenilince yukarıdan hücre parmaklığı iner (jailOutro): SELO içeride bağlama çalar, EKREM el sallar.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=18';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=18';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import { makeRing } from './hazards.js?v=18';
-import { limb, walkPose } from './models.js?v=18';
-import { groundAt } from './physics.js?v=18';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=18';
-import { ARENA } from './world.js?v=18';
-import { hitsPlayer, killProj } from './enemies.js?v=18';
-import { showBossBar, setBossBar } from './boss_core.js?v=18';
+import { tr, tf } from './i18n.js?v=20';
+import { G, diff, addScore, toast } from './state.js?v=20';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=20';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { makeRing } from './hazards.js?v=20';
+import { limb, walkPose } from './models.js?v=20';
+import { groundAt } from './physics.js?v=20';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=20';
+import { ARENA } from './world.js?v=20';
+import { hitsPlayer, killProj } from './enemies.js?v=20';
+import { showBossBar, setBossBar } from './boss_core.js?v=20';
 
 // --- ORTAK KAFA ---
 // Ten rengi kafa, kulaklar, kaşlar, gözler, burun, geniş gülüş (dişler); saçı modele göre eklenir
@@ -101,9 +102,9 @@ function floatTex(kind) {
     if (TEXS[kind]) return TEXS[kind];
     const draw = {
         note: (g) => { g.fillStyle = '#a21caf'; g.strokeStyle = '#a21caf'; g.lineWidth = 5; g.beginPath(); g.ellipse(18, 46, 10, 8, -0.4, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(44, 40, 10, 8, -0.4, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(27, 44); g.lineTo(27, 12); g.lineTo(53, 7); g.lineTo(53, 38); g.stroke(); g.lineWidth = 8; g.beginPath(); g.moveTo(27, 15); g.lineTo(53, 10); g.stroke(); },
-        aihm: (g) => { g.fillStyle = '#f8fafc'; g.fillRect(8, 2, 48, 60); g.fillStyle = '#1d4ed8'; g.fillRect(8, 2, 48, 16); g.fillStyle = '#fde047'; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; g.fillRect(32 + Math.cos(a) * 5 - 1, 10 + Math.sin(a) * 5 - 1, 2, 2); } g.fillStyle = '#1e3a8a'; g.font = 'bold 12px Arial'; g.textAlign = 'center'; g.fillText('AİHM', 32, 32); g.fillStyle = '#94a3b8'; [40, 47, 54].forEach(y => g.fillRect(14, y, 36, 2)); },
+        aihm: (g) => { g.fillStyle = '#f8fafc'; g.fillRect(8, 2, 48, 60); g.fillStyle = '#1d4ed8'; g.fillRect(8, 2, 48, 16); g.fillStyle = '#fde047'; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; g.fillRect(32 + Math.cos(a) * 5 - 1, 10 + Math.sin(a) * 5 - 1, 2, 2); } g.fillStyle = '#1e3a8a'; g.font = 'bold 12px Arial'; g.textAlign = 'center'; g.fillText(tr('AİHM'), 32, 32); g.fillStyle = '#94a3b8'; [40, 47, 54].forEach(y => g.fillRect(14, y, 36, 2)); },
         heart: (g) => { g.fillStyle = '#e11d48'; g.beginPath(); g.moveTo(32, 54); g.bezierCurveTo(0, 30, 14, 4, 32, 20); g.bezierCurveTo(50, 4, 64, 30, 32, 54); g.fill(); g.fillStyle = 'rgba(255,255,255,0.5)'; g.beginPath(); g.arc(22, 22, 4, 0, Math.PI * 2); g.fill(); },
-        vote: (g) => { g.fillStyle = '#fefce8'; g.fillRect(8, 2, 48, 60); g.strokeStyle = '#a8a29e'; g.lineWidth = 1; for (let i = 0; i < 3; i++) g.strokeRect(12, 6 + i * 19, 40, 16); g.strokeStyle = '#7c3aed'; g.lineWidth = 3; g.beginPath(); g.arc(32, 14, 7, 0, Math.PI * 2); g.stroke(); g.fillStyle = '#7c3aed'; g.font = 'bold 7px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('EVET', 32, 14); }
+        vote: (g) => { g.fillStyle = '#fefce8'; g.fillRect(8, 2, 48, 60); g.strokeStyle = '#a8a29e'; g.lineWidth = 1; for (let i = 0; i < 3; i++) g.strokeRect(12, 6 + i * 19, 40, 16); g.strokeStyle = '#7c3aed'; g.lineWidth = 3; g.beginPath(); g.arc(32, 14, 7, 0, Math.PI * 2); g.stroke(); g.fillStyle = '#7c3aed'; g.font = 'bold 7px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('EVET'), 32, 14); }
     }[kind];
     return (TEXS[kind] = canvasTex(64, 64, draw));
 }
@@ -179,7 +180,7 @@ function spawnHuman(scene, pos, cfg) {
     const dur = playSfx(cfg.talk.sfx, { vol: 1 }) || 2.5;
     b.t = Math.min(4, dur + 0.3); b.talkLen = b.t;
     if (cfg.talk.text) { b.bubble = textSprite(cfg.talk.text, { size: 44, height: 0.42, color: '#111827', bg: 'rgba(248,250,252,0.96)' }); b.bubble.position.set(0, cfg.height + 0.7, 0); m.root.add(b.bubble); }
-    toast(`BÖLÜM SONU CANAVARI: ${cfg.name}!`, 2600, '#fca5a5');
+    toast(tf("BÖLÜM SONU CANAVARI: {0}!", tr(cfg.name)), 2600, '#fca5a5');
     G.boss = b;
     showBossBar(b);
     return b;

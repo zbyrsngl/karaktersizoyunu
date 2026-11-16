@@ -3,10 +3,10 @@
 // (kulelerde nişancı), uzakta Selimiye'nin dört minaresi. 11 polis → demir kapı → canavar SELO (boss_human.js).
 // Yenilince hücre parmaklığı iner: "AİHM: DERHAL SERBEST BIRAKIN!" — HIRHIZ: "TANIMIYORUZ!"
 import * as THREE from 'three';
-import { box, mat, canvasTex, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=18';
-import { spawnSelo, seloJail } from './boss_human.js?v=18';
-import './police.js?v=18';
+import { box, mat, canvasTex, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=20';
+import { spawnSelo, seloJail } from './boss_human.js?v=20';
+import './police.js?v=20';
 
 const TOWERS = [-50, -120], TOWER_X = -4.5, DECK = 2.8;
 

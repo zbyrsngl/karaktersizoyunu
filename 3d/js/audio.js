@@ -3,7 +3,7 @@ let ac = null, master = null, musicGain = null, voiceBus = null, muted = false;
 const BUF = {}, GAIN = {};
 // Konuşmalar: dosyalar çok farklı seviyede kaydedilmiş (bazısı -35 dB), yüklenirken aynı seviyeye getirilir
 // ve çalarken müzik kısılır (ducking).
-const VOICES = new Set(['saygili', 'makara', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'yalarim', 'granny', 'hashasi', 'selo', 'ekrem']);
+const VOICES = new Set(['ekrem_guzel', 'ekrem_aday', 'bismillah', 'saygili', 'makara', 'sifirla', 'cengiz', 'hasret', 'yaallah', 'savci', 'peygamber', 'lutuf', 'yalarim', 'granny', 'hashasi', 'selo', 'ekrem']);
 const VOICE_RMS = 0.28;     // hedef ortalama seviye (~ -11 dB; tepeleri sıkıştırıcı tutar)
 const MUSIC_VOL = 0.35, MUSIC_DUCK = 0.08;
 let duckUntil = 0;
@@ -42,7 +42,9 @@ const FILES = {
     granny: ['../sfx/gotununkili.mp3'],       // 1. bölüm sonu: koşarak gelen teyzelerin tezahüratı
     hashasi: ['../sfx/hashasi.mp3'],          // 6. bölüm sonu: HIRHIZ "Bunlar haşhaşi! Bunlar sülük!"
     selo: ['../sfx/selo_giris.mp3'],          // 9. bölüm SELO gelince (kullanıcının verdiği sesin 25-35 sn'si)
-    ekrem: ['../sfx/ekrem_guzel.mp3']         // 10. bölüm EKREM: "Her şey çok güzel olacak!"
+    ekrem: ['../sfx/ekrem_guzel.mp3'],        // 10. bölüm EKREM: "Her şey çok güzel olacak!"
+    ekrem_guzel: ['../sfx/ekrem_guzel.mp3'], ekrem_aday: ['../sfx/ekrem_aday.mp3'],   // hikâye replikleri (story2d.js STORY_VOICES)
+    bismillah: ['../sfx/bismillah.mp3']       // HIRHIZ: "Ya Allah, bismillah!" (bölüm başında ve el bombası atarken)
 };
 try { muted = localStorage.getItem('hirhizMute') === '1'; } catch (e) {}
 
@@ -84,6 +86,7 @@ export function playSfx(name, { rate = 1, vol = 1 } = {}) {
     src.playbackRate.value = voice ? rate : rate * (0.95 + Math.random() * 0.1);
     const g = ac.createGain(); g.gain.value = vol * ((GAIN[name] && GAIN[name][i]) || 1);
     src.connect(g); g.connect(voice && voiceBus ? voiceBus : master); src.start();
+    lastSrc = src;
     const dur = src.buffer.duration / src.playbackRate.value;   // çalan sesin süresi (saniye)
     if (voice) duck(dur);
     return dur;
@@ -112,11 +115,34 @@ export function beep(type) {
     else if (type === 'stomp') { o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(880, t + 0.1); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); o.start(t); o.stop(t + 0.19); }
 }
 
+// Gürültü sesi (TOMA'nın su tazyiki): süzgeçten geçmiş beyaz gürültü, yavaşça söner
+let noiseBuf = null;
+export function hiss(dur = 1.5, freq = 1400, vol = 0.18) {
+    if (!ac || muted) return;
+    if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const t = ac.currentTime, src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.7;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.08); g.gain.setValueAtTime(vol, t + dur - 0.3); g.gain.linearRampToValueAtTime(0, t + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur + 0.05);
+}
+// Siren: iki tonlu (TOMA meydana girerken)
+export function siren(dur = 2.4) {
+    if (!ac || muted) return;
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.connect(g); g.connect(master);
+    for (let k = 0; k * 0.4 < dur; k++) o.frequency.setValueAtTime(k % 2 ? 660 : 880, t + k * 0.4);
+    g.gain.setValueAtTime(0.045, t); g.gain.setValueAtTime(0.045, t + dur - 0.2); g.gain.linearRampToValueAtTime(0, t + dur);
+    o.start(t); o.stop(t + dur);
+}
 export function playMusic(src) {
     if (!music.src.endsWith(src.replace('..', ''))) music.src = src;
     if (!muted) music.play().catch(() => {});
 }
 export function stopMusic() { music.pause(); }
+// Hikâye replikleri: aynı anda tek konuşma (yenisi gelince eskisi susar)
+let lastSrc = null, voiceSrc = null;
+export function playVoice(kind) { stopVoice(); const d = playSfx(kind); if (d) voiceSrc = lastSrc; return d; }
+export function stopVoice() { if (voiceSrc) { try { voiceSrc.stop(); } catch (e) {} } voiceSrc = null; }
 export function isMuted() { return muted; }
 export function setMuted(m) {
     muted = m;

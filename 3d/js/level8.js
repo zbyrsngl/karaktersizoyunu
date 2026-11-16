@@ -3,12 +3,12 @@
 // av kulelerinde nişancılar. Polisler rüşvetle teslim alınır. Çiftlik kapısı açılınca canavar FETÖ: SON — kovalar, raflara zıplar.
 // Yenilince mezara girer (outro.js graveOutro): "FETÖ öldü ve mezara girdi!"
 import * as THREE from 'three';
-import { G } from './state.js?v=18';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=18';
-import { spawnFeto } from './boss_feto.js?v=18';
-import { graveOutro } from './outro.js?v=18';
-import './police.js?v=18';
+import { G } from './state.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=20';
+import { spawnFeto } from './boss_feto.js?v=20';
+import { graveOutro } from './outro.js?v=20';
+import './police.js?v=20';
 
 const STANDS = [-48, -118], STAND_X = 4.5, DECK = 2.6;
 

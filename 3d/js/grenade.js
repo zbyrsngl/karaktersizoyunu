@@ -2,16 +2,16 @@
 // R tuşu / telefonda 💣 düğmesi: nişangâhın gösterdiği yere kavisle atılır, yerde seker, fünyesi bitince
 // ya da bir düşmana / canavara çarpınca patlar. Patlama: ışık parlaması, ateş topu, şok halkası, duman,
 // kıvılcım ve moloz, yerde kurum izi, kamera sarsıntısı. Yarıçapındaki düşmanlar düşer, tuğlalar kırılır, canavar hasar alır.
-// Elde en çok 3 bomba; her 12 sn'de bir yenisi gelir.
+// Elde en çok 3 bomba; oyun 1 bombayla başlar, yenileri güç tuğlalarından (her bölümde 3 sabit yerde) çıkar.
 import * as THREE from 'three';
-import { G } from './state.js?v=18';
-import { burst, spawnFx, addTrauma, floatText } from './fx.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import { damageEnemy } from './enemies.js?v=18';
-import { groundAt } from './physics.js?v=18';
-import { mat, clamp, rand, canvasTex } from './util.js?v=18';
+import { G } from './state.js?v=20';
+import { burst, spawnFx, addTrauma, floatText } from './fx.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { damageEnemy } from './enemies.js?v=20';
+import { groundAt } from './physics.js?v=20';
+import { mat, clamp, rand, canvasTex } from './util.js?v=20';
 
-export const GRENADE = { max: 3, recharge: 12, radius: 4.8, fuse: 1.6, grav: 20, minD: 3, maxD: 22 };
+export const GRENADE = { max: 3, start: 1, radius: 4.8, fuse: 1.6, grav: 20, minD: 3, maxD: 22 };
 let scene = null;
 const live = [];   // uçan bombalar
 const fx = [];     // patlama parçaları (ateş topu, halka, duman, kurum, ışık)
@@ -21,7 +21,7 @@ export function clearGrenades() {
     live.forEach(g => scene && scene.remove(g.m)); live.length = 0;
     fx.forEach(f => { scene && scene.remove(f.o); f.dispose && f.dispose(); }); fx.length = 0;
 }
-export function resetGrenadeStock() { G.grenades = GRENADE.max; G.grenadeT = 0; }
+export function resetGrenadeStock() { G.grenades = GRENADE.start; G.grenadeT = 0; }
 
 // --- MODEL: zeytin yeşili dilimli gövde, gri kapak, kaldıraç, sarı pim halkası, yanıp sönen kırmızı ışık ---
 const GEO = {
@@ -78,11 +78,7 @@ function solidAt(x, y, z) {
 }
 
 export function updateGrenades(dt) {
-    // Stok: zamanla dolar
-    if (G.grenades < GRENADE.max && G.state === 'play') {
-        G.grenadeT = (G.grenadeT || 0) + dt;
-        if (G.grenadeT >= GRENADE.recharge) { G.grenadeT = 0; G.grenades++; G.onGrenadeCount && G.onGrenadeCount(true); }
-    }
+    // Stok kendiliğinden dolmaz: bölüm 1 bombayla başlar, yenileri güç tuğlalarından çıkar (powerups.js)
     for (let i = live.length - 1; i >= 0; i--) {
         const g = live[i], p = g.pos;
         g.t += dt;

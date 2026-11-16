@@ -6,10 +6,11 @@
 //   TANKIN ÜSTÜNDEKİ NİŞANCI: tankın kulesinde diz çöker, lazerle izler
 // Yenilen asker silahını bırakır, elleri arkadan kelepçelenir ve götürülür: "TUTUKLANDI!"
 import * as THREE from 'three';
-import { limb } from './models.js?v=18';
-import { box, mat, canvasTex } from './util.js?v=18';
-import { TYPES } from './enemies.js?v=18';
-import { POLICE_AI } from './police.js?v=18';
+import { limb, labelTorso } from './models.js?v=20';
+import { tr } from './i18n.js?v=20';
+import { box, mat, canvasTex } from './util.js?v=20';
+import { TYPES } from './enemies.js?v=20';
+import { POLICE_AI } from './police.js?v=20';
 
 const OLIVE = '#4d5b2a', OLIVE_D = '#3a4520', SKIN = '#e8b48f';
 let camoTex = null, flagTex = null;
@@ -50,6 +51,7 @@ export function buildSoldier(variant) {
     torso.add(box(0.54, 0.08, 0.32, '#1c1917', 0, 0.06, 0, false));                      // kemer
     torso.add(box(0.12, 0.12, 0.08, '#3f3f1a', -0.14, 0.1, 0.17, false)); torso.add(box(0.12, 0.12, 0.08, '#3f3f1a', 0.14, 0.1, 0.17, false));   // fişeklik
     const fp = flagPatch(); fp.position.set(-0.27, 0.48, 0.05); fp.rotation.y = -Math.PI / 2; torso.add(fp);
+    labelTorso(torso, tr('ASKER'), '#f8fafc', '#2b3316', { frontY: 0.34, backY: 0.38 });   // göğüste ve sırtta ASKER (dile göre)
     const head = new THREE.Group(); head.position.y = 0.62; torso.add(head);
     head.add(box(0.12, 0.1, 0.12, SKIN, 0, 0.02, 0));
     head.add(box(0.34, 0.38, 0.32, SKIN, 0, 0.25, 0));

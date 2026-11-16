@@ -1,14 +1,15 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=18';
-import { moveBody } from './physics.js?v=18';
-import { input } from './input.js?v=18';
-import { G, diff, toast } from './state.js?v=18';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=18';
-import { playSfx, beep } from './audio.js?v=18';
-import { clamp, damp, dampAngle, angDiff } from './util.js?v=18';
-import { throwGrenade } from './grenade.js?v=18';
+import { buildHirhiz, walkPose } from './models.js?v=20';
+import { moveBody } from './physics.js?v=20';
+import { input } from './input.js?v=20';
+import { G, diff, toast } from './state.js?v=20';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=20';
+import { playSfx, beep } from './audio.js?v=20';
+import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=20';
+import { throwGrenade } from './grenade.js?v=20';
+import { resetPowers } from './powerups.js?v=20';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45, SPRINT = 1.6;   // Shift: hızlı koşu
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
@@ -22,8 +23,16 @@ export function createPlayer(scene) {
     // Siper hâlindeki büyük kalkan (gövdenin önünde, yukarı eğik)
     const big = m.shield.clone(); big.scale.setScalar(2.1); big.rotation.set(-0.45, 0, 0); big.position.set(0.05, 0.62, 0.42);
     big.visible = false; m.torso.add(big);
+    // Kalkan halesi: kalkan kaldırılınca önünde nabız gibi atan altın-yeşil ışık; saldırı durdurunca parlar
+    const auraTex = canvasTex(128, 160, (g, W, H) => {
+        const gr = g.createRadialGradient(W / 2, H / 2, 6, W / 2, H / 2, W * 0.62);
+        gr.addColorStop(0, 'rgba(253,230,138,0.55)'); gr.addColorStop(0.45, 'rgba(74,222,128,0.28)'); gr.addColorStop(1, 'rgba(34,197,94,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    });
+    const aura = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.9), new THREE.MeshBasicMaterial({ map: auraTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    aura.position.z = 0.09; big.add(aura);
     const p = {
-        m, big,
+        m, big, aura, flash: 0, power: { speed: 0, hammer: 0, shield: 0 },
         pos: m.root.position, vel: new THREE.Vector3(), r: 0.32, h: PLAYER_H,
         facing: Math.PI, grounded: false, coyote: 0, buffer: 0, jumping: false,
         hp: diff().hp, maxHp: diff().hp, invuln: 0, mask: 0, slow: 0,
@@ -47,6 +56,7 @@ export function resetPlayer(p, at) {
     p.squash = 0; p.phase = 0; p.swingHit = false; p.throwCd = 0; p.throwT = 0; p.shield = false;
     p.grounded = false; p.coyote = 0; p.buffer = 0; p.jumping = false;
     p.collected = 0; updateSack(p);
+    resetPowers(p);
 }
 
 function updateSack(p) { const k = 1 + Math.min(1, p.collected / 12) * 0.7; p.m.sack.scale.setScalar(k); }
@@ -57,6 +67,10 @@ export function hurtPlayer(from, { force = false, knock = 6 } = {}) {
     const p = G.player;
     if (p.dead || G.state !== 'play') return false;
     if (!force && p.invuln > 0) return false;
+    if (!force && p.power.shieldUp > 0) {   // kalkan gücü: saldırı işlemez
+        if (G.time - (p.lastBubble || 0) > 0.3) { p.lastBubble = G.time; blockFx(p.pos.clone().setY(p.pos.y + 1.2)); }
+        return false;
+    }
     if (!force && p.mask > 0) {
         p.mask--; p.invuln = 1.0;
         if (p.mask === 0) p.m.helmet.visible = false;
@@ -93,6 +107,7 @@ export function shieldBlocks(projPos, projVel) {
     return Math.abs(angDiff(p.facing, a)) < 1.4;
 }
 export function blockFx(pos) {
+    if (G.player) G.player.flash = 1;
     spawnFx('block', pos, 0.9);
     burst(pos, { n: 4, color: '#fde047', speed: 2, up: 2, size: 0.08 });
     playSfx('hit', { rate: 1.8, vol: 0.4 });
@@ -125,7 +140,7 @@ export function updatePlayer(p, dt, camYaw) {
     let wx = rx * input.mx + fx * input.my, wz = rz * input.mx + fz * input.my;
     const amt = Math.min(1, Math.hypot(wx, wz));
     const sprint = input.sprint && !p.shield && p.swing <= 0;
-    let top = RUN * (p.shield ? 0.45 : sprint ? SPRINT : 1) * (p.slow > 0 ? 0.5 : 1) * (p.swing > 0 && p.grounded ? 0.35 : 1);
+    let top = RUN * (p.power.speed > 0 ? 1.45 : 1) * (p.shield ? 0.45 : sprint ? SPRINT : 1) * (p.slow > 0 ? 0.5 : 1) * (p.swing > 0 && p.grounded ? 0.35 : 1);
     const tx = wx * top, tz = wz * top;
     const acc = p.grounded ? (amt > 0.05 ? ACC_G : DEC_G) : ACC_A;
     p.vel.x = approach(p.vel.x, tx, acc * dt); p.vel.z = approach(p.vel.z, tz, acc * dt);
@@ -199,7 +214,7 @@ export function updatePlayer(p, dt, camYaw) {
                 p.facing = Math.atan2(aim.x - p.pos.x, aim.z - p.pos.z);
                 const f = p.facing, from = new THREE.Vector3(p.pos.x + Math.sin(f) * 0.4 - Math.cos(f) * 0.3, p.pos.y + 1.7, p.pos.z + Math.cos(f) * 0.4 + Math.sin(f) * 0.3);
                 if (throwGrenade(from, aim)) {
-                    G.grenades--; G.onGrenadeCount && G.onGrenadeCount(false);
+                    G.grenades--; G.onGrenadeCount && G.onGrenadeCount(false); G.onGrenadeThrown && G.onGrenadeThrown();
                     p.grenCd = 0.6; p.throwT = 0.25; beep('swing');
                 }
             }
@@ -211,7 +226,7 @@ export function updatePlayer(p, dt, camYaw) {
 
 function approach(v, t, d) { return v < t ? Math.min(t, v + d) : Math.max(t, v - d); }
 function doJump(p) {
-    p.vel.y = JUMP_V; p.grounded = false; p.coyote = 0; p.buffer = 0; p.jumping = true; p.squash = -0.14;
+    p.vel.y = JUMP_V + (p.power.speed > 0 ? 1.2 : 0); p.grounded = false; p.coyote = 0; p.buffer = 0; p.jumping = true; p.squash = -0.14;
     beep('jump');
 }
 function onLand(p, v) {
@@ -269,6 +284,10 @@ function animate(p, dt, amt) {
     m.armL.rotation.x = p.shield ? -1.45 : -Math.sin(p.phase) * 0.4 * swingK * (p.grounded ? 1 : 0);
     if (p.throwT > 0 && !p.shield) { const k = clamp(1 - p.throwT / 0.2, 0, 1); m.armL.rotation.x = -2.7 + 1.5 * k; }   // atış sol elle: balyozlu sağ kol savrulmaz
     m.shield.visible = !p.shield; p.big.visible = p.shield;
+    // hale: kalkan kaldırıldıkça nabız gibi atar, saldırı durdurunca (p.flash) parlayıp büyür
+    if (p.flash > 0) p.flash = Math.max(0, p.flash - dt * 3);
+    const pulse = 0.55 + Math.sin(G.time * 9) * 0.15 + p.flash * 1.6 + (p.power.shield > 0 ? 0.35 : 0);
+    p.aura.material.opacity = Math.min(1, pulse); p.aura.scale.setScalar(1 + p.flash * 0.5 + Math.sin(G.time * 9) * 0.03);
     // Dokunulmazken yanıp söner
     m.root.visible = !(p.invuln > 0 && Math.floor(p.invuln * 12) % 2 === 0);
 }

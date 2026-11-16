@@ -3,12 +3,13 @@
 // "son dakika" ekranları, muhabirler, ayakkabı kutusu yığınları. Yolun üstünde iki asma köprü: üstlerinde SINAYPIRCI.
 // 17/25 polisleri (police.js) rüşvetle susturulur; ayakkabı kutuları toplanır; kapıdan geçince canavar SAYGILI (boss_saygili.js).
 import * as THREE from 'three';
-import { G } from './state.js?v=18';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=18';
-import { spawnSaygili } from './boss_saygili.js?v=18';
-import { egemenOutro } from './outro.js?v=18';
-import './police.js?v=18';
+import { tr } from './i18n.js?v=20';
+import { G } from './state.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=20';
+import { spawnSaygili } from './boss_saygili.js?v=20';
+import { egemenOutro } from './outro.js?v=20';
+import './police.js?v=20';
 
 const BRIDGES = [-52, -122];                 // köprülerin z konumu; tabliye 2.3–2.6 m (altından yürünür, üstüne zıplanır)
 const DECK_LO = 2.3, DECK_HI = 2.6;
@@ -83,7 +84,7 @@ function policeCar(scene, W, x, z, rot) {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
     const side = canvasTex(256, 64, (c, Wd, H) => {
         c.fillStyle = '#f8fafc'; c.fillRect(0, 0, Wd, H); c.fillStyle = '#1d4ed8'; c.fillRect(0, H * 0.45, Wd, H * 0.22);
-        c.fillStyle = '#1e3a8a'; c.font = 'bold 26px Arial Black, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('POLİS', Wd / 2, H * 0.25);
+        c.fillStyle = '#1e3a8a'; c.font = 'bold 26px Arial Black, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tr('POLİS'), Wd / 2, H * 0.25);
     });
     const sm = new THREE.MeshLambertMaterial({ map: side });
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.75, 4.3), [sm, sm, mat('#f8fafc'), mat('#1f2937'), mat('#e5e7eb'), mat('#e5e7eb')]);
@@ -129,7 +130,7 @@ function newsScreen(scene, x, z, rot, text) {
     const t = canvasTex(512, 288, (c, Wd, H) => {
         c.fillStyle = '#1e293b'; c.fillRect(0, 0, Wd, H);
         c.fillStyle = '#dc2626'; c.fillRect(0, H - 96, Wd, 96); c.fillStyle = '#facc15'; c.fillRect(0, H - 120, 210, 28);
-        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText('SON DAKİKA', 12, H - 106);
+        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText(tr('SON DAKİKA'), 12, H - 106);
         c.fillStyle = '#fef2f2'; c.textAlign = 'center';
         const words = text.split(' '), mid = Math.ceil(words.length / 2);
         fitText(c, words.slice(0, mid).join(' '), Wd / 2, H - 70, Wd - 30, 34); fitText(c, words.slice(mid).join(' '), Wd / 2, H - 32, Wd - 30, 34);

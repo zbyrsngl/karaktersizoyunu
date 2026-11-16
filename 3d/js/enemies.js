@@ -4,13 +4,14 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { walkPose, nameLabel } from './models.js?v=18';
-import { G, diff, addScore } from './state.js?v=18';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=18';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import { groundAt } from './physics.js?v=18';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=18';
+import { tr } from './i18n.js?v=20';
+import { walkPose, nameLabel } from './models.js?v=20';
+import { G, diff, addScore } from './state.js?v=20';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=20';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { groundAt } from './physics.js?v=20';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=20';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -195,8 +196,9 @@ export function hammerHit(point, p) {
     for (const e of G.enemies) {
         if (e.dead) continue;
         const dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z, d = Math.hypot(dx, dz);
-        if (d < HAMMER_REACH && Math.abs(e.pos.y - p.pos.y) < 1.6 && Math.abs(angDiff(p.facing, Math.atan2(dx, dz))) < 1.2) {
-            damageEnemy(e, 2, 'hammer'); hit = true;
+        const big = p.power && p.power.hammer > 0;   // dev balyoz: menzil, açı ve güç artar
+        if (d < HAMMER_REACH * (big ? 1.7 : 1) && Math.abs(e.pos.y - p.pos.y) < (big ? 2.2 : 1.6) && Math.abs(angDiff(p.facing, Math.atan2(dx, dz))) < (big ? 1.6 : 1.2)) {
+            damageEnemy(e, big ? 3 : 2, 'hammer'); hit = true;
             if (e.kind !== 'duran') spawnFx('hit', e.pos.clone().setY(e.pos.y + 1.1), 1.2);
         }
     }
@@ -285,7 +287,7 @@ function ammoMat(kind) {
     const tex = kind === 'tea'
         ? canvasTex(64, 32, (g) => {
             g.fillStyle = '#dc2626'; g.fillRect(0, 0, 64, 32); g.fillStyle = '#fef3c7'; g.fillRect(4, 4, 56, 24);
-            g.fillStyle = '#b91c1c'; g.font = 'bold 18px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('ÇAY', 32, 17);
+            g.fillStyle = '#b91c1c'; g.font = 'bold 18px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('ÇAY'), 32, 17);
         }, { pixel: true })
         : canvasTex(64, 32, (g) => {
             g.fillStyle = '#15803d'; g.fillRect(0, 0, 64, 32); g.fillStyle = '#bbf7d0'; g.fillRect(3, 3, 58, 26);

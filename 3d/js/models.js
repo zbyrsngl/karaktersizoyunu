@@ -1,7 +1,8 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { box, mat, canvasTex, textSprite } from './util.js?v=18';
+import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=20';
+import { box, mat, canvasTex, textSprite } from './util.js?v=20';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -31,6 +32,7 @@ export function getHeadTex() {
         x.restore();
         sharpen(x, c.width, c.height);
         headTex.needsUpdate = true;
+        window.headCanvas = c;   // 2D hikâye oynatıcısı (story2d.js) aynı kafayı kullanır
     };
     img.src = '../recep.jpg';
     return headTex;
@@ -57,25 +59,86 @@ export function sharpen(x, w, h, { amt = 1.1, con = 1.08, blur = 3, tint = null 
     x.putImageData(src, 0, 0);
 }
 
-// "DİN" yazılı yeşil kalkan (2D çizimin aynısı)
-let shieldTex = null;
-function getShieldTex() {
-    if (shieldTex) return shieldTex;
-    shieldTex = canvasTex(128, 160, (g) => {
-        g.translate(64, 80); g.scale(2.6, 2.6);
-        const path = (a, b) => { g.beginPath(); g.moveTo(-a, -29 + (23 - a)); g.lineTo(a, -29 + (23 - a)); g.lineTo(a, 4); g.quadraticCurveTo(a - 1, 22 - (23 - a) * 0.7, 0, 31 - (23 - a) * 1.2); g.quadraticCurveTo(-a + 1, 22 - (23 - a) * 0.7, -a, 4); g.closePath(); };
-        path(23); const gr = g.createLinearGradient(-23, -29, 23, 31); gr.addColorStop(0, '#166534'); gr.addColorStop(1, '#052e16');
-        g.fillStyle = gr; g.fill(); g.strokeStyle = '#fbbf24'; g.lineWidth = 4; g.stroke();
-        g.font = 'bold 17px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-        g.lineWidth = 3; g.strokeStyle = '#052e16'; g.strokeText('DİN', 0, 1); g.fillStyle = '#fde68a'; g.fillText('DİN', 0, 1);
-    });
-    return shieldTex;
+// Kalkan: kalın, kenarı pahlı (bevel) metal "heater" kalkan. Altın çerçeve, koyu yeşil gövde, ortada süslü madalyon ve
+// kabartma yazı (Türkçede DİN, diğer dillerde Relig). Malzeme parlak (Phong): ışığı yansıtır. Yerel +Z öne bakar.
+function shieldShape(s) {   // üst kenar düz, yanları aşağıda sivri uca kıvrılır (yarı genişlik 0.23·s, boy 0.58·s)
+    const w = 0.23 * s, top = 0.29 * s, bot = -0.29 * s, sh = new THREE.Shape();
+    sh.moveTo(-w, top); sh.quadraticCurveTo(0, top + 0.035 * s, w, top);
+    sh.lineTo(w, 0.02 * s);
+    sh.quadraticCurveTo(w * 0.95, bot * 0.7, 0, bot);
+    sh.quadraticCurveTo(-w * 0.95, bot * 0.7, -w, 0.02 * s);
+    sh.closePath();
+    return sh;
 }
+let shieldFaceTex = null;
+function getShieldFaceTex() {
+    if (shieldFaceTex) return shieldFaceTex;
+    shieldFaceTex = canvasTex(256, 320, (g, W, H) => {
+        const gr = g.createRadialGradient(W * 0.4, H * 0.3, 10, W / 2, H / 2, W * 0.75);
+        gr.addColorStop(0, '#22874a'); gr.addColorStop(0.55, '#14532d'); gr.addColorStop(1, '#052e16');
+        g.fillStyle = gr; g.fillRect(0, 0, W, H);
+        // ince altın iç çerçeve ve köşe süsleri
+        g.strokeStyle = 'rgba(251,191,36,0.85)'; g.lineWidth = 5; g.strokeRect(18, 18, W - 36, H - 36);
+        g.strokeStyle = 'rgba(251,191,36,0.4)'; g.lineWidth = 2; g.strokeRect(30, 30, W - 60, H - 60);
+        // ortada sekiz köşeli yıldız biçimli madalyon (geometrik süs)
+        g.save(); g.translate(W / 2, H * 0.47);
+        for (let k = 0; k < 2; k++) { g.save(); g.rotate(k * Math.PI / 4); g.fillStyle = k ? '#b45309' : '#d97706'; g.fillRect(-62, -62, 124, 124); g.restore(); }
+        g.beginPath(); g.arc(0, 0, 66, 0, Math.PI * 2); g.fillStyle = '#064e3b'; g.fill();
+        g.lineWidth = 6; g.strokeStyle = '#fbbf24'; g.stroke();
+        // kabartma yazı: gölge + altın dolgu + ince koyu kontur
+        const word = SHIELD_WORD;
+        let fs = 62; do { g.font = `bold ${fs}px Georgia, 'Times New Roman', serif`; fs -= 2; } while (g.measureText(word).width > 112);
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillText(word, 3, 5);
+        const tg = g.createLinearGradient(0, -30, 0, 30); tg.addColorStop(0, '#fef3c7'); tg.addColorStop(0.5, '#fbbf24'); tg.addColorStop(1, '#b45309');
+        g.lineWidth = 3; g.strokeStyle = '#422006'; g.strokeText(word, 0, 2); g.fillStyle = tg; g.fillText(word, 0, 2);
+        g.restore();
+        // perçinler
+        g.fillStyle = '#fde68a';
+        [[40, 44], [W - 40, 44], [40, H * 0.62], [W - 40, H * 0.62], [W / 2, H - 46]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill(); });
+        // üstten vuran ışık parlaması
+        const sh = g.createLinearGradient(0, 0, W, H); sh.addColorStop(0, 'rgba(255,255,255,0.22)'); sh.addColorStop(0.35, 'rgba(255,255,255,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, H);
+    });
+    return shieldFaceTex;
+}
+const SHIELD_GEO = {};
 export function makeShield(size = 1) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.46 * size, 0.58 * size),
-        new THREE.MeshLambertMaterial({ map: getShieldTex(), transparent: true, side: THREE.DoubleSide, alphaTest: 0.3 }));
-    m.castShadow = true;
-    return m;
+    if (!SHIELD_GEO.body) {
+        const ext = (s, depth, bevel) => new THREE.ExtrudeGeometry(shieldShape(s), { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 10 });
+        SHIELD_GEO.rim = ext(1.0, 0.03, 0.018);                 // altın çerçeve (arkada, biraz büyük)
+        SHIELD_GEO.body = ext(0.9, 0.035, 0.012);               // yeşil gövde
+        // ön yüz: şekle göre UV (0..1) ile yazılı doku
+        const face = new THREE.ShapeGeometry(shieldShape(0.86), 10), uv = face.attributes.uv, pos = face.attributes.position;
+        for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + 0.23 * 0.86) / (0.46 * 0.86), (pos.getY(i) + 0.29 * 0.86) / (0.58 * 0.86 + 0.03));
+        SHIELD_GEO.face = face;
+        SHIELD_GEO.boss = new THREE.SphereGeometry(0.035, 10, 8);
+    }
+    const g = new THREE.Group();
+    const rim = new THREE.Mesh(SHIELD_GEO.rim, new THREE.MeshPhongMaterial({ color: '#d4a017', specular: '#fff3c4', shininess: 90, emissive: '#3a2a00' }));
+    rim.position.z = -0.03; rim.castShadow = true; g.add(rim);
+    const body = new THREE.Mesh(SHIELD_GEO.body, new THREE.MeshPhongMaterial({ color: '#14532d', specular: '#86efac', shininess: 60 }));
+    body.position.z = 0.0; body.castShadow = true; g.add(body);
+    const face = new THREE.Mesh(SHIELD_GEO.face, new THREE.MeshPhongMaterial({ map: getShieldFaceTex(), specular: '#ffffff', shininess: 70, emissive: '#0b2e1a', emissiveMap: getShieldFaceTex(), emissiveIntensity: 0.35 }));
+    face.position.z = 0.049; g.add(face);
+    const knob = new THREE.Mesh(SHIELD_GEO.boss, new THREE.MeshPhongMaterial({ color: '#fbbf24', specular: '#ffffff', shininess: 120 }));
+    knob.position.set(0, 0.2, 0.06); g.add(knob);
+    g.scale.setScalar(size);
+    return g;
+}
+
+// Balyozun başındaki yazı (Türkçede YARGI, diğer dillerde JUDGE): iki yanda, sapın iki tarafından da okunur
+let hammerTex = null;
+function getHammerTex() {
+    if (hammerTex) return hammerTex;
+    hammerTex = canvasTex(256, 96, (g, W, H) => {
+        g.fillStyle = '#1f2937'; g.fillRect(0, 0, W, H);
+        g.strokeStyle = '#facc15'; g.lineWidth = 6; g.strokeRect(5, 5, W - 10, H - 10);
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        let fs = 70; do { g.font = `900 ${fs}px Impact, 'Arial Black', Arial`; fs -= 2; } while (g.measureText(HAMMER_WORD).width > W - 30);
+        g.lineWidth = 5; g.strokeStyle = '#000'; g.strokeText(HAMMER_WORD, W / 2, H / 2 + 3);
+        g.fillStyle = '#fde047'; g.fillText(HAMMER_WORD, W / 2, H / 2 + 3);
+    });
+    return hammerTex;
 }
 
 // Balyoz: sap + demir baş; tutma noktası grubun başlangıcı, sap -Y yönüne uzanır
@@ -83,9 +146,16 @@ function makeHammer() {
     const g = new THREE.Group();
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.95, 6), mat('#92400e'));
     handle.position.y = -0.38; handle.castShadow = true; g.add(handle);
-    g.add(box(0.2, 0.2, 0.42, '#4b5563', 0, -0.86, 0));
-    g.add(box(0.21, 0.21, 0.06, '#9ca3af', 0, -0.86, 0.2));
-    g.add(box(0.21, 0.21, 0.06, '#9ca3af', 0, -0.86, -0.2));
+    // demir baş (biraz büyütüldü: yazı okunabilsin) ve iki parlak vurma yüzü
+    g.add(box(0.24, 0.24, 0.52, '#374151', 0, -0.86, 0));
+    g.add(box(0.26, 0.26, 0.07, '#9ca3af', 0, -0.86, 0.25));
+    g.add(box(0.26, 0.26, 0.07, '#9ca3af', 0, -0.86, -0.25));
+    // YARGI / JUDGE yazısı: başın iki yan yüzünde, ışıktan etkilenmeyen parlak levha
+    const plate = new THREE.MeshBasicMaterial({ map: getHammerTex() });
+    [-1, 1].forEach(s => {
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.158), plate);
+        p.position.set(s * 0.122, -0.86, 0); p.rotation.y = s * Math.PI / 2; g.add(p);
+    });
     return g;
 }
 
@@ -96,7 +166,7 @@ function makeSack() {
         c.fillStyle = '#c8a165'; c.fillRect(0, 0, 128, 128);
         c.fillStyle = '#a47c45'; c.fillRect(20, 80, 26, 20);
         c.fillStyle = '#4a2c00'; c.font = 'bold 22px Arial'; c.textAlign = 'center';
-        c.fillText('KUL', 64, 58); c.fillText('HAKKI', 64, 84);
+        c.fillText(tr('KUL'), 64, 58); c.fillText(tr('HAKKI'), 64, 84);
     });
     const s = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshLambertMaterial({ map: tex }));
     s.scale.set(1, 1.25, 0.85); s.castShadow = true; g.add(s);
@@ -149,6 +219,7 @@ export const GEZI_LOOK = {
     duran:   { top: '#f8fafc', leg: '#111827', shoe: '#0a0a0a', skin: '#e0ac69', hair: '#1c1917' }
 };
 function frontText(txt, w, h, color, bg = null) {
+    txt = tr(txt);
     const t = canvasTex(256, Math.round(256 * h / w), (g, W, H) => {
         if (bg) { g.fillStyle = bg; g.fillRect(0, 0, W, H); }
         g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -223,6 +294,27 @@ export function buildHero(skin) {
         root.add(box(0.36, 0.42, 0.24, '#374151', -0.55, 0.21, -0.1));
     }
     return { root, body, legL, legR, armL, armR, torso, head, skirt, lid };
+}
+
+// Üniformanın göğsünde ve sırtında okunaklı yazı (polislerde 17/25, askerlerde ASKER — dile göre)
+const UNIFORM_TEX = {};
+export function uniformText(txt, fg, bg) {
+    const k = txt + fg + bg;
+    UNIFORM_TEX[k] = UNIFORM_TEX[k] || canvasTex(256, 80, (g, W, H) => {
+        g.fillStyle = bg; g.fillRect(0, 0, W, H);
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        let s = 66; do { g.font = `900 ${s}px Impact, 'Arial Black', Arial`; s -= 2; } while (g.measureText(txt).width > W - 20);
+        g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.strokeText(txt, W / 2, H / 2 + 3);
+        g.fillStyle = fg; g.fillText(txt, W / 2, H / 2 + 3);
+    });
+    return new THREE.MeshBasicMaterial({ map: UNIFORM_TEX[k] });
+}
+// torso: gövde grubu; front/back: göğüs ve sırt levhası
+export function labelTorso(torso, txt, fg, bg, { frontY = 0.2, backY = 0.36, w = 0.46, depth = 0.3 } = {}) {
+    const m = uniformText(txt, fg, bg);
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.31), m); back.position.set(0, backY, -depth / 2 - 0.012); back.rotation.y = Math.PI; torso.add(back);
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.82, w * 0.82 * 0.31), m); front.position.set(0, frontY, depth / 2 + 0.022); torso.add(front);
+    return { back, front };
 }
 
 // Yürüme/koşma salınımı

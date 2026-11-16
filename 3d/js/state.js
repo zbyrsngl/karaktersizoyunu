@@ -1,4 +1,5 @@
 // HIRHIZ 3D: oyunun paylaşılan durumu (modüller arası)
+import { tr } from './i18n.js?v=20';
 export const DIFFS = {
     easy:   { hp: 5, speed: 0.75, fire: 1.4, boss: 0.7, score: 0.5, name: 'KOLAY' },
     normal: { hp: 3, speed: 1,    fire: 1,   boss: 1,   score: 1,   name: 'NORMAL' },
@@ -20,6 +21,7 @@ export function addScore(n) { G.score += Math.round(n * diff().score); return G.
 // Ekranda kısa bildirim
 let toastTimer = null;
 export function toast(text, ms = 1800, color = '#fde047') {
+    text = tr(text);
     const el = document.getElementById('toast');
     el.textContent = text; el.style.color = color; el.classList.add('on');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), ms);

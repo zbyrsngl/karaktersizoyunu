@@ -4,13 +4,14 @@
 // cankurtaran kulelerinde nişancılar. Kum torbalı kontrol noktası açılınca canavar DARBE TANKI (boss_darbetank.js);
 // yenilince HIRHIZ: "15 Temmuz Allah'ın bir lütfü!", sonra yalarım amca gelir (outro.js yalarimOutro).
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=18';
-import { getHeadTex } from './models.js?v=18';
-import { spawnDarbeTank } from './boss_darbetank.js?v=18';
-import { yalarimOutro } from './outro.js?v=18';
-import './police.js?v=18';
-import './tanks.js?v=18';
+import { tr } from './i18n.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=20';
+import { getHeadTex } from './models.js?v=20';
+import { spawnDarbeTank } from './boss_darbetank.js?v=20';
+import { yalarimOutro } from './outro.js?v=20';
+import './police.js?v=20';
+import './tanks.js?v=20';
 
 const TOWERS = [-52, -122], TOWER_X = -4, DECK = 2.6;
 const NEWS = ['CANLI: CUMHURBAŞKANI FACETIME İLE BAĞLANDI', "BOĞAZ KÖPRÜSÜ'NDE TANKLAR", "TRT'DE DARBE BİLDİRİSİ OKUNDU"];
@@ -73,7 +74,7 @@ function faceTimeScreen(scene, x, y, z, rot, scale = 1) {
     g.add(box(5.4, 3.4, 0.25, '#0f172a', 0, 0, 0));
     const bg = canvasTex(512, 320, (c, W, H) => {
         const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#1e3a8a'); gr.addColorStop(1, '#0f172a'); c.fillStyle = gr; c.fillRect(0, 0, W, H);
-        c.fillStyle = '#dc2626'; c.fillRect(16, 16, 110, 40); c.fillStyle = '#fff'; c.font = 'bold 26px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText('CANLI', 26, 37);
+        c.fillStyle = '#dc2626'; c.fillRect(16, 16, 110, 40); c.fillStyle = '#fff'; c.font = 'bold 26px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText(tr('CANLI'), 26, 37);
         c.fillStyle = '#dc2626'; c.fillRect(0, H - 70, W, 70); c.fillStyle = '#fef2f2'; c.textAlign = 'center';
         fitText(c, 'CUMHURBAŞKANI FACETIME İLE BAĞLANDI', W / 2, H - 34, W - 30, 32);
         c.fillStyle = '#111827'; c.beginPath(); c.roundRect(W / 2 - 70, 30, 140, 200, 18); c.fill();   // telefon
@@ -91,7 +92,7 @@ function newsScreen(scene, x, z, rot, text) {
     const t = canvasTex(512, 288, (c, Wd, H) => {
         c.fillStyle = '#1e293b'; c.fillRect(0, 0, Wd, H);
         c.fillStyle = '#dc2626'; c.fillRect(0, H - 96, Wd, 96); c.fillStyle = '#facc15'; c.fillRect(0, H - 120, 210, 28);
-        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText('SON DAKİKA', 12, H - 106);
+        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText(tr('SON DAKİKA'), 12, H - 106);
         c.fillStyle = '#fef2f2'; c.textAlign = 'center';
         const words = text.split(' '), mid = Math.ceil(words.length / 2);
         fitText(c, words.slice(0, mid).join(' '), Wd / 2, H - 70, Wd - 30, 34); fitText(c, words.slice(mid).join(' '), Wd / 2, H - 32, Wd - 30, 34);

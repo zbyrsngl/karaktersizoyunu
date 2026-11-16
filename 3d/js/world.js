@@ -3,12 +3,25 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=18';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=20';
+import { tr, tf, lang } from './i18n.js?v=20';
+import { buildStreets } from './streets.js?v=20';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği
 export const ARENA = { z0: -184, z1: -236, hw: 18, cz: -212 };
-const BRICK_Y = 2.7;                                            // tuğlanın alt yüzü
+export const BRICK_Y = 2.7;                                     // tuğlanın alt yüzü
+// Bölümün başına eklenen mahalle (streets.js): yol z = EXT_Z0'dan başlar, oyuncu START_Z'de doğar.
+// Mahallede iki kavşak: ara sokaklar yolun iki yanına (deniz/köprü olan tarafa açılmaz) STREET_LEN boyunca uzanır.
+export const EXT_Z0 = 100, START_Z = 94;
+export const STREET = { hw: 4.5, len: 26, z: [72, 40] };
+const DISTRICT_SIDES = { 3: [1], 5: [1] };   // 3 ve 5. bölümde sol taraf deniz
+export function districtPlan(L) {
+    const sides = L.noOuter ? [] : (DISTRICT_SIDES[L.id] || [-1, 1]);
+    const junctions = [];
+    STREET.z.forEach(z => sides.forEach(s => junctions.push({ z, s, hw: STREET.hw, len: STREET.len })));
+    return { junctions };
+}
 
 // --- DOKULAR ---
 export const TEX = {};
@@ -193,7 +206,7 @@ function makeTape() {   // kaset: turuncu etiketinde "SIFIRLA", makaralar (3. b�
     tapeTex = tapeTex || canvasTex(80, 52, (g) => {
         g.fillStyle = '#111827'; g.fillRect(0, 0, 80, 52);
         g.fillStyle = '#f59e0b'; g.fillRect(6, 6, 68, 22);
-        g.fillStyle = '#111827'; g.font = 'bold 13px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SIFIRLA', 40, 17);
+        g.fillStyle = '#111827'; g.font = 'bold 13px Arial Black, Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('SIFIRLA'), 40, 17);
         g.fillStyle = '#e5e7eb'; [24, 56].forEach(x => { g.beginPath(); g.arc(x, 39, 8, 0, Math.PI * 2); g.fill(); });
         g.fillStyle = '#4b5563'; g.fillRect(30, 35, 20, 8);
     }, { pixel: true });
@@ -223,9 +236,13 @@ export function buildWorld(scene, L) {
     const W = { L, solids: [], items: [], bricks: [], movers: [] };
     const addSolid = (a, mesh) => { a.mesh = mesh || null; W.solids.push(a); return a; };
     const G0 = L.ground;
+    // İlk yol parçası mahalleyi de kapsayacak şekilde uzar (bölüm dosyalarındaki koordinatlar değişmez)
+    const segs = L.segs.map((s, i) => i === 0 ? [EXT_Z0, s[1]] : s);
+    const plan = W.plan = districtPlan(L);
+    W.segs = segs;
 
     // Zemin parçaları (yol) ve meydan
-    L.segs.forEach(([z0, z1]) => {
+    segs.forEach(([z0, z1]) => {
         const m = slab(-HW, HW, -3, 0, z0, z1, G0.top, G0.side, 0.5, G0.rep); scene.add(m);
         addSolid(new AABB(-HW, -3, z1, HW, 0, z0, 'ground'), m);
     });
@@ -240,30 +257,46 @@ export function buildWorld(scene, L) {
         m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0.0, (z0 + z1) / 2); m.receiveShadow = true; scene.add(m);
     };
     if (!L.noOuter) {   // köprü bölümünde yolun yanı boşluk (aşağıda deniz)
-        flat(-90, -HW - 0.01, 40, ARENA.z0); flat(HW + 0.01, 90, 40, ARENA.z0);
+        flat(-90, -HW - 0.01, EXT_Z0 + 40, ARENA.z0); flat(HW + 0.01, 90, EXT_Z0 + 40, ARENA.z0);
         flat(-90, -ARENA.hw, ARENA.z0, -320); flat(ARENA.hw, 90, ARENA.z0, -320); flat(-ARENA.hw, ARENA.hw, ARENA.z1, -320);
-        flat(-HW, HW, 40, 10);
+        flat(-HW, HW, EXT_Z0 + 40, EXT_Z0);
     }
 
     // Görünmez duvarlar (yoldan çıkılmaz)
     const wall = (x0, x1, z0, z1) => addSolid(new AABB(x0, -20, z1, x1, 12, z0, 'wall'));
-    wall(-HW - 1, -HW, 12, ARENA.z0); wall(HW, HW + 1, 12, ARENA.z0);
-    wall(-HW, HW, 12, 10.5);
+    // yolun iki yanı: ara sokakların ağzında açıklık
+    const gaps = s => plan.junctions.filter(j => j.s === s).map(j => [j.z + j.hw, j.z - j.hw]);
+    const along = (s, z0, z1, fn) => {   // z0 > z1 aralığını açıklıklardan bölerek fn(a, b) çağırır
+        let top = z0;
+        gaps(s).sort((a, b) => b[0] - a[0]).forEach(([g0, g1]) => { if (g0 < top && g1 > z1) { fn(top, g0); top = g1; } });
+        fn(top, z1);
+    };
+    [-1, 1].forEach(s => along(s, EXT_Z0 + 2, ARENA.z0, (a, b) => wall(s < 0 ? -HW - 1 : HW, s < 0 ? -HW : HW + 1, a, b)));
+    wall(-HW, HW, EXT_Z0 + 2, EXT_Z0 + 0.5);
+    // ara sokaklar: zemin, iki yan duvar ve dip duvarı
+    plan.junctions.forEach(j => {
+        const x0 = j.s * HW, x1 = j.s * (HW + j.len), lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+        const m = slab(lo, hi, -3, 0.02, j.z + j.hw, j.z - j.hw, G0.top === 'road' ? 'pave' : G0.top, G0.side, 0.5, G0.top === 'road' ? null : G0.rep); scene.add(m);
+        addSolid(new AABB(lo, -3, j.z - j.hw, hi, 0, j.z + j.hw, 'ground'), m);
+        wall(lo, hi, j.z + j.hw + 1, j.z + j.hw); wall(lo, hi, j.z - j.hw, j.z - j.hw - 1);
+        wall(j.s < 0 ? lo - 1 : hi, j.s < 0 ? lo : hi + 1, j.z + j.hw, j.z - j.hw);
+    });
     wall(-ARENA.hw - 1, -HW, ARENA.z0 + 0.5, ARENA.z0); wall(HW, ARENA.hw + 1, ARENA.z0 + 0.5, ARENA.z0);
     wall(-ARENA.hw - 1, -ARENA.hw, ARENA.z0, ARENA.z1); wall(ARENA.hw, ARENA.hw + 1, ARENA.z0, ARENA.z1);
     wall(-ARENA.hw, ARENA.hw, ARENA.z1, ARENA.z1 - 1);
 
     // Yol kenarı (çit ya da demir bariyer) ve meydanın kenarında alçak duvar
     const edge = L.edge, edgeM = mat(edge.color);
-    L.segs.forEach(([z0, z1]) => [-1, 1].forEach(s => {
-        const h = new THREE.Mesh(new THREE.BoxGeometry(edge.w, edge.h, Math.abs(z1 - z0)), edgeM);
-        h.position.set(s * (HW + edge.w / 2), edge.h / 2, (z0 + z1) / 2); h.castShadow = h.receiveShadow = true; scene.add(h);
-    }));
+    segs.forEach(([z0, z1]) => [-1, 1].forEach(s => along(s, z0, z1, (a, b) => {
+        if (a - b < 0.2) return;
+        const h = new THREE.Mesh(new THREE.BoxGeometry(edge.w, edge.h, Math.abs(a - b)), edgeM);
+        h.position.set(s * (HW + edge.w / 2), edge.h / 2, (a + b) / 2); h.castShadow = h.receiveShadow = true; scene.add(h);
+    })));
     [-1, 1].forEach(s => scene.add(box(0.6, 0.7, ARENA.z0 - ARENA.z1, '#a8a29e', s * (ARENA.hw + 0.3), 0.35, (ARENA.z0 + ARENA.z1) / 2)));
     scene.add(box(ARENA.hw * 2, 0.7, 0.6, '#a8a29e', 0, 0.35, ARENA.z1 - 0.3));
 
     // Çukur kenarlarında dubalar ve tabela
-    const pits = L.segs.slice(0, -1).map(([, z1], i) => (z1 + L.segs[i + 1][0]) / 2);
+    const pits = segs.slice(0, -1).map(([, z1], i) => (z1 + segs[i + 1][0]) / 2);
     pits.forEach((pz, i) => {
         [-1, 1].forEach(s => [-1.9, 1.9].forEach(dz => {
             const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 6), mat('#f97316'));
@@ -323,12 +356,13 @@ export function buildWorld(scene, L) {
             setCount(n) {
                 const x = c.getContext('2d');
                 x.fillStyle = L.gateColor; x.fillRect(0, 0, 512, 128); x.fillStyle = '#fef2f2'; x.textAlign = 'center'; x.textBaseline = 'middle';
-                fitText(x, n > 0 ? `GEÇMEK İÇİN ${n} ${L.gateWho} DAHA` : 'YOL AÇIK!', 256, 68, 480, 60);
+                fitText(x, n > 0 ? tf('GEÇMEK İÇİN {0} {1} DAHA', n, tr(L.gateWho)) : 'YOL AÇIK!', 256, 68, 480, 60);
                 tex.needsUpdate = true;
             }
         };
     }
 
+    buildStreets(scene, W, L);   // mahalle, ara sokaklar, engeller (siper), güç tuğlaları, pusu düşmanları
     L.decorate(scene, W);
     return W;
 }

@@ -4,13 +4,15 @@
 // bayraklı kalabalık. Darbeci askerler (soldiers.js) kelepçe atılarak tutuklanır. Tank barikatı açılınca canavar FETÖ (boss_feto.js);
 // yenilince HIRHIZ konuşur, ardından "son peygamber" adamı gelir (outro.js).
 import * as THREE from 'three';
-import { G } from './state.js?v=18';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=18';
-import { spawnFeto } from './boss_feto.js?v=18';
-import { peygamberOutro } from './outro.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import './soldiers.js?v=18';
+import { tr } from './i18n.js?v=20';
+import { G } from './state.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=20';
+import { spawnFeto } from './boss_feto.js?v=20';
+import { peygamberOutro } from './outro.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { limb, walkPose } from './models.js?v=20';
+import './soldiers.js?v=20';
 
 const TANKS = [[3.5, -46], [-3.5, -84], [3.5, -120], [-3.5, -158]];   // yoldaki tanklar (kulelerine çıkılır)
 const HULL = 1.5, TURRET = 2.3;
@@ -95,7 +97,7 @@ function newsBoard(scene, x, z, rot, text) {
     const t = canvasTex(512, 288, (c, Wd, H) => {
         c.fillStyle = '#1e293b'; c.fillRect(0, 0, Wd, H);
         c.fillStyle = '#dc2626'; c.fillRect(0, H - 96, Wd, 96); c.fillStyle = '#facc15'; c.fillRect(0, H - 120, 210, 28);
-        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText('SON DAKİKA', 12, H - 106);
+        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText(tr('SON DAKİKA'), 12, H - 106);
         c.fillStyle = '#fef2f2'; c.textAlign = 'center';
         const words = text.split(' '), mid = Math.ceil(words.length / 2);
         fitText(c, words.slice(0, mid).join(' '), Wd / 2, H - 70, Wd - 30, 34); fitText(c, words.slice(mid).join(' '), Wd / 2, H - 32, Wd - 30, 34);
@@ -103,6 +105,114 @@ function newsBoard(scene, x, z, rot, text) {
     });
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 1.86), new THREE.MeshBasicMaterial({ map: t }));
     scr.position.set(0, 3.9, 0.12); g.add(scr);
+}
+
+// --- KÖPRÜNÜN YAYA YOLLARINDAKİ SAHNELER (oyun alanının dışında, arka plan) ---
+// Köprünün iki yanında halatların dışında yaya yolu ve dış korkuluk. Sağda öfkeli kalabalık bir askeri öğrenciyi
+// omuzlarında taşıyıp korkuluktan aşağı atar; solda başka bir kalabalık yere düşmüş askeri öğrenciyi sopalarla döver.
+// İkisi de döngüyle tekrarlanır; kodla çizilmiş blok figürler.
+const WALK0 = HW + 2.3, WALK1 = HW + 7.6;   // yaya yolunun iç ve dış kenarı (|x|)
+function person(shirt, pants, skin = '#e0ac69', hair = '#1c1917') {
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+    const legL = limb(body, -0.11, 0.7, 0, 0.16, 0.68, 0.18, pants, '#111827');
+    const legR = limb(body, 0.11, 0.7, 0, 0.16, 0.68, 0.18, pants, '#111827');
+    const torso = new THREE.Group(); torso.position.y = 0.7; body.add(torso);
+    torso.add(box(0.48, 0.6, 0.28, shirt, 0, 0.3, 0));
+    const head = new THREE.Group(); head.position.y = 0.62; torso.add(head);
+    head.add(box(0.32, 0.36, 0.3, skin, 0, 0.22, 0));
+    head.add(box(0.34, 0.1, 0.32, hair, 0, 0.42, -0.01, false));
+    head.add(box(0.2, 0.04, 0.02, '#7f1d1d', 0, 0.1, 0.155, false));   // bağıran ağız
+    const armL = limb(torso, -0.31, 0.56, 0, 0.12, 0.5, 0.13, shirt);
+    const armR = limb(torso, 0.31, 0.56, 0, 0.12, 0.5, 0.13, shirt);
+    armL.add(box(0.1, 0.1, 0.1, skin, 0, -0.53, 0, false)); armR.add(box(0.1, 0.1, 0.1, skin, 0, -0.53, 0, false));
+    return { root, body, legL, legR, armL, armR, torso, head };
+}
+function cadet() {   // askeri öğrenci: kamuflaj tonlarında üniforma, bordo bere
+    const m = person('#4d5b2a', '#3a4520', '#e8b48f', '#3f2a1d');
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2.4), mat('#7f1d1d'));
+    b.scale.set(1.05, 0.5, 1); b.position.set(-0.02, 0.44, 0); m.head.add(b);
+    return m;
+}
+const MOB = [['#1e40af', '#1f2937'], ['#f8fafc', '#374151'], ['#dc2626', '#111827'], ['#374151', '#1e3a8a'], ['#16a34a', '#292524'], ['#f59e0b', '#1f2937']];
+function bridgeScenes(scene, W) {
+    // yaya yolları ve dış korkuluklar (bütün köprü boyunca)
+    const z0 = 98, z1 = ARENA.z0, len = z0 - z1, zc = (z0 + z1) / 2;
+    [-1, 1].forEach(s => {
+        const xm = s * (WALK0 + WALK1) / 2;
+        scene.add(box(WALK1 - WALK0, 0.4, len, '#64748b', xm, -0.2, zc));
+        scene.add(box(0.12, 1.1, len, '#94a3b8', s * WALK1, 0.55, zc));
+        scene.add(box(0.12, 0.12, len, '#cbd5e1', s * WALK1, 1.12, zc, false));
+        scene.add(box(0.1, 0.5, len, '#94a3b8', s * WALK0, 0.25, zc, false));
+    });
+    const reg = (g) => { scene.add(g); if (W.cull) W.cull.push({ o: g, x: g.position.x, z: g.position.z }); return g; };
+
+    // SAĞ: askeri öğrenciyi köprüden atan kalabalık
+    {
+        const S = 1, base = new THREE.Group(); base.position.set(0, 0, 52); reg(base);
+        base.position.x = S * (WALK0 + 1.6);
+        const carriers = [0, 1, 2, 3].map(i => { const m = person(...MOB[i]); base.add(m.root); return m; });
+        const watchers = [4, 5].map(i => { const m = person(...MOB[i]); base.add(m.root); m.root.position.set(-0.3 + i * 0.4, 0, (i - 4.5) * 2.6); return m; });
+        const c = cadet(); base.add(c.root);
+        const slots = [[-0.35, -0.55], [0.35, -0.55], [-0.35, 0.55], [0.35, 0.55]];
+        const T = 10.5, run = WALK1 - WALK0 - 2.4;   // döngü süresi, kalabalığın korkuluğa yürüyeceği mesafe
+        W.movers.push((dt, t) => {
+            const k = t % T;
+            let gx = 0, lift = 1.95, cx = 0, cy = 0, cRot = 0, fall = false;
+            if (k < 3.2) { gx = run * k / 3.2; }                                        // taşıyarak korkuluğa
+            else if (k < 3.9) { gx = run; lift = 1.95 + (k - 3.2) / 0.7 * 0.9; }        // havaya kaldır
+            else if (k < 7) { gx = run; fall = true; }                                   // at, bağırarak izle
+            else { gx = run * (1 - (k - 7) / 3.5); }                                     // geri dön
+            carriers.forEach((m, i) => {
+                m.root.position.set(gx + slots[i][0], 0, slots[i][1]); m.root.rotation.y = S * Math.PI / 2;
+                const walking = k < 3.2 || k >= 7;
+                walkPose(m, t * 9 + i, walking ? 1 : 0);
+                const up = k < 3.9 ? -2.9 : -3.0 + Math.sin(t * 10 + i) * 0.35;           // eller yukarıda: taşır / bağırır
+                m.armL.rotation.x = up; m.armR.rotation.x = up + (k >= 3.9 && k < 7 ? Math.sin(t * 12 + i) * 0.4 : 0);
+                if (k >= 7) { m.root.rotation.y = -S * Math.PI / 2; m.armL.rotation.x = m.armR.rotation.x = 0; }
+            });
+            watchers.forEach((m, i) => { m.root.rotation.y = S * Math.PI / 2 - 0.4 + i * 0.8; m.armR.rotation.x = -2.8 + Math.sin(t * 8 + i) * 0.3; m.armL.rotation.x = -2.6 + Math.cos(t * 8 + i) * 0.3; });
+            if (!fall) {
+                c.root.visible = k < 7 || k > 10;
+                c.root.position.set(gx, lift - 0.25, 0); c.root.rotation.set(0, S * Math.PI / 2, S * Math.PI / 2); c.body.rotation.x = 0;
+                c.legL.rotation.x = Math.sin(t * 14) * 0.6; c.legR.rotation.x = -Math.sin(t * 14) * 0.6;   // çırpınır
+                c.armL.rotation.x = Math.sin(t * 13) * 0.8; c.armR.rotation.x = -Math.sin(t * 13) * 0.8;
+                if (k >= 10) c.root.visible = false;
+            } else {
+                const ft = k - 3.9, edge = (WALK1 - WALK0 - 1.6) + 0.6;
+                cx = Math.min(run + 2.6 * ft, edge + 2.6 * ft); cy = lift - 0.25 + 3 * ft - 0.5 * 18 * ft * ft;
+                c.root.visible = cy > -36;
+                c.root.position.set(Math.max(gx, cx), cy, 0); cRot = ft * 5;
+                c.root.rotation.set(cRot, S * Math.PI / 2, S * Math.PI / 2);
+                c.armL.rotation.x = -2.8; c.armR.rotation.x = -2.6; c.legL.rotation.x = 0.4; c.legR.rotation.x = -0.4;
+            }
+        });
+    }
+    // SOL: yerdeki askeri öğrenciyi sopalarla döven kalabalık
+    {
+        const S = -1, base = new THREE.Group(); base.position.set(S * ((WALK0 + WALK1) / 2), 0, 30); reg(base);
+        const c = cadet(); base.add(c.root);
+        c.root.position.set(0, 0.25, 0); c.body.rotation.x = -Math.PI / 2 + 0.15; c.root.rotation.y = 0.4;
+        c.armL.rotation.x = -2.6; c.armR.rotation.x = -2.9;   // kollarıyla başını korur
+        const ring = [0, 1, 2, 4, 5].map((mi, i) => {
+            const m = person(...MOB[mi]); base.add(m.root);
+            const a = i / 5 * Math.PI * 2 + 0.3, r = 1.25;
+            m.root.position.set(Math.cos(a) * r * 0.9, 0, Math.sin(a) * r * 1.4);
+            m.root.rotation.y = Math.atan2(-m.root.position.x, -m.root.position.z);
+            const stick = new THREE.Group(); stick.position.y = -0.52; m.armR.add(stick);
+            const st = box(0.06, 1.1, 0.06, '#78350f', 0, -0.05, 0.45); st.rotation.x = Math.PI / 2 - 0.2; stick.add(st);
+            return m;
+        });
+        W.movers.push((dt, t) => {
+            ring.forEach((m, i) => {
+                const ph = (t * 2.6 + i * 0.37) % 1;   // sopayı kaldır (yavaş) - indir (hızlı)
+                m.armR.rotation.x = ph < 0.7 ? -0.3 - 2.6 * (ph / 0.7) : -2.9 + 2.6 * ((ph - 0.7) / 0.3);
+                m.armL.rotation.x = -0.6 + Math.sin(t * 6 + i) * 0.4;
+                m.body.rotation.x = ph >= 0.7 ? 0.25 : 0.05;
+                m.body.position.y = Math.abs(Math.sin(t * 5 + i)) * 0.04;
+            });
+            c.body.position.y = Math.abs(Math.sin(t * 16)) * 0.04; c.legL.rotation.x = 0.8 + Math.sin(t * 7) * 0.2; c.legR.rotation.x = 1.0;
+        });
+    }
 }
 
 function decorate(scene, W) {
@@ -199,6 +309,8 @@ function decorate(scene, W) {
         }
         jet.visible = jet.userData.z !== undefined;
     });
+
+    bridgeScenes(scene, W);
 
     // Son dakika ekranları, giriş tabelası
     [[1, -12], [-1, -70], [1, -134]].forEach(([s, z], i) => newsBoard(scene, s * (HW + 2.4), z, -s * Math.PI / 2 * 0.7, NEWS[i % NEWS.length]));

@@ -2,9 +2,10 @@
 // Gece, Ankara'da bir emniyet bürosu: masada ByLock açık telefon, monitörler, dosya yığınları, pencerede Atakule.
 // 4 farklı rakamlı şifre: yeşil = doğru yer, sarı = var ama yeri yanlış, gri = yok. 8 hak; hak bitince şifre değişir.
 import * as THREE from 'three';
-import { G, addScore, toast } from './state.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
+import { G, addScore, toast } from './state.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { tr, tf } from './i18n.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
 
 const LEN = 4, TRIES = 8, GOOD = 5;   // GOOD: 3. yıldız için en çok bu kadar tahmin
 const TICKER = "BYLOCK LİSTELERİ AÇIKLANDI • 'MOR BEYİN' UYGULAMASI: 11 BİN 480 KİŞİNİN LİSTEDE YANLIŞLIKLA YER ALDIĞI ORTAYA ÇIKTI • KHK İLE 125 BİNDEN FAZLA KAMU GÖREVLİSİ İHRAÇ EDİLDİ • ÖĞRETMENLER, AKADEMİSYENLER, GAZETECİLER DE LİSTEDE • ";
@@ -108,7 +109,7 @@ export function makePuzzleMode() {
     };
     mode.retry = () => mode.reset();
     mode.leave = () => { if (el) el.style.display = 'none'; pz = null; };
-    mode.hint = touch => touch ? 'Rakamlara dokun, ✔ ile dene.' : 'Rakam tuşları ile yaz · Enter: dene · Backspace: sil';
+    mode.hint = touch => tr(touch ? 'Rakamlara dokun, ✔ ile dene.' : 'Rakam tuşları ile yaz · Enter: dene · Backspace: sil');
     mode.hud = () => {};
 
     function keyStates() {
@@ -136,18 +137,18 @@ export function makePuzzleMode() {
         }).join('');
         el.innerHTML = `
           <div class="pz-phone">
-            <div class="pz-bar"><span class="pz-lock">🔒</span><b>ByLock</b><span class="pz-round">Tur ${pz.round}</span></div>
+            <div class="pz-bar"><span class="pz-lock">🔒</span><b>ByLock</b><span class="pz-round">${tf("Tur {0}", pz.round)}</span></div>
             <div class="pz-body">
               <div class="pz-board">${rows}</div>
               <div class="pz-side">
-                <p class="pz-sub">Şifre 4 farklı rakam. Kır, liste çıksın!</p>
-                <div class="pz-legend"><span><i class="g"></i>doğru yer</span><span><i class="y"></i>var, yeri yanlış</span><span><i class="x"></i>yok</span></div>
+                <p class="pz-sub">${tr("Şifre 4 farklı rakam. Kır, liste çıksın!")}</p>
+                <div class="pz-legend"><span><i class="g"></i>${tr("doğru yer")}</span><span><i class="y"></i>${tr("var, yeri yanlış")}</span><span><i class="x"></i>${tr("yok")}</span></div>
                 <div class="pz-keys">${keys}</div>
-                <div class="pz-left">Kalan hak: <b>${TRIES - pz.rows.length}</b></div>
-                <div class="pz-msg${pz.solved ? ' win' : pz.msg ? ' fail' : ''}">${pz.msg}</div>
+                <div class="pz-left">${tr("Kalan hak: ")}<b>${TRIES - pz.rows.length}</b></div>
+                <div class="pz-msg${pz.solved ? ' win' : pz.msg ? ' fail' : ''}">${tr(pz.msg)}</div>
               </div>
             </div>
-            <div class="pz-ticker"><b>SON DAKİKA</b><div class="pz-tick-wrap"><span>${TICKER}</span></div></div>
+            <div class="pz-ticker"><b>${tr("SON DAKİKA")}</b><div class="pz-tick-wrap"><span>${tr(TICKER)}</span></div></div>
           </div>`;
         el.querySelectorAll('.pz-key').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); press(b.dataset.k); }));
         pz.shake = false;
@@ -182,7 +183,7 @@ export function makePuzzleMode() {
         }
         if (pz.rows.length >= TRIES) {   // hak bitti: şifre gösterilir, değişir, yeni tur
             pz.locked = true;
-            pz.msg = `İNDİRDİN Mİ?! Şifre ${pz.code} idi, değiştirildi!`;
+            pz.msg = tf('İNDİRDİN Mİ?! Şifre {0} idi, değiştirildi!', pz.code);
             G.livesLost++;
             playSfx('ouch');
             render();
@@ -198,6 +199,6 @@ export function makePuzzleMode() {
     }
     // Karne: ⭐ çöz, ⭐ ilk turda çöz, ⭐ en çok 5 tahminde çöz
     mode.stars = () => 1 + (pz && pz.round === 1 ? 1 : 0) + (pz && pz.lastRound <= GOOD ? 1 : 0);
-    mode.detail = () => `Tahmin: ${pz ? pz.guesses : 0} · Tur: ${pz ? pz.round : 1} · ⭐ çöz · ⭐ ilk turda · ⭐ en çok ${GOOD} tahmin`;
+    mode.detail = () => tf('Tahmin: {0} · Tur: {1} · ⭐ çöz · ⭐ ilk turda · ⭐ en çok {2} tahmin', pz ? pz.guesses : 0, pz ? pz.round : 1, GOOD);
     return mode;
 }

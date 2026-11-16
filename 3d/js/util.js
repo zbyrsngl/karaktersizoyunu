@@ -1,5 +1,6 @@
 // HIRHIZ 3D: ortak araçlar (malzemeler, yazı dokuları, matematik)
 import * as THREE from 'three';
+import { tr } from './i18n.js?v=20';
 
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const lerp = (a, b, k) => a + (b - a) * k;
@@ -45,6 +46,7 @@ export function canvasTex(w, h, draw, opts = {}) {
 
 // Yazıyı tuvale sığdırarak çizer
 export function fitText(ctx, txt, x, y, maxW, size, font = 'Impact, Arial Black, Arial') {
+    txt = tr(txt);
     let s = size;
     do { ctx.font = `bold ${s}px ${font}`; s -= 2; } while (ctx.measureText(txt).width > maxW && s > 8);
     ctx.fillText(txt, x, y);
@@ -52,6 +54,7 @@ export function fitText(ctx, txt, x, y, maxW, size, font = 'Impact, Arial Black,
 
 // Kafanın üstünde duran yazı (her zaman kameraya döner)
 export function textSprite(text, { color = '#f8fafc', bg = 'rgba(15,23,42,0.75)', stroke = null, size = 44, height = 0.32, font = 'Arial Black, Arial' } = {}) {
+    text = tr(text);
     const c = document.createElement('canvas'), g = c.getContext('2d');
     g.font = `bold ${size}px ${font}`;
     const w = Math.ceil(g.measureText(text).width) + size, h = Math.ceil(size * 1.5);

@@ -3,11 +3,12 @@
 // Kasetler toplanır (hepsi "MONTAJ!"), polisler rüşvetle susturulur; villa balkonlarındaki SINAYPIRCILAR'a ancak rüşvet atarak ulaşılır.
 // Demir kapıdan geçince canavar DEV ÇELİK KASA (boss_kasa.js); yenilince Cengiz gelir (outro.js).
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=18';
-import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=18';
-import { spawnKasa } from './boss_kasa.js?v=18';
-import { cengizOutro } from './outro.js?v=18';
-import './police.js?v=18';
+import { tr } from './i18n.js?v=20';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
+import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=20';
+import { spawnKasa } from './boss_kasa.js?v=20';
+import { cengizOutro } from './outro.js?v=20';
+import './police.js?v=20';
 
 const NEWS = ["'SIFIRLA' SES KAYDI İNTERNETE DÜŞTÜ", "KAYITLARA 'MONTAJ' DEDİ", "KAYITTA: '30 MİLYON AVRO DAHA VAR'"];
 const BALCONY_X = HW + 1.4, BALCONY_Y = 3.2, SNIPERS_Z = [-48, -92, -160];
@@ -74,7 +75,7 @@ function newsScreen(scene, x, z, rot, text) {
     const t = canvasTex(512, 288, (c, Wd, H) => {
         c.fillStyle = '#1e293b'; c.fillRect(0, 0, Wd, H);
         c.fillStyle = '#dc2626'; c.fillRect(0, H - 96, Wd, 96); c.fillStyle = '#facc15'; c.fillRect(0, H - 120, 210, 28);
-        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText('SON DAKİKA', 12, H - 106);
+        c.fillStyle = '#111827'; c.font = 'bold 20px Arial Black, Arial'; c.textBaseline = 'middle'; c.fillText(tr('SON DAKİKA'), 12, H - 106);
         c.fillStyle = '#fef2f2'; c.textAlign = 'center';
         const words = text.split(' '), mid = Math.ceil(words.length / 2);
         fitText(c, words.slice(0, mid).join(' '), Wd / 2, H - 70, Wd - 30, 34); fitText(c, words.slice(mid).join(' '), Wd / 2, H - 32, Wd - 30, 34);

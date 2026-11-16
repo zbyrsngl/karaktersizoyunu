@@ -6,14 +6,14 @@
 //   KÖPRÜNÜN ÜSTÜNDEKİ SINAYPIRCI: köprüde diz çöker; kırmızı lazerle seni izler, lazer yanıp sönünce kilitlenmiştir → kaç!
 // Rüşvet destesiyle (nişanlı atış) yenilen polis parayı alıp gider: "DOSYA KAPANDI!"
 import * as THREE from 'three';
-import { limb, walkPose } from './models.js?v=18';
-import { G, diff } from './state.js?v=18';
-import { hurtPlayer, blockFx } from './player.js?v=18';
-import { burst, addTrauma } from './fx.js?v=18';
-import { playSfx, beep } from './audio.js?v=18';
-import { makeCloud } from './hazards.js?v=18';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=18';
-import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=18';
+import { limb, walkPose, labelTorso } from './models.js?v=20';
+import { G, diff } from './state.js?v=20';
+import { hurtPlayer, blockFx } from './player.js?v=20';
+import { burst, addTrauma } from './fx.js?v=20';
+import { playSfx, beep } from './audio.js?v=20';
+import { makeCloud } from './hazards.js?v=20';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=20';
+import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=20';
 
 // --- MODELLER ---
 const UNI = '#1e40af', UNI_D = '#172554', ARM = '#1e3a8a', SKIN = '#e8b48f';
@@ -47,7 +47,7 @@ export function buildPolice(variant) {
     torso.add(box(0.14, 0.12, 0.02, '#93c5fd', 0, 0.56, 0.155, false));                 // yaka
     for (let i = 0; i < 3; i++) torso.add(box(0.04, 0.04, 0.02, '#facc15', 0.03, 0.44 - i * 0.1, 0.16, false));   // düğmeler
     torso.add(box(0.08, 0.08, 0.02, '#fbbf24', 0.15, 0.48, 0.16, false));                // rozet
-    const pl = plate(); pl.position.set(-0.12, 0.34, 0.156); torso.add(pl);
+    labelTorso(torso, '17/25', '#fde047', '#0f2a6b', { frontY: 0.2 });   // göğüste ve sırtta büyük 17/25
     torso.add(box(0.54, 0.08, 0.32, '#111827', 0, 0.04, 0, false));                      // kemer
     torso.add(box(0.1, 0.06, 0.02, '#d4d4d8', 0, 0.04, 0.17, false));
     if (variant === 'saygili') {   // apoletler + kravat

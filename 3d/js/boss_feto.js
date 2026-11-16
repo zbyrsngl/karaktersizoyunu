@@ -7,17 +7,17 @@
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
 // 8. bölüm FETÖ: SON (opts.son): "YA ALLAH!" diye gelir, daha hızlı kovalar, oyuncu rafa çıkınca zıplayıp peşinden gelir (moveBody fiziği).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=18';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=18';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=18';
-import { playSfx } from './audio.js?v=18';
-import { makeRing } from './hazards.js?v=18';
-import { limb, walkPose } from './models.js?v=18';
-import { groundAt, moveBody } from './physics.js?v=18';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=18';
-import { ARENA } from './world.js?v=18';
-import { hitsPlayer, killProj } from './enemies.js?v=18';
-import { showBossBar, setBossBar } from './boss_core.js?v=18';
+import { G, diff, addScore, toast } from './state.js?v=20';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=20';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=20';
+import { playSfx } from './audio.js?v=20';
+import { makeRing } from './hazards.js?v=20';
+import { limb, walkPose } from './models.js?v=20';
+import { groundAt, moveBody } from './physics.js?v=20';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=20';
+import { ARENA } from './world.js?v=20';
+import { hitsPlayer, killProj } from './enemies.js?v=20';
+import { showBossBar, setBossBar } from './boss_core.js?v=20';
 
 const TOP = 1.9, SKIN = '#e8c4a0';
 
