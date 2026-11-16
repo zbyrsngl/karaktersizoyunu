@@ -386,7 +386,34 @@ const D = {
     'TERZİ': ['TAILOR', 'TAILLEUR', 'KLEERMAKER', 'SCHNEIDER', 'АТЕЛЬЕ'],
     'KASAP': ['BUTCHER', 'BOUCHERIE', 'SLAGER', 'METZGEREI', 'МЯСНАЯ ЛАВКА'],
     'MANAV': ['GREENGROCER', 'PRIMEUR', 'GROENTEBOER', 'OBST & GEMÜSE', 'ОВОЩИ-ФРУКТЫ'],
-    'Ya Allah, bismillah!':['Ya Allah, bismillah!', 'Ya Allah, bismillah !', 'Ya Allah, bismillah!', 'Ya Allah, bismillah!', 'Я Аллах, бисмиллях!']
+    'Ya Allah, bismillah!': ['Ya Allah, bismillah!', 'Ya Allah, bismillah !', 'Ya Allah, bismillah!', 'Ya Allah, bismillah!', 'Я Аллах, бисмиллях!'],
+    // --- İKİ KİŞİLİK OYUN (net.js) ---
+    '👥 İKİ KİŞİ OYNA': ['👥 TWO PLAYERS', '👥 À DEUX', '👥 MET Z\'N TWEEËN', '👥 ZU ZWEIT', '👥 ВДВОЁМ'],
+    'Birlikte oyna: biri oda kurar, diğeri 4 harfli kodu girip katılır.': ['Play together: one creates a room, the other joins with the 4-letter code.', 'Jouez ensemble : l\'un crée un salon, l\'autre le rejoint avec le code à 4 lettres.', 'Speel samen: één maakt een kamer, de ander doet mee met de code van 4 letters.', 'Zusammen spielen: einer erstellt einen Raum, der andere tritt mit dem 4-Buchstaben-Code bei.', 'Играйте вместе: один создаёт комнату, другой входит по коду из 4 букв.'],
+    '🏠 ODA KUR': ['🏠 CREATE ROOM', '🏠 CRÉER UN SALON', '🏠 KAMER MAKEN', '🏠 RAUM ERSTELLEN', '🏠 СОЗДАТЬ КОМНАТУ'],
+    'KOD': ['CODE', 'CODE', 'CODE', 'CODE', 'КОД'],
+    'KATIL': ['JOIN', 'REJOINDRE', 'MEEDOEN', 'BEITRETEN', 'ВОЙТИ'],
+    'AYRIL': ['LEAVE', 'QUITTER', 'VERLATEN', 'VERLASSEN', 'ВЫЙТИ'],
+    'Bağlanıyor...': ['Connecting...', 'Connexion...', 'Verbinden...', 'Verbinde...', 'Подключение...'],
+    'Bağlantı kütüphanesi yüklenemedi. İnternet bağlantını kontrol et.': ['Could not load the connection library. Check your internet connection.', 'Impossible de charger la bibliothèque de connexion. Vérifie ta connexion Internet.', 'Kon de verbindingsbibliotheek niet laden. Controleer je internet.', 'Verbindungsbibliothek konnte nicht geladen werden. Prüfe deine Internetverbindung.', 'Не удалось загрузить библиотеку связи. Проверь интернет.'],
+    'Oda kodu: {0} — arkadaşın bu kodla katılsın.': ['Room code: {0} — your friend joins with this code.', 'Code du salon : {0} — ton ami rejoint avec ce code.', 'Kamercode: {0} — je vriend doet mee met deze code.', 'Raumcode: {0} — dein Freund tritt mit diesem Code bei.', 'Код комнаты: {0} — друг входит с этим кодом.'],
+    'Bağlantı hatası': ['Connection error', 'Erreur de connexion', 'Verbindingsfout', 'Verbindungsfehler', 'Ошибка связи'],
+    'Kod 4 harf olmalı.': ['The code must be 4 letters.', 'Le code doit faire 4 lettres.', 'De code moet 4 letters zijn.', 'Der Code muss 4 Buchstaben haben.', 'Код должен быть из 4 букв.'],
+    'Bu kodla bir oda yok.': ['There is no room with this code.', 'Aucun salon avec ce code.', 'Er is geen kamer met deze code.', 'Es gibt keinen Raum mit diesem Code.', 'Комнаты с таким кодом нет.'],
+    'Bağlandın! Ev sahibi oyunu başlatınca oyun açılacak.': ['Connected! The game opens when the host starts it.', 'Connecté ! La partie s\'ouvre quand l\'hôte la lance.', 'Verbonden! Het spel opent zodra de host start.', 'Verbunden! Das Spiel öffnet sich, wenn der Gastgeber startet.', 'Подключено! Игра откроется, когда хозяин её запустит.'],
+    '2. oyuncu bağlandı! Bölümü seçip OYUNU BAŞLAT\'a bas.': ['Player 2 connected! Pick a level and press START GAME.', 'Le joueur 2 est connecté ! Choisis un niveau et appuie sur LANCER LE JEU.', 'Speler 2 is verbonden! Kies een level en druk op SPEL STARTEN.', 'Spieler 2 ist verbunden! Wähle ein Level und drücke SPIEL STARTEN.', 'Игрок 2 подключён! Выбери уровень и нажми НАЧАТЬ ИГРУ.'],
+    'İKİ KİŞİLİK OYUN HAZIR!': ['TWO-PLAYER GAME READY!', 'PARTIE À DEUX PRÊTE !', 'SPEL VOOR TWEE KLAAR!', 'ZWEI-SPIELER-SPIEL BEREIT!', 'ИГРА ВДВОЁМ ГОТОВА!'],
+    'ARKADAŞINLA BAĞLANTI KOPTU': ['LOST CONNECTION TO YOUR FRIEND', 'CONNEXION PERDUE AVEC TON AMI', 'VERBINDING MET JE VRIEND VERBROKEN', 'VERBINDUNG ZUM FREUND VERLOREN', 'СВЯЗЬ С ДРУГОМ ПОТЕРЯНА'],
+    'Bağlantı koptu.': ['Connection lost.', 'Connexion perdue.', 'Verbinding verbroken.', 'Verbindung verloren.', 'Связь потеряна.'],
+    'Oda dolu.': ['The room is full.', 'Le salon est plein.', 'De kamer is vol.', 'Der Raum ist voll.', 'Комната заполнена.'],
+    'Sürümler farklı! İkiniz de sayfayı yenileyin.': ['Different versions! Both of you, reload the page.', 'Versions différentes ! Rechargez tous les deux la page.', 'Verschillende versies! Herlaad allebei de pagina.', 'Unterschiedliche Versionen! Ladet beide die Seite neu.', 'Разные версии! Обновите страницу оба.'],
+    'Tek kişilik oyuna dönüldü.': ['Back to single player.', 'Retour au jeu solo.', 'Terug naar één speler.', 'Zurück zum Einzelspiel.', 'Возврат к одиночной игре.'],
+    'EV SAHİBİ BAŞLATACAK': ['THE HOST WILL START', 'L\'HÔTE VA LANCER', 'DE HOST START', 'DER GASTGEBER STARTET', 'ЗАПУСТИТ ХОЗЯИН'],
+    'Ev sahibi sonraki bölümü seçecek.': ['The host will pick the next level.', 'L\'hôte choisira le niveau suivant.', 'De host kiest het volgende level.', 'Der Gastgeber wählt das nächste Level.', 'Следующий уровень выберет хозяин.'],
+    'YAKALANDIN! ARKADAŞININ YANINDA DOĞACAKSIN...': ['BUSTED! YOU\'LL RESPAWN NEXT TO YOUR FRIEND...', 'ATTRAPÉ ! TU VAS RÉAPPARAÎTRE PRÈS DE TON AMI...', 'BETRAPT! JE KOMT TERUG NAAST JE VRIEND...', 'ERWISCHT! DU KOMMST NEBEN DEINEM FREUND ZURÜCK...', 'ПОПАЛСЯ! ВОЗРОДИШЬСЯ РЯДОМ С ДРУГОМ...'],
+    'ARKADAŞININ YANINDA DOĞDUN!': ['BACK NEXT TO YOUR FRIEND!', 'DE RETOUR PRÈS DE TON AMI !', 'TERUG NAAST JE VRIEND!', 'ZURÜCK NEBEN DEINEM FREUND!', 'ТЫ СНОВА РЯДОМ С ДРУГОМ!'],
+    'İkiniz de yakalandınız. Ev sahibi yeniden başlatacak.': ['You were both caught. The host will restart.', 'Vous êtes tous les deux attrapés. L\'hôte va recommencer.', 'Jullie zijn allebei betrapt. De host start opnieuw.', 'Ihr wurdet beide erwischt. Der Gastgeber startet neu.', 'Вас обоих поймали. Хозяин начнёт заново.'],
+    'İkiniz de yakalandınız!': ['You were both caught!', 'Vous êtes tous les deux attrapés !', 'Jullie zijn allebei betrapt!', 'Ihr wurdet beide erwischt!', 'Вас обоих поймали!']
 };
 
 // Türkçe yazının seçili dildeki karşılığı (yoksa kendisi)

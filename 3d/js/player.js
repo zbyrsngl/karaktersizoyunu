@@ -1,15 +1,15 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=21';
-import { moveBody } from './physics.js?v=21';
-import { input } from './input.js?v=21';
-import { G, diff, toast } from './state.js?v=21';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=21';
-import { playSfx, beep } from './audio.js?v=21';
-import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=21';
-import { throwGrenade } from './grenade.js?v=21';
-import { resetPowers } from './powerups.js?v=21';
+import { buildHirhiz, walkPose } from './models.js?v=22';
+import { moveBody } from './physics.js?v=22';
+import { input } from './input.js?v=22';
+import { G, diff, toast } from './state.js?v=22';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=22';
+import { playSfx, beep } from './audio.js?v=22';
+import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=22';
+import { throwGrenade } from './grenade.js?v=22';
+import { resetPowers } from './powerups.js?v=22';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45, SPRINT = 1.6;   // Shift: hızlı koşu
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
@@ -17,7 +17,8 @@ const COYOTE = 0.12, BUFFER = 0.14;
 const SWING = 0.4, SWING_HIT = 0.13, HAMMER_REACH = 2.1;
 export const PLAYER_H = 1.85;
 
-export function createPlayer(scene) {
+// remote: çok oyunculu oyunda arkadaşın karakteri (kukla): fiziği yok, ağdan gelen konumla oynar (net.js)
+export function createPlayer(scene, { remote = false } = {}) {
     const m = buildHirhiz();
     scene.add(m.root);
     // Siper hâlindeki büyük kalkan (gövdenin önünde, yukarı eğik)
@@ -40,7 +41,8 @@ export function createPlayer(scene) {
         squash: 0, phase: 0, dead: false, deadT: 0,
         safe: new THREE.Vector3(), lastGround: null, collected: 0
     };
-    G.player = p;
+    p.remote = remote;
+    if (!remote) G.player = p;
     return p;
 }
 
@@ -65,6 +67,7 @@ export function addCollected(p) { p.collected++; updateSack(p); }
 // Hasar: baret+maske varsa o korur; can biterse ölür
 export function hurtPlayer(from, { force = false, knock = 6 } = {}) {
     const p = G.player;
+    if (p.remote) return false;   // arkadaşın canını kendi cihazı yönetir
     if (p.dead || G.state !== 'play') return false;
     if (!force && p.invuln > 0) return false;
     if (!force && p.power.shieldUp > 0) {   // kalkan gücü: saldırı işlemez
@@ -214,7 +217,7 @@ export function updatePlayer(p, dt, camYaw) {
                 p.facing = Math.atan2(aim.x - p.pos.x, aim.z - p.pos.z);
                 const f = p.facing, from = new THREE.Vector3(p.pos.x + Math.sin(f) * 0.4 - Math.cos(f) * 0.3, p.pos.y + 1.7, p.pos.z + Math.cos(f) * 0.4 + Math.sin(f) * 0.3);
                 if (throwGrenade(from, aim)) {
-                    G.grenades--; G.onGrenadeCount && G.onGrenadeCount(false); G.onGrenadeThrown && G.onGrenadeThrown();
+                    G.grenades--; G.onGrenadeCount && G.onGrenadeCount(false); G.onGrenadeThrown && G.onGrenadeThrown(from, aim);
                     p.grenCd = 0.6; p.throwT = 0.25; beep('swing');
                 }
             }
@@ -251,6 +254,29 @@ function hammerPoint(p) {
     return new THREE.Vector3(p.pos.x + Math.sin(p.facing) * 1.3, p.pos.y + 0.8, p.pos.z + Math.cos(p.facing) * 1.3);
 }
 export { HAMMER_REACH };
+
+// --- KUKLA (çok oyunculu: arkadaşın karakteri) ---
+// net: { pos, vel, facing, fl (bitler: 1 kalkan, 2 yerde, 4 ölü, 8 dokunulmaz, 16 dev balyoz, 32 kalkan gücü), hp }
+export function updatePuppet(p, dt, net) {
+    if (!net) return;
+    const k = 1 - Math.exp(-14 * dt);
+    p.pos.x += (net.pos.x + net.vel.x * 0.05 - p.pos.x) * k; p.pos.y += (net.pos.y - p.pos.y) * k; p.pos.z += (net.pos.z + net.vel.z * 0.05 - p.pos.z) * k;
+    if (p.pos.distanceTo(net.pos) > 6) p.pos.copy(net.pos);   // çok uzaklaştıysa ışınla
+    p.vel.copy(net.vel); p.facing = dampAngle(p.facing, net.facing, 18, dt);
+    p.shield = !!(net.fl & 1); p.grounded = !!(net.fl & 2); p.hp = net.hp;
+    p.power.hammer = net.fl & 16 ? 1 : 0; p.power.shieldUp = net.fl & 32 ? 1 : 0;
+    const dead = !!(net.fl & 4);
+    if (p.swing > 0) p.swing -= dt;
+    if (p.throwT > 0) p.throwT -= dt;
+    if (dead) { p.m.body.rotation.x = Math.min(Math.PI / 2, (p.m.body.rotation.x || 0) + dt * 3.5); p.m.root.rotation.y = p.facing; p.dead = true; return; }
+    if (p.dead) { p.dead = false; p.m.body.rotation.set(0, 0, 0); }
+    p.invuln = net.fl & 8 ? (G.time % 1) + 0.01 : 0;   // animate yanıp söndürür
+    const hk = p.power.hammer ? 1.9 : 1; p.m.hammer.scale.setScalar(p.m.hammer.scale.x + (hk - p.m.hammer.scale.x) * Math.min(1, dt * 10));
+    animate(p, dt, Math.min(1, Math.hypot(p.vel.x, p.vel.z) / RUN));
+}
+export function puppetSwing(p) { p.swing = SWING; p.swingHit = true; }
+export function puppetThrow(p) { p.throwT = 0.2; }
+export { hammerPoint };
 
 // Fotoğraf kafa her karede kameraya döner; karakter ekranda sola gidiyorsa aynalanır (2D'deki gibi)
 let faceDir = 1;

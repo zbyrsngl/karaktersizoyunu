@@ -5,18 +5,18 @@
 //   EKREM: ♥ kalpler · ✔ oy pusulası yağmuru; yenilince "YSK: SEÇİM İPTAL!" → SEÇİM TEKRARI (daha büyük, 22 can, + şok dalgası, + maraton koşusu)
 // Yenilince yukarıdan hücre parmaklığı iner (jailOutro): SELO içeride bağlama çalar, EKREM el sallar.
 import * as THREE from 'three';
-import { tr, tf } from './i18n.js?v=21';
-import { G, diff, addScore, toast } from './state.js?v=21';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=21';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=21';
-import { playSfx } from './audio.js?v=21';
-import { makeRing } from './hazards.js?v=21';
-import { limb, walkPose } from './models.js?v=21';
-import { groundAt } from './physics.js?v=21';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=21';
-import { ARENA } from './world.js?v=21';
-import { hitsPlayer, killProj } from './enemies.js?v=21';
-import { showBossBar, setBossBar } from './boss_core.js?v=21';
+import { tr, tf } from './i18n.js?v=22';
+import { G, diff, addScore, toast } from './state.js?v=22';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=22';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=22';
+import { playSfx } from './audio.js?v=22';
+import { makeRing } from './hazards.js?v=22';
+import { limb, walkPose } from './models.js?v=22';
+import { groundAt } from './physics.js?v=22';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=22';
+import { ARENA } from './world.js?v=22';
+import { hitsPlayer, killProj } from './enemies.js?v=22';
+import { showBossBar, setBossBar } from './boss_core.js?v=22';
 
 // --- ORTAK KAFA ---
 // Ten rengi kafa, kulaklar, kaşlar, gözler, burun, geniş gülüş (dişler); saçı modele göre eklenir
@@ -181,7 +181,7 @@ function spawnHuman(scene, pos, cfg) {
     b.t = Math.min(4, dur + 0.3); b.talkLen = b.t;
     if (cfg.talk.text) { b.bubble = textSprite(cfg.talk.text, { size: 44, height: 0.42, color: '#111827', bg: 'rgba(248,250,252,0.96)' }); b.bubble.position.set(0, cfg.height + 0.7, 0); m.root.add(b.bubble); }
     toast(tf("BÖLÜM SONU CANAVARI: {0}!", tr(cfg.name)), 2600, '#fca5a5');
-    G.boss = b;
+    G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de
     showBossBar(b);
     return b;
 }

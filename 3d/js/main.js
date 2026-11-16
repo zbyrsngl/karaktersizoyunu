@@ -1,31 +1,33 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=21';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=21';
-import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=21';
-import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=21';
-import { updateStreets, resetStreets } from './streets.js?v=21';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=21';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=21';
-import { updateHazards, clearHazards } from './hazards.js?v=21';
-import { updateBoss, removeBoss } from './boss_core.js?v=21';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=21';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=21';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=21';
-import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=21';
-import { groundAt } from './physics.js?v=21';
-import { playLevelStory } from './story3d.js?v=21';
-import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=21';
-import { LEVEL1 } from './level1.js?v=21';
-import { LEVEL2 } from './level2.js?v=21';
-import { LEVEL3 } from './level3.js?v=21';
-import { LEVEL4 } from './level4.js?v=21';
-import { LEVEL5 } from './level5.js?v=21';
-import { LEVEL6 } from './level6.js?v=21';
-import { LEVEL7 } from './level7.js?v=21';
-import { LEVEL8 } from './level8.js?v=21';
-import { LEVEL9 } from './level9.js?v=21';
-import { LEVEL10 } from './level10.js?v=21';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=22';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=22';
+import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=22';
+import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=22';
+import { updateStreets, resetStreets } from './streets.js?v=22';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=22';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=22';
+import { updateHazards, clearHazards } from './hazards.js?v=22';
+import { updateBoss, removeBoss } from './boss_core.js?v=22';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=22';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=22';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=22';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=22';
+import { groundAt } from './physics.js?v=22';
+import { playLevelStory } from './story3d.js?v=22';
+import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=22';
+import { isGuest } from './enemies.js?v=22';
+import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=22';
+import { LEVEL1 } from './level1.js?v=22';
+import { LEVEL2 } from './level2.js?v=22';
+import { LEVEL3 } from './level3.js?v=22';
+import { LEVEL4 } from './level4.js?v=22';
+import { LEVEL5 } from './level5.js?v=22';
+import { LEVEL6 } from './level6.js?v=22';
+import { LEVEL7 } from './level7.js?v=22';
+import { LEVEL8 } from './level8.js?v=22';
+import { LEVEL9 } from './level9.js?v=22';
+import { LEVEL10 } from './level10.js?v=22';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -77,6 +79,7 @@ function loadLevel(id) {
     // Özel bölümler (L.mode: 6 uçuş, 7 bulmaca) kendi dünyasını kurar, oyuncuyu, kamerayı ve akışı kendisi yönetir
     G.world = L.mode ? L.mode.build(scene, L) : buildWorld(scene, L);
     if (!player) player = createPlayer(scene); else scene.add(player.m.root);
+    netSceneChanged(scene);   // çok oyunculu: arkadaşın karakteri de yeni sahneye
     document.body.classList.toggle('mode-flight', !!L.mode && L.mode.kind === 'flight');
     document.body.classList.toggle('mode-puzzle', !!L.mode && L.mode.kind === 'puzzle');
     $('b-bribe').innerHTML = `<b>□</b>${tr(L.ammoName)}`;
@@ -85,6 +88,7 @@ function loadLevel(id) {
 // Eski sahnenin GPU kaynaklarını bırak (oyuncu modeli yeni sahneye taşındığı için ona dokunulmaz)
 function disposeScene(sc) {
     if (player) sc.remove(player.m.root);
+    netBeforeDispose(sc);
     sc.traverse(o => {
         if (o.geometry) o.geometry.dispose();
         const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
@@ -158,8 +162,11 @@ function applyShake() {
 }
 
 // --- OLAYLAR ---
-G.onHammer = (point, p) => {
+// fromNet: arkadaşın vuruşu (net.js); misafirde tuğla ve canavar hasarına ev sahibi karar verir
+G.onHammer = (point, p, fromNet) => {
     hammerHit(point, p);
+    if (!fromNet) netEvent('hammer', { f: p.facing });
+    if (isGuest()) return;
     for (const b of G.world.bricks) {   // tuğlalar
         if (b.broken) continue;
         const c = b.mesh.position;
@@ -171,6 +178,7 @@ G.onHammer = (point, p) => {
 };
 // El bombası patlaması: yarıçaptaki tuğlalar kırılır, canavar hasar alır (onBlast yoksa balyoz darbesi gibi)
 G.onBlast = (pos, R) => {
+    if (isGuest()) return;   // misafir: patlamanın sonucu ev sahibinden gelir
     for (const b of G.world.bricks) if (!b.broken && b.mesh.position.distanceTo(pos) < R * 0.8) breakBrick(b);
     const B = G.boss;
     if (B && !B.dead && Math.hypot(pos.x - B.pos.x, pos.z - B.pos.z) < R + 1.5 && Math.abs(pos.y - B.pos.y) < R + 2) {
@@ -178,9 +186,14 @@ G.onBlast = (pos, R) => {
         if (B.onBlast) B.onBlast(pt); else if (B.onHammer) B.onHammer(pt);
     }
 };
-G.onBrickHit = (aabb) => { const b = G.world.bricks.find(b => b.aabb === aabb); if (b) breakBrick(b); };
-function breakBrick(b) {
+G.onBrickHit = (aabb, how) => {
+    if (isGuest() && how !== 'head') return;   // misafirde mermiyle kırılanı ev sahibi kırar (kafayla vurduğunu kendisi kırar ve bildirir)
+    const b = G.world.bricks.find(b => b.aabb === aabb); if (b) breakBrick(b);
+};
+function breakBrick(b, fromNet) {
     if (b.broken) return;
+    const idx = G.world.bricks.indexOf(b);
+    if (!fromNet) netEvent('brick', { i: idx });
     b.broken = true; b.mesh.visible = false; b.aabb.active = false;
     burst(b.mesh.position, { n: 12, color: b.gold ? ['#facc15', '#ca8a04'] : ['#b45309', '#9a3412', '#7c2d12'], speed: 4, up: 5, size: 0.22, life: 0.9 });
     playSfx('hit', { rate: 0.9, vol: 0.5 }); addTrauma(0.12);
@@ -190,15 +203,15 @@ function breakBrick(b) {
         const g = (POWER_MAKERS[b.power] ? POWER_MAKERS[b.power] : () => makeItem(b.power))();
         const floor = Math.max(0, groundAt(G.world.solids, b.mesh.position.x, b.mesh.position.z, b.aabb.min.y - 0.1));
         g.position.copy(b.mesh.position).setY(floor); scene.add(g);
-        G.world.items.push({ kind: b.power, mesh: g, pos: g.position, baseY: floor, taken: false, temp: true, pop: 0 });
+        G.world.items.push({ id: 'b' + idx, kind: b.power, mesh: g, pos: g.position, baseY: floor, taken: false, temp: true, pop: 0 });
         playSfx('coin', { rate: 1.6, vol: 0.5 });
     }
     if (b.gold) {   // içinden kul hakkı torbası çıkar
         const g = makeBag(); g.position.copy(b.mesh.position).setY(b.aabb.min.y - 0.2); scene.add(g);
-        G.world.items.push({ kind: 'bag', mesh: g, pos: g.position, baseY: g.position.y, taken: false, temp: true });
+        G.world.items.push({ id: 'b' + idx, kind: 'bag', mesh: g, pos: g.position, baseY: g.position.y, taken: false, temp: true });
     }
 }
-G.onThrow = (from, dir) => throwAmmo(from, dir);
+G.onThrow = (from, dir, fromNet) => { throwAmmo(from, dir); if (!fromNet) netEvent('throw', { from: from.toArray(), dir: dir.toArray() }); };
 // Nişan: bilgisayarda ekranın ortasındaki nişangâhtan çıkan ışının ilk çarptığı yer;
 // telefonda karakterin önündeki (±40°, 26 m) en yakın düşman, yoksa düz ileri
 const ray = new THREE.Ray(), box3 = new THREE.Box3(), hitV = new THREE.Vector3(), camDir = new THREE.Vector3();
@@ -256,18 +269,24 @@ G.onKill = () => {
 };
 G.onPlayerDead = () => {
     playSfx('cry', { rate: 0.8 });
-    setTimeout(() => { if (G.state === 'play') { G.state = 'dead'; showPanel('dead'); releasePointer(); } }, 1500);
+    if (coopNow()) { respawnT = 4; toast('YAKALANDIN! ARKADAŞININ YANINDA DOĞACAKSIN...', 3000, '#fca5a5'); return; }
+    setTimeout(() => { if (G.state === 'play') { G.state = 'dead'; $('dead').querySelector('.desc').textContent = tr('Canın bitti.'); showPanel('dead'); releasePointer(); } }, 1500);
 };
 const key = (k) => `hirhiz3d${k}${G.level.id}`;
 const getNum = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
 const setNum = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-G.onBossDefeated = () => {
+G.onBossDefeated = (fromNet) => {
     if (G.state !== 'play') return;
+    if (isGuest() && !fromNet && coopNow()) return;   // misafir: ev sahibinin bildirmesini bekler
+    if (!isGuest()) netEvent('outro');
     if (G.level.outro && !G.outro) { $('boss-bar').hidden = true; G.outro = G.level.outro(scene); return; }   // ör. 3. bölüm: Cengiz gelir, sonra karne
     showWon();
 };
 G.showWon = () => { if (G.state === 'play') showWon(); };
-function showWon() {
+function showWon(fromNet) {
+    if (G.state === 'won') return;
+    if (isGuest() && !fromNet && coopNow() && !G.level.mode) return;   // misafir: ev sahibi bitirince
+    if (!isGuest()) netEvent('won');
     G.state = 'won'; releasePointer(); stopMusic();
     const L = G.level, stars = L.stars ? L.stars() : G.livesLost === 0 ? 3 : G.livesLost <= 1 ? 2 : 1;
     const best = getNum(key('Best')), bestStars = getNum(key('Stars'));
@@ -281,6 +300,8 @@ function showWon() {
     const next = LEVELS[L.id + 1];
     $('next').hidden = !next; if (next) $('next').textContent = tf('{0}. BÖLÜME GEÇ', L.id + 1);
     $('won-soon').hidden = !!next;
+    if (isGuest()) { $('next').hidden = true; $('again').hidden = true; $('won-soon').hidden = false; $('won-soon').textContent = tr('Ev sahibi sonraki bölümü seçecek.'); }
+    else $('again').hidden = false;
     $('won-soon').textContent = tr(L.id === MAX_LEVEL ? "TEBRİKLER! 3D'deki bütün bölümleri bitirdin." : "Sonraki bölüm 3D'de yakında.");
     showPanel('won');
 };
@@ -293,6 +314,7 @@ function updateLevel(dt) {
         const dx = it.pos.x - p.pos.x, dz = it.pos.z - p.pos.z, dy = it.pos.y - p.pos.y;
         if (Math.hypot(dx, dz) < 0.85 && dy > -1.0 && dy < 1.9 && !p.dead) {
             it.taken = true; it.mesh.visible = false;
+            netEvent('item', { id: it.id });
             spawnFx('collect', it.pos.clone(), 1.4);
             playSfx('coin', { vol: 0.6 });
             const at = it.pos.clone().setY(it.pos.y + 1.4);
@@ -323,13 +345,65 @@ function updateLevel(dt) {
         playSfx('coin', { rate: 0.8 });
     }
     updateOutro(dt);
-    if (W.barricade.open && !G.boss && !G.bossDone && p.pos.z < ARENA.z0 - 3 && !p.dead) {
-        L.boss(scene);
-        G.bossDone = true;
-        $('battery').hidden = true;   // canavar dövüşünde şarj azalmaz (üstteki çubuk canavarın)
-        addTrauma(0.3);
+    const pp = coopNow() && partnerHere() ? partnerPos() : null;
+    if (!isGuest() && W.barricade.open && !G.boss && !G.bossDone && ((p.pos.z < ARENA.z0 - 3 && !p.dead) || (pp && pp.z < ARENA.z0 - 3))) { spawnBoss(); netEvent('boss'); }
+    // çok oyunculu: ölünce 4 sn sonra arkadaşın yanında doğ; ikiniz de öldüyseniz ev sahibi bölümü yeniden başlatır
+    if (p.dead && coopNow() && respawnT > 0) {
+        respawnT -= dt;
+        if (respawnT <= 0) {
+            if (!partnerDead() && partnerHere()) respawnAt(partnerPos());
+            else if (!isGuest()) allDead();
+            else respawnT = 0.5;
+        }
     }
 }
+
+// --- ÇOK OYUNCULU YARDIMCILARI (net.js) ---
+const coopNow = () => netOn() && G.level && !G.level.mode;
+let respawnT = 0;
+function respawnAt(pos) {
+    const p = G.player;
+    p.dead = false; p.deadT = 0; p.hp = p.maxHp; p.invuln = 2.5; p.vel.set(0, 0, 0);
+    p.m.body.rotation.set(0, 0, 0); p.m.root.visible = true;
+    p.pos.set(pos.x + 1.2, pos.y + 0.5, pos.z); p.safe.copy(p.pos);
+    updateHearts(); toast('ARKADAŞININ YANINDA DOĞDUN!', 1600, '#86efac');
+}
+function allDead(fromNet) {
+    if (G.state !== 'play') return;
+    if (!isGuest()) netEvent('alldead');
+    G.state = 'dead'; showPanel('dead'); releasePointer();
+    const g = isGuest();
+    $('retry').hidden = g; $('dead-restart').hidden = g;
+    $('dead').querySelector('.desc').textContent = tr(g ? 'İkiniz de yakalandınız. Ev sahibi yeniden başlatacak.' : 'İkiniz de yakalandınız!');
+}
+function spawnBoss() {
+    if (G.boss || G.bossDone) return;
+    G.level.boss(scene);
+    G.bossDone = true;
+    $('battery').hidden = true;   // canavar dövüşünde şarj azalmaz (üstteki çubuk canavarın)
+    addTrauma(0.3);
+}
+// Arkadaşın aldığı eşya: burada da alınmış say; ev sahibi puanı ve toplananı işler
+function takeItem(id) {
+    const it = G.world.items.find(i => i.id === id); if (!it || it.taken) return;
+    it.taken = true; it.mesh.visible = false;
+    spawnFx('collect', it.pos.clone(), 1.2);
+    if (it.kind === G.level.collect.kind) { G.collect++; addScore(5000); }
+    else if (it.kind === 'bag') addScore(5000);
+    else addScore(1000);
+    updateHud();
+}
+// Lobi ve menü: misafir bölüm seçemez, oyunu ev sahibi başlatır
+function renderNet() {
+    const on = netOn(), g = on && isGuest();
+    $('net-host').hidden = on; $('net-join-row').hidden = on; $('net-leave').hidden = !G.net;
+    $('start').disabled = g; $('start').textContent = tr(g ? 'EV SAHİBİ BAŞLATACAK' : 'OYUNU BAŞLAT');
+    $('levels').classList.toggle('locked', g);
+    $('net-btn').classList.toggle('on', on);
+    $('partner').hidden = true;
+    $('retry').hidden = false; $('dead-restart').hidden = false;
+}
+$('net-btn').onclick = () => { const el = $('net'); el.hidden = !el.hidden; };
 
 function updateOutro(dt) { if (G.outro && !G.outro.finished && G.outro.update(dt)) { G.outro.finished = true; showWon(); } }
 
@@ -373,7 +447,7 @@ function resetLevel() {
         return;
     }
     W.items = W.items.filter(it => { if (it.temp) { scene.remove(it.mesh); return false; } return true; });
-    W.items.forEach(it => { it.taken = false; it.mesh.visible = true; });
+    W.items.forEach((it, i) => { it.taken = false; it.mesh.visible = true; it.id = it.id || 'i' + i; });
     W.bricks.forEach(b => { b.broken = false; b.mesh.visible = true; b.aabb.active = true; });
     W.barricade.open = false; W.barricade.t = 0; W.barricade.group.position.y = 0; W.barricade.aabb.active = true;
     W.checkpoint.reached = false; W.checkpoint.cloth.material.color.set('#6b7280');
@@ -390,6 +464,7 @@ function getNumRaw(k) { try { return +localStorage.getItem(k) || 0; } catch (e) 
 // Önce bölümün hikâyesi (oturumda bir kez, 2D'deki gibi), sonra oyun
 function startGame(id = selected) {
     unlockAudio();
+    if (netOn() && !isGuest()) netEvent('level', { id, diff: G.difficulty });
     if (!T && !storyDoneFor[id]) {
         storyDoneFor[id] = true; hidePanels(); stopMusic(); releasePointer();
         G.state = 'story';
@@ -418,9 +493,14 @@ function sayBismillah() {
     playSfx('bismillah', { vol: 1 });
     const p = G.player; if (p) floatText('Ya Allah, bismillah!', p.pos.clone().setY(p.pos.y + 2.6), '#fef3c7', 0.36, 2);
 }
-G.onGrenadeThrown = () => { if (G.time - lastBismillah > 8 && Math.random() < 0.6) sayBismillah(); };
+G.onGrenadeThrown = (from, to) => {
+    if (G.time - lastBismillah > 8 && Math.random() < 0.6) sayBismillah();
+    if (from) netEvent('gren', { from: from.toArray(), to: to.toArray() });
+};
 // Ölünce: kontrol noktasından (ya da canavar meydanının girişinden) devam
-function retry() {
+function retry(fromNet) {
+    if (!isGuest()) netEvent('retry');
+    respawnT = 0;
     hidePanels(); clearAll();
     const p = G.player, W = G.world;
     if (G.level.mode) { G.level.mode.retry(); G.state = 'play'; updateHearts(); playMusic(G.level.music); return; }
@@ -460,7 +540,7 @@ function renderLevels() {
         const st = getNumRaw(`hirhiz3dStars${L.id}`);
         return `<button class="chip lvl${L.id === selected ? ' on' : ''}" data-l="${L.id}">${tr(L.menuTitle)}${st ? ' ' + '⭐'.repeat(st) : ''}</button>`;
     }).join('');
-    $('levels').querySelectorAll('button').forEach(b => b.onclick = () => { selected = +b.dataset.l; setNum('hirhiz3dLevel', selected); renderLevels(); });
+    $('levels').querySelectorAll('button').forEach(b => b.onclick = () => { if (isGuest()) return; selected = +b.dataset.l; setNum('hirhiz3dLevel', selected); renderLevels(); });
     const L = LEVELS[selected], best = getNumRaw(`hirhiz3dBest${L.id}`);
     $('menu-sub').textContent = tf('{0}. BÖLÜM · {1}', L.id, tr(L.name));
     $('menu-desc').textContent = tr(L.desc);
@@ -480,8 +560,14 @@ function renderDiff() {
 }
 function renderSound() { document.querySelectorAll('.snd').forEach(b => b.textContent = tr(isMuted() ? '🔇 SES KAPALI' : '🔊 SES AÇIK')); }
 translateDom(); renderLevels(); renderDiff(); renderSound(); renderLangs();
+initNet({
+    get version() { return VER; }, startGame: (id) => { selected = id; startGame(id); }, retry: () => retry(true), showWon: () => showWon(true), allDead: () => allDead(true),
+    bossDefeated: () => G.onBossDefeated(true), spawnBoss, takeItem, breakBrickIdx: (i) => { const b = G.world.bricks && G.world.bricks[i]; if (b) breakBrick(b, true); },
+    updateHud: () => updateHud(), onKillSync: () => G.onKill && G.onKill(), onNetChange: () => { renderNet(); renderLevels(); }
+});
+renderNet();
 document.querySelectorAll('.snd').forEach(b => b.onclick = () => { unlockAudio(); setMuted(!isMuted()); renderSound(); });
-$('start').onclick = () => startGame(selected);
+$('start').onclick = () => { if (!isGuest()) startGame(selected); };
 $('resume').onclick = resume;
 $('restart').onclick = () => startGame(G.level.id);
 $('retry').onclick = retry;
@@ -515,6 +601,7 @@ function step(dt) {
     pollInput();
     G.time += dt;
     if (G.level.mode) {
+        updateNet(dt);
         G.level.mode.update(dt);
         if (G.state === 'play') updateOutro(dt);
         updateFx(dt); consumePresses();
@@ -522,6 +609,7 @@ function step(dt) {
     }
     updatePlayer(player, dt, cam.yaw);
     updatePowers(dt);
+    updateNet(dt);
     updateEnemies(dt);
     updateBoss(dt);
     updateHazards(dt);
@@ -537,7 +625,7 @@ function frame(now) {
     if (G.freeze) { faceCamera(player, cam.yaw); renderer.render(scene, camera); return; }   // test sürerken döngüyü test yönetir
     if (input.pausePressed) { input.pausePressed = false; if (G.state === 'play') pause(); else if (G.state === 'pause') resume(); }
     if (input.restartPressed) { input.restartPressed = false; if (G.state === 'pause' || G.state === 'dead') startGame(G.level.id); }
-    if (G.state === 'play' || G.state === 'dead' || G.state === 'won') {
+    if (G.state === 'play' || G.state === 'dead' || G.state === 'won' || (G.state === 'pause' && netOn())) {   // çok oyunculuda duraklatınca oyun durmaz
         if (G.hitStop > 0) { G.hitStop -= dt; }
         else {
             acc += dt;
@@ -555,7 +643,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '21';
+const VER = '22';
 $('ver').textContent = tf('Sürüm {0}', VER);   // ana menüde: telefonda yeni sürümün yüklendiği buradan görülür
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
@@ -565,6 +653,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=21').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=22').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

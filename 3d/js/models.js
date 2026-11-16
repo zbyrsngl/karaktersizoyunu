@@ -1,8 +1,8 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=21';
-import { box, mat, canvasTex, textSprite } from './util.js?v=21';
+import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=22';
+import { box, mat, canvasTex, textSprite } from './util.js?v=22';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -329,4 +329,15 @@ export function nameLabel(text, y) {
     const s = textSprite(text, { size: 40, height: 0.26, color: '#fde68a', bg: 'rgba(15,23,42,0.72)' });
     s.position.y = y;
     return s;
+}
+
+// Çok oyunculu: 2. oyuncu HIRHIZ'ın renkli kopyası (bordo takım, altın kravat). Paylaşılan renk malzemeleri değiştirilir.
+export const P2_COLORS = { '#334155': '#7f1d1d', '#1e293b': '#5b1414', '#1e3a8a': '#d4a017' };
+export function recolorHirhiz(m, map) {
+    m.root.traverse(o => {
+        if (!o.isMesh || Array.isArray(o.material)) return;
+        for (const from in map) {
+            if (o.material === mat(from)) { o.material = mat(map[from]); break; }
+        }
+    });
 }

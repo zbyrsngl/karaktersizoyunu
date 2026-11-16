@@ -7,17 +7,17 @@
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
 // 8. bölüm FETÖ: SON (opts.son): "YA ALLAH!" diye gelir, daha hızlı kovalar, oyuncu rafa çıkınca zıplayıp peşinden gelir (moveBody fiziği).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=21';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=21';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=21';
-import { playSfx } from './audio.js?v=21';
-import { makeRing } from './hazards.js?v=21';
-import { limb, walkPose } from './models.js?v=21';
-import { groundAt, moveBody } from './physics.js?v=21';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=21';
-import { ARENA } from './world.js?v=21';
-import { hitsPlayer, killProj } from './enemies.js?v=21';
-import { showBossBar, setBossBar } from './boss_core.js?v=21';
+import { G, diff, addScore, toast } from './state.js?v=22';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=22';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=22';
+import { playSfx } from './audio.js?v=22';
+import { makeRing } from './hazards.js?v=22';
+import { limb, walkPose } from './models.js?v=22';
+import { groundAt, moveBody } from './physics.js?v=22';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=22';
+import { ARENA } from './world.js?v=22';
+import { hitsPlayer, killProj } from './enemies.js?v=22';
+import { showBossBar, setBossBar } from './boss_core.js?v=22';
 
 const TOP = 1.9, SKIN = '#e8c4a0';
 
@@ -95,7 +95,7 @@ export function spawnFeto(scene, pos, opts = {}) {
         b.t = Math.min(2.5, (playSfx('yaallah', { vol: 1 }) || 1.5) + 0.4);
         floatText('YA ALLAH!', b.pos.clone().setY(TOP + 1), '#ef4444', 0.8, 2);
         toast('BÖLÜM SONU CANAVARI: FETÖ: SON!', 2600, '#fca5a5');
-        G.boss = b; showBossBar(b);
+        G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de showBossBar(b);
         return b;
     }
     // Karşılaşma: HIRHIZ konuşur (balon başında), FETÖ bekler
@@ -104,7 +104,7 @@ export function spawnFeto(scene, pos, opts = {}) {
     b.bubble = textSprite('Hocam gel, bu hasret bitsin!', { size: 44, height: 0.42, color: '#111827', bg: 'rgba(248,250,252,0.96)' });
     b.bubble.position.set(0, 2.6, 0); G.player.m.root.add(b.bubble);
     toast('BÖLÜM SONU CANAVARI: FETÖ!', 2600, '#fca5a5');
-    G.boss = b;
+    G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de
     showBossBar(b);
     return b;
 }

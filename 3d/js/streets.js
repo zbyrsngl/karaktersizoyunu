@@ -7,11 +7,11 @@
 //  • Güç tuğlaları (mavi ★): içinden el bombası (her bölümde 3 sabit yerde), can, kalkan gücü, hız, dev balyoz çıkar (powerups.js).
 // Yerleşim bölüm numarasıyla tohumlanmış rastgele sayılarla yapılır: her açılışta aynı.
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=21';
-import { box, mat, canvasTex, AABB } from './util.js?v=21';
-import { HW, ARENA, EXT_Z0, START_Z, BRICK_Y, signBoard, TEX } from './world.js?v=21';
-import { powerBrickTex, POWER_KINDS } from './powerups.js?v=21';
-import { groundAt } from './physics.js?v=21';
+import { G, toast } from './state.js?v=22';
+import { box, mat, canvasTex, AABB } from './util.js?v=22';
+import { HW, ARENA, EXT_Z0, START_Z, BRICK_Y, signBoard, TEX } from './world.js?v=22';
+import { powerBrickTex, POWER_KINDS } from './powerups.js?v=22';
+import { groundAt } from './physics.js?v=22';
 
 // --- TEMALAR (bölüme göre) ---
 const THEMES = {

@@ -4,16 +4,16 @@
 //   VRRROOOM! (her üçüncü): titreyerek hazırlanır, sonra dümdüz hızla ileri sürer (yolundan çekil ya da kalkanla karşıla)
 // Hasar: üstüne zıplamak 2, balyoz 1, rüşvet 1. Yenilince kapağından beyaz bayrak çıkar: TESLİM!
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=21';
-import { hurtPlayer, blockFx, bouncePlayer } from './player.js?v=21';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=21';
-import { playSfx } from './audio.js?v=21';
-import { makeFire } from './hazards.js?v=21';
-import { box, mat, angDiff, dampAngle, clamp, rand } from './util.js?v=21';
-import { ARENA } from './world.js?v=21';
-import { throwLob } from './enemies.js?v=21';
-import { showBossBar, setBossBar } from './boss_core.js?v=21';
-import { tankCamo } from './tanks.js?v=21';
+import { G, diff, addScore, toast } from './state.js?v=22';
+import { hurtPlayer, blockFx, bouncePlayer } from './player.js?v=22';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=22';
+import { playSfx } from './audio.js?v=22';
+import { makeFire } from './hazards.js?v=22';
+import { box, mat, angDiff, dampAngle, clamp, rand } from './util.js?v=22';
+import { ARENA } from './world.js?v=22';
+import { throwLob } from './enemies.js?v=22';
+import { showBossBar, setBossBar } from './boss_core.js?v=22';
+import { tankCamo } from './tanks.js?v=22';
 
 const HX = 1.55, HZ = 3.0, HULL_TOP = 1.5, TOP = 2.35;
 
@@ -61,7 +61,7 @@ export function spawnDarbeTank(scene, pos) {
     };
     toast('BÖLÜM SONU CANAVARI: DARBE TANKI!', 2600, '#fca5a5');
     floatText('YOL KAPALI!', pos.clone().setY(TOP + 1.2), '#fde047', 0.7, 2.2);
-    G.boss = b;
+    G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de
     showBossBar(b);
     playSfx('boom', { rate: 0.5, vol: 0.5 });
     return b;

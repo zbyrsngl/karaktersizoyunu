@@ -5,15 +5,15 @@
 //   SIFIRLA!: üstteki sayaç sıfırlanır (sıfırlama sesi), oyuncunun çevresine gökten dolar yağar (kalkan yukarıdan da korur)
 // Saldırıdan sonra kapak bir süre AÇIK kalır: o sırada balyoz (1), kapaktan içeri rüşvet (1) ya da üstüne zıplamak (2) işler.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=21';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=21';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=21';
-import { playSfx } from './audio.js?v=21';
-import { groundAt } from './physics.js?v=21';
-import { box, mat, canvasTex, angDiff, dampAngle, clamp, rand } from './util.js?v=21';
-import { ARENA } from './world.js?v=21';
-import { throwLob, hitsPlayer, killProj } from './enemies.js?v=21';
-import { showBossBar, setBossBar } from './boss_core.js?v=21';
+import { G, diff, addScore, toast } from './state.js?v=22';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=22';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=22';
+import { playSfx } from './audio.js?v=22';
+import { groundAt } from './physics.js?v=22';
+import { box, mat, canvasTex, angDiff, dampAngle, clamp, rand } from './util.js?v=22';
+import { ARENA } from './world.js?v=22';
+import { throwLob, hitsPlayer, killProj } from './enemies.js?v=22';
+import { showBossBar, setBossBar } from './boss_core.js?v=22';
 
 const HX = 1.1, HZ = 0.8, TOP = 2.4;          // gövdenin yarı eni, yarı derinliği, tepe yüksekliği
 const OPEN_T = 0.57, EXPOSED_T = 1.9, RESET_T = 0.85;
@@ -87,7 +87,7 @@ export function spawnKasa(scene, pos) {
     toast('BÖLÜM SONU CANAVARI: DEV ÇELİK KASA!', 2600, '#fca5a5');
     floatText('SIFIRLAAA!', pos.clone().setY(TOP + 1), '#4ade80', 0.7, 2);
     floatText('KAPAĞI AÇILINCA VUR!', pos.clone().setY(TOP + 0.4), '#fde047', 0.45, 2.6);
-    G.boss = b;
+    G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de
     showBossBar(b);
     playSfx('boom', { rate: 0.6, vol: 0.4 });
     return b;

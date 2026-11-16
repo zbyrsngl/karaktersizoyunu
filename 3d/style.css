@@ -180,3 +180,14 @@ body.mode-puzzle #hud { display: none; }
 #story-canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 #story-skip { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); background: rgba(0,0,0,0.6); color: #fde047; border: 2px solid #fde047; border-radius: 8px; padding: 6px 14px; font: bold 15px monospace; cursor: pointer; }
 #langs .chip { min-width: 0; padding-left: 10px; padding-right: 10px; }
+
+/* İki kişilik oyun (js/net.js) */
+#net { margin: 6px 0; padding: 8px; border: 2px dashed #475569; border-radius: 12px; }
+#net-input { width: 92px; text-align: center; font: bold 20px "Arial Black", Arial, sans-serif; letter-spacing: 4px; text-transform: uppercase; border-radius: 999px; border: 2px solid #64748b; background: #0f172a; color: #fde047; padding: 6px 8px; }
+#net-code { font: 900 40px "Arial Black", Arial, sans-serif; letter-spacing: 10px; color: #fde047; text-shadow: 0 3px 0 #92400e; margin: 4px 0; }
+#net-status.bad { color: #fca5a5; }
+#net-btn.on { border-color: #86efac; color: #86efac; }
+#levels.locked { opacity: 0.55; pointer-events: none; }
+#start:disabled { opacity: 0.6; filter: grayscale(0.6); }
+#partner { font-size: 14px; color: #fde68a; }
+#partner[hidden] { display: none; }

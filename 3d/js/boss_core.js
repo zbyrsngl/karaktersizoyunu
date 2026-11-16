@@ -1,7 +1,8 @@
 // HIRHIZ 3D: canavarların ortak işleri — can çubuğu, kaldırma, her karede güncelleme.
 // Her canavar G.boss'a şunları koyar: { root, pos, hp, maxHp, name, dead, update(dt), hitTest(nokta), onHammer?(nokta), onAmmo?(mermi), reset?() }
-import { G } from './state.js?v=21';
-import { tr } from './i18n.js?v=21';
+import { G } from './state.js?v=22';
+import { tr } from './i18n.js?v=22';
+import { nearestPlayer } from './enemies.js?v=22';
 
 export function showBossBar(b) {
     document.querySelector('#boss-bar .boss-name').textContent = tr(b.name);
@@ -18,4 +19,9 @@ export function removeBoss(scene) {
     G.boss = null;
     document.getElementById('boss-bar').hidden = true;
 }
-export function updateBoss(dt) { if (G.boss) G.boss.update(dt); }
+// Çok oyunculu: canavar kendisine en yakın oyuncuyu hedef alır (enemies.js nearestPlayer)
+export function updateBoss(dt) {
+    if (!G.boss) return;
+    const local = G.player; G.player = nearestPlayer(G.boss.pos);
+    try { G.boss.update(dt); } finally { G.player = local; }
+}

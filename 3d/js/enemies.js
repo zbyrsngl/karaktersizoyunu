@@ -4,14 +4,14 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=21';
-import { walkPose, nameLabel } from './models.js?v=21';
-import { G, diff, addScore } from './state.js?v=21';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=21';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=21';
-import { playSfx } from './audio.js?v=21';
-import { groundAt } from './physics.js?v=21';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=21';
+import { tr } from './i18n.js?v=22';
+import { walkPose, nameLabel } from './models.js?v=22';
+import { G, diff, addScore } from './state.js?v=22';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=22';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=22';
+import { playSfx } from './audio.js?v=22';
+import { groundAt } from './physics.js?v=22';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=22';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -49,13 +49,24 @@ export function clearEnemies(scene) {
 }
 
 const busy = e => e.st !== 'idle' && e.st !== 'stun';
+// Çok oyunculu: her düşman kendisine en yakın (canlı) oyuncuyu hedef alır. Hedef, düşmanın güncellemesi süresince G.player olur;
+// hurtPlayer yalnızca bu cihazın oyuncusuna işler (arkadaşın canını kendi cihazı yönetir).
+export function nearestPlayer(pos) {
+    const ps = G.players;
+    if (!ps || ps.length < 2) return G.player;
+    let best = null, bd = Infinity;
+    for (const q of ps) { if (q.dead) continue; const d = Math.hypot(q.pos.x - pos.x, q.pos.z - pos.z); if (d < bd) { bd = d; best = q; } }
+    return best || G.player;
+}
+export const isGuest = () => !!(G.net && G.net.guest);
 export function updateEnemies(dt) {
-    const p = G.player;
+    const local = G.player;
     let attackers = 0;
     for (const e of G.enemies) if (!e.dead && busy(e)) attackers++;
     for (const e of G.enemies) {
         if (e.dead) { updateDead(e, dt); continue; }
         if (e.kind === 'duran') continue;
+        const p = G.player = nearestPlayer(e.pos);
         if (e.hurtT > 0) e.hurtT -= dt;
         if (e.cd > 0) e.cd -= dt;
         const dx = p.pos.x - e.pos.x, dz = p.pos.z - e.pos.z;
@@ -76,6 +87,7 @@ export function updateEnemies(dt) {
             else if (e.st !== 'stun' && !e.T.harmless) hurtPlayer(e.pos);
         }
     }
+    G.player = local;
     updateProjectiles(dt);
 }
 
@@ -137,6 +149,14 @@ export function midPoint(e) { return e.pos.clone().setY(e.pos.y + 1.2).lerp(G.pl
 // how: 'hammer' | 'ammo' (çay/rüşvet) | 'stomp'
 export function damageEnemy(e, power = 2, how = 'hammer') {
     if (e.dead) return;
+    if (isGuest() && !e.netKill) {   // misafir: hasara ev sahibi karar verir; burada yalnızca vuruş hissi
+        if (e.kind === 'duran') { sayOnce(e, 'KIPIRDAMIYOR!', '#e5e7eb'); return; }
+        if (e.hurtT > 0 && how !== 'ammo') return;
+        e.hurtT = 0.25; e.pop = 1;
+        playSfx('hit', { vol: how === 'ammo' ? 0.35 : 0.6, rate: how === 'ammo' ? 1.4 : 1 });
+        burst(e.pos.clone().setY(e.pos.y + 1.2), { n: 4, color: ['#fde047', '#f8fafc'], speed: 3, up: 3 });
+        return;
+    }
     if (e.kind === 'duran') { sayOnce(e, 'KIPIRDAMIYOR!', '#e5e7eb'); return; }
     if (e.hurtT > 0 && how !== 'ammo') return;
     e.hp -= power; e.hurtT = 0.25; e.pop = 1;
@@ -321,9 +341,9 @@ function updateAmmo(p, dt) {
             }
         }
         const B = G.boss;
-        if (B && !B.dead && B.hitTest(p.pos)) { B.onAmmo && B.onAmmo(p); ammoSplash(p); killProj(p); return; }
+        if (B && !B.dead && B.hitTest(p.pos)) { if (!isGuest()) B.onAmmo && B.onAmmo(p); ammoSplash(p); killProj(p); return; }
         const a = insideSolid(p.pos);
-        if (a) { if (a.type === 'brick') G.onBrickHit && G.onBrickHit(a); ammoSplash(p); killProj(p); return; }
+        if (a) { if (a.type === 'brick') G.onBrickHit && G.onBrickHit(a, 'ammo'); ammoSplash(p); killProj(p); return; }
     }
     if (p.pos.y < -5) killProj(p);
 }
