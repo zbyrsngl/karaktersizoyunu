@@ -6,14 +6,14 @@
 //   KÖPRÜNÜN ÜSTÜNDEKİ SINAYPIRCI: köprüde diz çöker; kırmızı lazerle seni izler, lazer yanıp sönünce kilitlenmiştir → kaç!
 // Rüşvet destesiyle (nişanlı atış) yenilen polis parayı alıp gider: "DOSYA KAPANDI!"
 import * as THREE from 'three';
-import { limb, walkPose, labelTorso } from './models.js?v=22';
-import { G, diff } from './state.js?v=22';
-import { hurtPlayer, blockFx } from './player.js?v=22';
-import { burst, addTrauma } from './fx.js?v=22';
-import { playSfx, beep } from './audio.js?v=22';
-import { makeCloud } from './hazards.js?v=22';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=22';
-import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=22';
+import { limb, walkPose, labelTorso } from './models.js?v=23';
+import { G, diff } from './state.js?v=23';
+import { hurtPlayer, blockFx } from './player.js?v=23';
+import { burst, addTrauma } from './fx.js?v=23';
+import { playSfx, beep } from './audio.js?v=23';
+import { makeCloud } from './hazards.js?v=23';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, rand } from './util.js?v=23';
+import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, shootStraight, shootAt, throwLob } from './enemies.js?v=23';
 
 // --- MODELLER ---
 const UNI = '#1e40af', UNI_D = '#172554', ARM = '#1e3a8a', SKIN = '#e8b48f';

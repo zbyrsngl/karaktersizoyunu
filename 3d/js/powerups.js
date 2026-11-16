@@ -7,11 +7,11 @@
 //   hammer   DEV BALYOZ   15 sn: balyoz iki kat büyür, menzili ve gücü artar
 // Oyun 1 el bombasıyla başlar; bombalar artık kendiliğinden dolmaz.
 import * as THREE from 'three';
-import { G, toast, addScore } from './state.js?v=22';
-import { box, mat, canvasTex } from './util.js?v=22';
-import { burst, floatText, spawnFx } from './fx.js?v=22';
-import { playSfx } from './audio.js?v=22';
-import { tr } from './i18n.js?v=22';
+import { G, toast, addScore } from './state.js?v=23';
+import { box, mat, canvasTex } from './util.js?v=23';
+import { burst, floatText, spawnFx } from './fx.js?v=23';
+import { playSfx } from './audio.js?v=23';
+import { tr } from './i18n.js?v=23';
 
 export const POWER_TIME = { shieldUp: 12, speed: 10, hammer: 15 };
 export const POWER_KINDS = ['heart', 'shieldUp', 'speed', 'hammer'];   // rastgele dağıtılanlar (el bombası ayrıca 3 sabit yerde)
