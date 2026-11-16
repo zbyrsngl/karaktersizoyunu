@@ -1,7 +1,7 @@
 // HIRHIZ 3D: bölüm başı hikâyeleri — 2D oyunun hikâye oynatıcısı aynen kullanılır (story2d.js, tools/build_story3d.js üretir).
 // Her bölüm oturumda ilk açılışta hikâyesini oynatır; dokun / Enter / Boşluk: yazıyı tamamla, sonra sonraki sahne; GEÇ ya da Esc: atla.
-import { playVoice, stopVoice } from './audio.js?v=20';
-import { getHeadTex } from './models.js?v=20';
+import { playVoice, stopVoice } from './audio.js?v=21';
+import { getHeadTex } from './models.js?v=21';
 
 const W = window;
 let ready = false;

@@ -1,31 +1,31 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=20';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=20';
-import { buildWorld, updateWorld, ARENA, makeBag, makeItem, START_Z } from './world.js?v=20';
-import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=20';
-import { updateStreets, resetStreets } from './streets.js?v=20';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=20';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=20';
-import { updateHazards, clearHazards } from './hazards.js?v=20';
-import { updateBoss, removeBoss } from './boss_core.js?v=20';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=20';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=20';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=20';
-import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=20';
-import { groundAt } from './physics.js?v=20';
-import { playLevelStory } from './story3d.js?v=20';
-import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=20';
-import { LEVEL1 } from './level1.js?v=20';
-import { LEVEL2 } from './level2.js?v=20';
-import { LEVEL3 } from './level3.js?v=20';
-import { LEVEL4 } from './level4.js?v=20';
-import { LEVEL5 } from './level5.js?v=20';
-import { LEVEL6 } from './level6.js?v=20';
-import { LEVEL7 } from './level7.js?v=20';
-import { LEVEL8 } from './level8.js?v=20';
-import { LEVEL9 } from './level9.js?v=20';
-import { LEVEL10 } from './level10.js?v=20';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=21';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=21';
+import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=21';
+import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=21';
+import { updateStreets, resetStreets } from './streets.js?v=21';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=21';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=21';
+import { updateHazards, clearHazards } from './hazards.js?v=21';
+import { updateBoss, removeBoss } from './boss_core.js?v=21';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=21';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=21';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=21';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=21';
+import { groundAt } from './physics.js?v=21';
+import { playLevelStory } from './story3d.js?v=21';
+import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=21';
+import { LEVEL1 } from './level1.js?v=21';
+import { LEVEL2 } from './level2.js?v=21';
+import { LEVEL3 } from './level3.js?v=21';
+import { LEVEL4 } from './level4.js?v=21';
+import { LEVEL5 } from './level5.js?v=21';
+import { LEVEL6 } from './level6.js?v=21';
+import { LEVEL7 } from './level7.js?v=21';
+import { LEVEL8 } from './level8.js?v=21';
+import { LEVEL9 } from './level9.js?v=21';
+import { LEVEL10 } from './level10.js?v=21';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -127,9 +127,19 @@ function updateCamera(dt) {
         cam.target.x + sx + Math.sin(cam.yaw) * cp * cam.dist,
         cam.target.y + Math.sin(cam.pitch) * cam.dist,
         cam.target.z + sz + Math.cos(cam.yaw) * cp * cam.dist);
-    // Zeminin altına inmesin
-    const gy = groundAt(G.world.solids, camera.position.x, camera.position.z, camera.position.y + 1);
-    if (camera.position.y < gy + 0.4) camera.position.y = gy + 0.4;
+    // Zeminin altına inmesin: zemin karakterin başı hizasından aşağı doğru aranır (kamera yerin altına düşmüş olsa da bulunur);
+    // yolun dışındaki çimen/kum/kar düzlemi katı kutu değildir, orada zemin y = 0 sayılır (köprü bölümünde yolun dışı boşluk)
+    const cx = camera.position.x, cz = camera.position.z;
+    let gy = groundAt(G.world.solids, cx, cz, cam.target.y + 0.5, 0.3);
+    if (!G.level.noOuter && Math.abs(cx) > HW - 0.2) gy = Math.max(gy, 0);
+    if (gy === -Infinity) gy = G.level.noOuter ? -30 : -2.9;   // çukurun içi (dibi -3.2)
+    if (camera.position.y < gy + 0.45) {
+        camera.position.y = gy + 0.45;
+        // yere yaslanınca kamerayı biraz karaktere yaklaştır: yukarı bakış yine çalışsın, görüntü yere gömülmesin
+        const k = 0.25;
+        camera.position.x += (cam.target.x + sx - camera.position.x) * k;
+        camera.position.z += (cam.target.z + sz - camera.position.z) * k;
+    }
     camera.lookAt(cam.target.x + sx, cam.target.y, cam.target.z + sz);
     applyShake();
     // Güneş oyuncuyu izler (gölgeler keskin kalsın)
@@ -545,7 +555,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '20';
+const VER = '21';
 $('ver').textContent = tf('Sürüm {0}', VER);   // ana menüde: telefonda yeni sürümün yüklendiği buradan görülür
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
@@ -555,6 +565,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=20').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=21').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

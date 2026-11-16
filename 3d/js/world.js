@@ -3,9 +3,9 @@
 // Tuğla raflar (T1 = 1.8 m, T2 = 3.2 m), kafayla kırılan tuğlalar, toplanacaklar, yarı yolda kontrol noktası,
 // sonunda kapı/barikat (hedef sayıda düşman yenilince iner) ve canavar meydanı.
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, AABB } from './util.js?v=20';
-import { tr, tf, lang } from './i18n.js?v=20';
-import { buildStreets } from './streets.js?v=20';
+import { box, mat, canvasTex, fitText, AABB } from './util.js?v=21';
+import { tr, tf, lang } from './i18n.js?v=21';
+import { buildStreets } from './streets.js?v=21';
 
 export const T1 = 1.8, T2 = 3.2;
 export const HW = 8;                                            // yolun yarı genişliği

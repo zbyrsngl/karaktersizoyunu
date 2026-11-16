@@ -15,7 +15,7 @@ export function runTest(name, H) {
     try {
         if (name === 'hikaye') {   // bölümün giriş hikâyesi (2D oynatıcı); &sahne=N: N kez ilerlet
             const Q = new URLSearchParams(location.search), n = +(Q.get('sahne') || 0);
-            import('./story3d.js?v=20').then(S => {
+            import('./story3d.js?v=21').then(S => {
                 S.playLevelStory(G.level.id, () => say('hikaye bitti'));
                 for (let i = 0; i < n * 2; i++) window.storyNext();
                 setTimeout(() => say('hikaye açık=' + S.storyOpen() + ' kafa=' + !!window.headCanvas), 1500);
@@ -30,6 +30,30 @@ export function runTest(name, H) {
             }
             say(res.join(' · '));
         }
+        if (name === 'kamera') {   // nişan en aşağıda (kamera en alçakta), her yöne dönerken kamera yerin altına giriyor mu (bütün yürünen bölümler)
+            const Q = new URLSearchParams(location.search), res = [];
+            const levels = Q.get('tek') ? [G.level.id] : [1, 2, 3, 4, 5, 8, 9, 10], input = H.input;
+            for (const n of levels) {
+                if (!Q.get('tek')) { H.startGame(n); run(0.1); }
+                G.enemies.forEach(e => { e.cd = 99; e.T.update = () => {}; });
+                let worst = 99, where = '';
+                for (const [x, z] of [[0, 94], [7.5, 60], [-7.5, 20], [14, 72], [0, -30], [7.6, -120], [0, -200], [16, -220]]) {
+                    p.pos.set(x, 0, z); p.vel.set(0, 0, 0); p.safe.copy(p.pos); cam.target.set(x, 1.6, z);
+                    for (let a = 0; a < 16; a++) {
+                        cam.yaw = a / 16 * Math.PI * 2; cam.pitch = -5; input.camDX = 0; input.camDY = 999;   // en aşağı (kamera en alçakta)
+                        input.camDY = -99999; for (let i = 0; i < 40; i++) { input.camDY = -50; updateCamera(STEP); }
+                        const c = H.camera.position, overRoad = Math.abs(c.x) < 8 || (c.z < -184 && c.z > -236 && Math.abs(c.x) < 18);
+                        const floor = G.level.noOuter && !overRoad ? null : 0;
+                        if (floor !== null && G.world.solids.some(s => s.type === 'ground' && c.x > s.min.x && c.x < s.max.x && c.z > s.min.z && c.z < s.max.z) || (floor !== null && !overRoad)) {
+                            const d = c.y - floor; if (d < worst) { worst = d; where = `${x},${z} yaw${a}`; }
+                        }
+                    }
+                }
+                res.push(`${n}: en alçak ${worst.toFixed(2)}m (${where}) pitch=${cam.pitch.toFixed(2)}`);
+            }
+            if (Q.get('foto')) { p.pos.set(0, 0, 60); cam.target.set(0, 1.6, 60); cam.yaw = +(Q.get('yaw') || 0); for (let i = 0; i < 60; i++) { input.camDY = -50; updateCamera(STEP); } render(); }
+            say(res.join(' · '));
+        }
         if (name === 'guc') {   // güç tuğlalarını kır, çıkan güçleri al: bomba sayısı, güç süreleri, kalkan gücüyle hasar almama
             run(0.3); G.enemies.forEach(e => { e.cd = 99; e.T.update = () => {}; });
             const res = [`başlangıç bomba=${G.grenades}`];
@@ -42,7 +66,7 @@ export function runTest(name, H) {
             }
             const P = p.power; res.push(`bomba=${G.grenades} kalkan=${P.shieldUp.toFixed(0)} hız=${P.speed.toFixed(0)} balyoz=${P.hammer.toFixed(0)}`);
             P.shieldUp = 5; const hp0 = p.hp; p.invuln = 0; G.onHammer && 0; const hurt = (await_ => 0);
-            import('./player.js?v=20').then(M => {
+            import('./player.js?v=21').then(M => {
                 M.hurtPlayer(p.pos.clone().setX(p.pos.x + 1)); res.push(`kalkanlıyken can ${hp0}->${p.hp}`);
                 P.hammer = 10; P.shieldUp = 10; run(0.4);
                 cam.yaw = 2.4; cam.pitch = 0.2; cam.dist = 4; updateCamera(0.0001); render();
@@ -90,7 +114,7 @@ export function runTest(name, H) {
             res.push(`${G.level.id}:pad${vis('pad')}`); say(res.join(' '));
         }
         if (name === 'ses') {   // konuşma seslerinin yükseltme katsayıları ve müziğin Web Audio'dan geçmesi
-            import('./audio.js?v=20').then(A => { A.unlockAudio(); setTimeout(() => {
+            import('./audio.js?v=21').then(A => { A.unlockAudio(); setTimeout(() => {
                 const D = A.audioDebug(), r = [];
                 for (const k of ['hasret', 'yaallah', 'savci', 'peygamber', 'cengiz', 'selo', 'saygili', 'ekrem']) r.push(k + '=' + (D.gains[k] ? D.gains[k][0].toFixed(2) : '-'));
                 say('müzik=' + D.music + ' ' + r.join(' '));
@@ -220,7 +244,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=20').then(() => {});
+            import('./player.js?v=21').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -339,7 +363,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=20').then(async o => {
+            import('./outro.js?v=21').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));

@@ -3,13 +3,13 @@
 // "son dakika" ekranları, muhabirler, ayakkabı kutusu yığınları. Yolun üstünde iki asma köprü: üstlerinde SINAYPIRCI.
 // 17/25 polisleri (police.js) rüşvetle susturulur; ayakkabı kutuları toplanır; kapıdan geçince canavar SAYGILI (boss_saygili.js).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=20';
-import { G } from './state.js?v=20';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
-import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=20';
-import { spawnSaygili } from './boss_saygili.js?v=20';
-import { egemenOutro } from './outro.js?v=20';
-import './police.js?v=20';
+import { tr } from './i18n.js?v=21';
+import { G } from './state.js?v=21';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=21';
+import { T1, T2, HW, ARENA, signBoard, entrySign, TEX, tiled } from './world.js?v=21';
+import { spawnSaygili } from './boss_saygili.js?v=21';
+import { egemenOutro } from './outro.js?v=21';
+import './police.js?v=21';
 
 const BRIDGES = [-52, -122];                 // köprülerin z konumu; tabliye 2.3–2.6 m (altından yürünür, üstüne zıplanır)
 const DECK_LO = 2.3, DECK_HI = 2.6;

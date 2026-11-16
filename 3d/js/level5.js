@@ -4,14 +4,14 @@
 // cankurtaran kulelerinde nişancılar. Kum torbalı kontrol noktası açılınca canavar DARBE TANKI (boss_darbetank.js);
 // yenilince HIRHIZ: "15 Temmuz Allah'ın bir lütfü!", sonra yalarım amca gelir (outro.js yalarimOutro).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=20';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=20';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=20';
-import { getHeadTex } from './models.js?v=20';
-import { spawnDarbeTank } from './boss_darbetank.js?v=20';
-import { yalarimOutro } from './outro.js?v=20';
-import './police.js?v=20';
-import './tanks.js?v=20';
+import { tr } from './i18n.js?v=21';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=21';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=21';
+import { getHeadTex } from './models.js?v=21';
+import { spawnDarbeTank } from './boss_darbetank.js?v=21';
+import { yalarimOutro } from './outro.js?v=21';
+import './police.js?v=21';
+import './tanks.js?v=21';
 
 const TOWERS = [-52, -122], TOWER_X = -4, DECK = 2.6;
 const NEWS = ['CANLI: CUMHURBAŞKANI FACETIME İLE BAĞLANDI', "BOĞAZ KÖPRÜSÜ'NDE TANKLAR", "TRT'DE DARBE BİLDİRİSİ OKUNDU"];
