@@ -11,14 +11,14 @@
 //  • Düşmanlar her iki cihazda da çalışır (saldırıları en yakın oyuncuya); misafirde konumları ev sahibinden gelenle düzeltilir.
 // Uçuş (6) ve BYLOCK (7) bölümlerinde herkes kendi oyununu oynar; ev sahibi sonraki bölüme geçince misafir de geçer.
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=23';
-import { tr, tf } from './i18n.js?v=23';
-import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=23';
-import { recolorHirhiz, P2_COLORS } from './models.js?v=23';
-import { throwGrenade } from './grenade.js?v=23';
-import { damageEnemy } from './enemies.js?v=23';
-import { setBossBar } from './boss_core.js?v=23';
-import { textSprite } from './util.js?v=23';
+import { G, toast } from './state.js?v=24';
+import { tr, tf } from './i18n.js?v=24';
+import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=24';
+import { recolorHirhiz, P2_COLORS } from './models.js?v=24';
+import { throwGrenade } from './grenade.js?v=24';
+import { damageEnemy } from './enemies.js?v=24';
+import { setBossBar } from './boss_core.js?v=24';
+import { textSprite } from './util.js?v=24';
 
 // Taşıyıcı: herkese açık ücretsiz MQTT aracı sunucusu (WebSocket, wss). İki cihaz doğrudan bağlanmaz; mesajlar sunucudan geçer.
 // Böylece mobil operatör ağlarında da çalışır (önceki PeerJS/WebRTC doğrudan bağlantısı telefonlarda kurulamadı).
@@ -192,21 +192,37 @@ export function updateNet(dt) {
     if (sendT <= 0 && coop()) {
         sendT = 1 / 15;
         const fl = (p.shield ? 1 : 0) | (p.grounded ? 2 : 0) | (p.dead ? 4 : 0) | (p.invuln > 0 ? 8 : 0) | (p.power.hammer > 0 ? 16 : 0) | (p.power.shieldUp > 0 ? 32 : 0);
-        send({ t: 'P', p: [r2(p.pos.x), r2(p.pos.y), r2(p.pos.z)], v: [r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)], f: r2(p.facing), fl, hp: p.hp, lv: G.level.id });
+        send({ t: 'P', p: [r2(p.pos.x), r2(p.pos.y), r2(p.pos.z)], v: [r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)], f: r2(p.facing), fl, hp: p.hp, lv: G.level.id,
+               ...(G.net.guest && (++stateN % 15) === 0 ? lists() : {}) });
     }
     // ev sahibi: oyunun durumu (15/sn)
     if (!G.net.guest) {
         stateT -= dt;
         if (stateT <= 0) {
             stateT = 0.1;
-            const B = G.boss;
-            send({ t: 'S', lv: G.level.id, sc: G.score, k: G.kills, c: G.collect, st: G.state,
+            const B = G.boss, full = (++stateN % 10) === 0;   // tuğla/eşya listesi saniyede bir
+            send({ t: 'S', lv: G.level.id, sc: G.score, k: G.kills, c: G.collect, st: G.state, r: G.run || 0, d: G.difficulty,
+                bo: G.bossDone ? 1 : 0, o: G.outro ? 1 : 0, ...(full ? lists() : {}),
                 e: coop() ? G.enemies.map(e => e.dead ? (e.how === 'ammo' ? 1 : 0) : [r2(e.pos.x), r2(e.pos.y), r2(e.pos.z)]) : null,
                 b: coop() && B ? [r2(B.pos.x), r2(B.pos.y), r2(B.pos.z), r2(B.root.rotation.y), r2(B.hp), B.dead ? 1 : 0] : null });
         }
     } else applyGuestCorrections(dt);
 }
 const r2 = v => Math.round(v * 100) / 100;
+let stateN = 0;
+// Kırılan tuğlalar ve alınan eşyalar: tek seferlik olay mesajı yolda kaybolursa bu listeler eşitler
+function lists() {
+    const W = G.world; if (!W || !W.bricks || G.level.mode) return {};
+    const br = [], it = [];
+    W.bricks.forEach((b, i) => { if (b.broken) br.push(i); });
+    W.items.forEach(x => { if (x.taken && x.id) it.push(x.id); });
+    return { br, it };
+}
+function applyLists(m) {
+    if (!coop() || m.lv !== G.level.id) return;
+    if (m.br) m.br.forEach(i => { const b = G.world.bricks[i]; if (b && !b.broken) API.breakBrickIdx(i); });
+    if (m.it) m.it.forEach(id => API.takeItem(id));
+}
 
 // misafir: düşmanları ve canavarı ev sahibinin konumuna yumuşakça çek
 let lastS = null;
@@ -235,12 +251,15 @@ function onData(m) {
         if (!remote) remote = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), facing: 0, fl: 0, hp: 3 };
         remote.pos.set(m.p[0], m.p[1], m.p[2]); remote.vel.set(m.v[0], m.v[1], m.v[2]); remote.facing = m.f; remote.fl = m.fl; remote.hp = m.hp; remote.lv = m.lv;
         if (puppet && remote.lv === G.level.id && !puppet.seen) { puppet.seen = true; puppet.pos.copy(remote.pos); }
+        if (!G.net.guest && m.br) applyLists(m);
         updatePartnerHud();
         return;
     }
     if (m.t === 'S') {   // yalnızca misafir alır
         lastS = m;
+        syncGuest(m);
         if (m.lv !== G.level.id) return;
+        if (m.br) applyLists(m);
         if (G.score !== m.sc || G.kills !== m.k || G.collect !== m.c) {
             const killsChanged = G.kills !== m.k;
             G.score = m.sc; G.kills = m.k; G.collect = m.c;
@@ -250,11 +269,28 @@ function onData(m) {
     }
     if (m.t === 'E') onEvent(m);
 }
+// Misafir: ev sahibinin durumuna göre bölüm/canavar/son sahne/karne eşitlemesi (olay mesajları kaybolsa bile)
+function syncGuest(m) {
+    const st = G.state;
+    if (st === 'story' || !G.level) return;
+    if (m.st === 'play' && (m.lv !== G.level.id || (m.r && m.r !== G.netRun))) {   // ev sahibi başka bölümde / bölümü yeniden başlattı
+        if (st === 'menu' && m.lv !== G.level.id && !m.r) return;
+        G.netRun = m.r; if (m.d) G.difficulty = m.d; API.startGame(m.lv); return;
+    }
+    if (m.lv !== G.level.id || !coop() || (m.r && m.r !== G.netRun)) return;
+    if (m.st === 'play' && st === 'dead') { API.retry(); return; }
+    if (st !== 'play' && st !== 'pause') return;
+    if (m.st === 'dead') { API.allDead(); return; }
+    if (m.st === 'won') { API.showWon(); return; }
+    if (m.bo && !G.bossDone && !G.boss) API.spawnBoss();
+    if (m.o && !G.outro && G.boss) API.bossDefeated();
+}
 function onEvent(m) {
+    if (window.__dropEv && window.__dropEv.includes(m.k)) return;   // yalnızca test: kaybolan mesaj
     const P = puppet, here = m.lv === undefined || (G.level && m.lv === G.level.id);
     switch (m.k) {
         case 'level':   // ev sahibi bölüm başlattı
-            if (G.net.guest) { G.difficulty = m.diff; API.startGame(m.id); }
+            if (G.net.guest) { G.difficulty = m.diff; G.netRun = m.r; API.startGame(m.id); }
             break;
         case 'hammer':
             if (P && here && coop()) { puppetSwing(P); P.facing = m.f; G.onHammer && G.onHammer(hammerPoint(P), P, true); }

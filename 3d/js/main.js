@@ -1,33 +1,33 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=23';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=23';
-import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=23';
-import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=23';
-import { updateStreets, resetStreets } from './streets.js?v=23';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=23';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=23';
-import { updateHazards, clearHazards } from './hazards.js?v=23';
-import { updateBoss, removeBoss } from './boss_core.js?v=23';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=23';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=23';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=23';
-import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=23';
-import { groundAt } from './physics.js?v=23';
-import { playLevelStory } from './story3d.js?v=23';
-import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=23';
-import { isGuest } from './enemies.js?v=23';
-import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=23';
-import { LEVEL1 } from './level1.js?v=23';
-import { LEVEL2 } from './level2.js?v=23';
-import { LEVEL3 } from './level3.js?v=23';
-import { LEVEL4 } from './level4.js?v=23';
-import { LEVEL5 } from './level5.js?v=23';
-import { LEVEL6 } from './level6.js?v=23';
-import { LEVEL7 } from './level7.js?v=23';
-import { LEVEL8 } from './level8.js?v=23';
-import { LEVEL9 } from './level9.js?v=23';
-import { LEVEL10 } from './level10.js?v=23';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=24';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=24';
+import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=24';
+import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=24';
+import { updateStreets, resetStreets } from './streets.js?v=24';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=24';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=24';
+import { updateHazards, clearHazards } from './hazards.js?v=24';
+import { updateBoss, removeBoss } from './boss_core.js?v=24';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=24';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=24';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=24';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=24';
+import { groundAt } from './physics.js?v=24';
+import { playLevelStory } from './story3d.js?v=24';
+import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=24';
+import { isGuest } from './enemies.js?v=24';
+import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=24';
+import { LEVEL1 } from './level1.js?v=24';
+import { LEVEL2 } from './level2.js?v=24';
+import { LEVEL3 } from './level3.js?v=24';
+import { LEVEL4 } from './level4.js?v=24';
+import { LEVEL5 } from './level5.js?v=24';
+import { LEVEL6 } from './level6.js?v=24';
+import { LEVEL7 } from './level7.js?v=24';
+import { LEVEL8 } from './level8.js?v=24';
+import { LEVEL9 } from './level9.js?v=24';
+import { LEVEL10 } from './level10.js?v=24';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -279,7 +279,13 @@ G.onBossDefeated = (fromNet) => {
     if (G.state !== 'play') return;
     if (isGuest() && !fromNet && coopNow()) return;   // misafir: ev sahibinin bildirmesini bekler
     if (!isGuest()) netEvent('outro');
-    if (G.level.outro && !G.outro) { $('boss-bar').hidden = true; G.outro = G.level.outro(scene); return; }   // ör. 3. bölüm: Cengiz gelir, sonra karne
+    if (G.level.outro && !G.outro) {
+        // canavarın güncellemesi sırasında G.player geçici olarak canavara en yakın oyuncu (arkadaşın kuklası) olabilir:
+        // sahne her cihazda o cihazın kendi oyuncusunun yanında kurulmalı
+        const was = G.player; G.player = player;
+        try { $('boss-bar').hidden = true; G.outro = G.level.outro(scene); } finally { G.player = was; }
+        return;
+    }   // ör. 3. bölüm: Cengiz gelir, sonra karne
     showWon();
 };
 G.showWon = () => { if (G.state === 'play') showWon(); };
@@ -464,7 +470,7 @@ function getNumRaw(k) { try { return +localStorage.getItem(k) || 0; } catch (e) 
 // Önce bölümün hikâyesi (oturumda bir kez, 2D'deki gibi), sonra oyun
 function startGame(id = selected) {
     unlockAudio();
-    if (netOn() && !isGuest()) netEvent('level', { id, diff: G.difficulty });
+    if (netOn() && !isGuest()) { G.run = (G.run || 0) + 1; netEvent('level', { id, diff: G.difficulty, r: G.run }); }
     if (!T && !storyDoneFor[id]) {
         storyDoneFor[id] = true; hidePanels(); stopMusic(); releasePointer();
         G.state = 'story';
@@ -643,7 +649,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '23';
+const VER = '24';
 $('ver').textContent = tf('Sürüm {0}', VER);   // ana menüde: telefonda yeni sürümün yüklendiği buradan görülür
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
@@ -653,6 +659,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=23').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=24').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

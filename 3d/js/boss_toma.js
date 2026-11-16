@@ -6,16 +6,16 @@
 // Efektler: dönen mavi-kırmızı tepe lambası ışığı, siren, farlardan ışık hüzmesi, egzoz dumanı, yerde su birikintileri,
 // hasar aldıkça motordan duman ve kıvılcım; yenilince patlamalar ve tankından fışkıran su.
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=23';
-import { G, diff, addScore, toast } from './state.js?v=23';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=23';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=23';
-import { playSfx, hiss, siren } from './audio.js?v=23';
-import { groundAt } from './physics.js?v=23';
-import { makeCloud } from './hazards.js?v=23';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=23';
-import { ARENA } from './world.js?v=23';
-import { showBossBar, setBossBar } from './boss_core.js?v=23';
+import { tr } from './i18n.js?v=24';
+import { G, diff, addScore, toast } from './state.js?v=24';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=24';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
+import { playSfx, hiss, siren } from './audio.js?v=24';
+import { groundAt } from './physics.js?v=24';
+import { makeCloud } from './hazards.js?v=24';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=24';
+import { ARENA } from './world.js?v=24';
+import { showBossBar, setBossBar } from './boss_core.js?v=24';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;

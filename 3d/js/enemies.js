@@ -4,14 +4,14 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=23';
-import { walkPose, nameLabel } from './models.js?v=23';
-import { G, diff, addScore } from './state.js?v=23';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=23';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=23';
-import { playSfx } from './audio.js?v=23';
-import { groundAt } from './physics.js?v=23';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=23';
+import { tr } from './i18n.js?v=24';
+import { walkPose, nameLabel } from './models.js?v=24';
+import { G, diff, addScore } from './state.js?v=24';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=24';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
+import { playSfx } from './audio.js?v=24';
+import { groundAt } from './physics.js?v=24';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=24';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -63,7 +63,7 @@ export function updateEnemies(dt) {
     const local = G.player;
     let attackers = 0;
     for (const e of G.enemies) if (!e.dead && busy(e)) attackers++;
-    for (const e of G.enemies) {
+    try { for (const e of G.enemies) {
         if (e.dead) { updateDead(e, dt); continue; }
         if (e.kind === 'duran') continue;
         const p = G.player = nearestPlayer(e.pos);
@@ -86,8 +86,7 @@ export function updateEnemies(dt) {
             if (p.vel.y < -1 && c.dy > h - 0.9) { bouncePlayer(10); damageEnemy(e, 9, 'stomp'); }
             else if (e.st !== 'stun' && !e.T.harmless) hurtPlayer(e.pos);
         }
-    }
-    G.player = local;
+    } } finally { G.player = local; }   // hata olsa bile asıl oyuncu geri gelsin
     updateProjectiles(dt);
 }
 
