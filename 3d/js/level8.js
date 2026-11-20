@@ -5,13 +5,13 @@
 // Çiftliğin kapısı açılınca bahçede FETÖ: SON — tümsekli, raflı meydanda kovalar, raflara kolayca zıplar.
 // Yenilince mezara girer (outro.js graveOutro): "FETÖ öldü ve mezara girdi!"
 import * as THREE from 'three';
-import { G } from './state.js?v=27';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=27';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=27';
-import { spawnFeto } from './boss_feto.js?v=27';
-import { graveOutro } from './outro.js?v=27';
-import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, mat4, pick } from './decor.js?v=27';
-import './abiler.js?v=27';
+import { G } from './state.js?v=28';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=28';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=28';
+import { spawnFeto } from './boss_feto.js?v=28';
+import { graveOutro } from './outro.js?v=28';
+import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, mat4, pick } from './decor.js?v=28';
+import './abiler.js?v=28';
 
 const STANDS = [-48, -118], STAND_X = 4.5, DECK = 2.6;
 // Meydanda tümsekler (engebe): [x, z, en, boy, yükseklik]; üstlerine çıkılır, FETÖ de zıplar

@@ -4,15 +4,15 @@
 //   CANLI BOMBA: seni görünce bağırarak koşar; yanına kadar gelirse kendini patlatır. Önce durdur! (vurulunca yeleği patlar: yakın durma)
 // Yakalanan terörist kelepçeyle götürülür ("YAKALANDI!"). Mayınlar (makeMines): yaklaşınca bip bip öter, 1.4 sn sonra patlar.
 import * as THREE from 'three';
-import { limb, walkPose } from './models.js?v=27';
-import { G, diff } from './state.js?v=27';
-import { hurtPlayer } from './player.js?v=27';
-import { burst, floatText, addTrauma, spawnFx } from './fx.js?v=27';
-import { playSfx, beep } from './audio.js?v=27';
-import { makeBomb, blast } from './hazards.js?v=27';
-import { box, mat, dampAngle, rand, AABB } from './util.js?v=27';
-import { Batch, mat4 } from './decor.js?v=27';
-import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight, throwLob, damageEnemy, setBubble } from './enemies.js?v=27';
+import { limb, walkPose } from './models.js?v=28';
+import { G, diff } from './state.js?v=28';
+import { hurtPlayer } from './player.js?v=28';
+import { burst, floatText, addTrauma, spawnFx } from './fx.js?v=28';
+import { playSfx, beep } from './audio.js?v=28';
+import { makeBomb, blast } from './hazards.js?v=28';
+import { box, mat, dampAngle, rand, AABB } from './util.js?v=28';
+import { Batch, mat4 } from './decor.js?v=28';
+import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight, throwLob, damageEnemy, setBubble } from './enemies.js?v=28';
 
 const CAMO = '#4d5b2a', CAMO_D = '#3f4a22', SKIN = '#c68642';
 function buildTerror(kind) {

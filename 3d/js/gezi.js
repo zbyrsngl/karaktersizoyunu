@@ -7,14 +7,14 @@
 //   Tencere Tava (3 can): kalkan hücumu ya da tencere fırlatır
 //   Duran Adam: hiç kıpırdamaz, hiçbir şey işlemez
 import * as THREE from 'three';
-import { buildHero, walkPose } from './models.js?v=27';
-import { G, diff } from './state.js?v=27';
-import { hurtPlayer, blockFx } from './player.js?v=27';
-import { burst, floatText, addTrauma } from './fx.js?v=27';
-import { playSfx, beep } from './audio.js?v=27';
-import { makeFire, makeBomb } from './hazards.js?v=27';
-import { angDiff, dampAngle, mat, rand } from './util.js?v=27';
-import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, throwLob, setBubble } from './enemies.js?v=27';
+import { buildHero, walkPose } from './models.js?v=28';
+import { G, diff } from './state.js?v=28';
+import { hurtPlayer, blockFx } from './player.js?v=28';
+import { burst, floatText, addTrauma } from './fx.js?v=28';
+import { playSfx, beep } from './audio.js?v=28';
+import { makeFire, makeBomb } from './hazards.js?v=28';
+import { angDiff, dampAngle, mat, rand } from './util.js?v=28';
+import { TYPES, patrol, keepRange, stepToward, go, finish, stun, shieldFacing, midPoint, handPos, throwLob, setBubble } from './enemies.js?v=28';
 
 const SLOGANS = ['HER YER TAKSİM!', 'DİRENİŞ!', 'ÇAPULCUYUZ!', 'HÜKÜMET İSTİFA!'];
 // Uyarınca ara sıra slogan atar (balon kafanın üstünde, can götürmez)

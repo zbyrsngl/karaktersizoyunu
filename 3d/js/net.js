@@ -11,15 +11,15 @@
 //  • Düşmanlar her iki cihazda da çalışır (saldırıları en yakın oyuncuya); misafirde konumları ev sahibinden gelenle düzeltilir.
 // Uçuş (6) ve BYLOCK (7) bölümlerinde herkes kendi oyununu oynar; ev sahibi sonraki bölüme geçince misafir de geçer.
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=27';
-import { tr, tf } from './i18n.js?v=27';
-import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=27';
-import { recolorHirhiz, P2_COLORS } from './models.js?v=27';
-import { throwGrenade } from './grenade.js?v=27';
-import { showFur } from './gorilla.js?v=27';
-import { damageEnemy } from './enemies.js?v=27';
-import { setBossBar } from './boss_core.js?v=27';
-import { textSprite } from './util.js?v=27';
+import { G, toast } from './state.js?v=28';
+import { tr, tf } from './i18n.js?v=28';
+import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=28';
+import { recolorHirhiz, P2_COLORS } from './models.js?v=28';
+import { throwGrenade } from './grenade.js?v=28';
+import { showFur } from './gorilla.js?v=28';
+import { damageEnemy } from './enemies.js?v=28';
+import { setBossBar } from './boss_core.js?v=28';
+import { textSprite } from './util.js?v=28';
 
 // Taşıyıcı: herkese açık ücretsiz MQTT aracı sunucusu (WebSocket, wss). İki cihaz doğrudan bağlanmaz; mesajlar sunucudan geçer.
 // Böylece mobil operatör ağlarında da çalışır (önceki PeerJS/WebRTC doğrudan bağlantısı telefonlarda kurulamadı).

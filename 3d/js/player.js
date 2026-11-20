@@ -1,15 +1,15 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=27';
-import { moveBody } from './physics.js?v=27';
-import { input } from './input.js?v=27';
-import { G, diff, toast } from './state.js?v=27';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=27';
-import { playSfx, beep } from './audio.js?v=27';
-import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=27';
-import { throwGrenade } from './grenade.js?v=27';
-import { resetPowers } from './powerups.js?v=27';
+import { buildHirhiz, walkPose } from './models.js?v=28';
+import { moveBody } from './physics.js?v=28';
+import { input } from './input.js?v=28';
+import { G, diff, toast } from './state.js?v=28';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=28';
+import { playSfx, beep } from './audio.js?v=28';
+import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=28';
+import { throwGrenade } from './grenade.js?v=28';
+import { resetPowers } from './powerups.js?v=28';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45, SPRINT = 1.6;   // Shift: hızlı koşu
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;

@@ -1,6 +1,6 @@
 // HIRHIZ 3D: ortak araçlar (malzemeler, yazı dokuları, matematik)
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=27';
+import { tr } from './i18n.js?v=28';
 
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const lerp = (a, b, k) => a + (b - a) * k;

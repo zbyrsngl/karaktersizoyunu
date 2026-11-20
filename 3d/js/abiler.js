@@ -5,14 +5,14 @@
 //   TAKKELİ ABİ: takkesini başından çıkarıp atar; takke düştüğü yerde bomba gibi patlar (kırmızı halkadan çık)
 // Rüşvetle ya da balyozla yenilen abi "İTİRAFÇI OLDU!" diye gider.
 import * as THREE from 'three';
-import { limb, walkPose, labelTorso } from './models.js?v=27';
-import { G, diff } from './state.js?v=27';
-import { hurtPlayer, blockFx, shieldBlocks } from './player.js?v=27';
-import { burst, floatText, addTrauma } from './fx.js?v=27';
-import { playSfx, beep } from './audio.js?v=27';
-import { makeBomb, blast } from './hazards.js?v=27';
-import { box, mat, angDiff, dampAngle, rand } from './util.js?v=27';
-import { TYPES, patrol, keepRange, go, finish, handPos, shootStraight, throwLob, hitsPlayer, killProj } from './enemies.js?v=27';
+import { limb, walkPose, labelTorso } from './models.js?v=28';
+import { G, diff } from './state.js?v=28';
+import { hurtPlayer, blockFx, shieldBlocks } from './player.js?v=28';
+import { burst, floatText, addTrauma } from './fx.js?v=28';
+import { playSfx, beep } from './audio.js?v=28';
+import { makeBomb, blast } from './hazards.js?v=28';
+import { box, mat, angDiff, dampAngle, rand } from './util.js?v=28';
+import { TYPES, patrol, keepRange, go, finish, handPos, shootStraight, throwLob, hitsPlayer, killProj } from './enemies.js?v=28';
 
 const SKIN = '#e0ac69';
 const SUITS = { kitap: '#1f2937', tesbih: '#334155', takke: '#3f3f46' };

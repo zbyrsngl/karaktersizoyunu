@@ -3,10 +3,10 @@
 //   - uçağın seyir ışıkları (sol kırmızı, sağ yeşil, beyaz flaş), sert dönüşte kanat ucu buhar izleri, hafif türbülans
 //   - hız çizgileri, yakında akan bulut kümeleri, uzakta yanıp sönen yolcu uçakları, yerden gökyüzünü tarayan projektörler
 import * as THREE from 'three';
-import { G } from './state.js?v=27';
-import { floatText, addTrauma } from './fx.js?v=27';
-import { jetPass, sonicBoom } from './audio.js?v=27';
-import { box, mat, canvasTex, rand } from './util.js?v=27';
+import { G } from './state.js?v=28';
+import { floatText, addTrauma } from './fx.js?v=28';
+import { jetPass, sonicBoom } from './audio.js?v=28';
+import { box, mat, canvasTex, rand } from './util.js?v=28';
 
 const SPEED = 30;
 

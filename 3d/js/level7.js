@@ -1,5 +1,5 @@
 // HIRHIZ 3D — 7. BÖLÜM: BYLOCK (şifre kırma bulmacası; bütün oyun puzzle.js'te)
-import { makePuzzleMode } from './puzzle.js?v=27';
+import { makePuzzleMode } from './puzzle.js?v=28';
 
 const mode = makePuzzleMode();
 export const LEVEL7 = {

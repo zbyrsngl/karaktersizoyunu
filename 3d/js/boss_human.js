@@ -5,18 +5,18 @@
 //   EKREM: ♥ kalpler · ✔ oy pusulası yağmuru; yenilince "YSK: SEÇİM İPTAL!" → SEÇİM TEKRARI (daha büyük, 22 can, + şok dalgası, + maraton koşusu)
 // Yenilince yukarıdan hücre parmaklığı iner (jailOutro): SELO içeride bağlama çalar, EKREM el sallar.
 import * as THREE from 'three';
-import { tr, tf } from './i18n.js?v=27';
-import { G, diff, addScore, toast } from './state.js?v=27';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=27';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
-import { playSfx } from './audio.js?v=27';
-import { makeRing } from './hazards.js?v=27';
-import { limb, walkPose } from './models.js?v=27';
-import { groundAt } from './physics.js?v=27';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=27';
-import { ARENA } from './world.js?v=27';
-import { hitsPlayer, killProj } from './enemies.js?v=27';
-import { showBossBar, setBossBar } from './boss_core.js?v=27';
+import { tr, tf } from './i18n.js?v=28';
+import { G, diff, addScore, toast } from './state.js?v=28';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=28';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=28';
+import { playSfx } from './audio.js?v=28';
+import { makeRing } from './hazards.js?v=28';
+import { limb, walkPose } from './models.js?v=28';
+import { groundAt } from './physics.js?v=28';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=28';
+import { ARENA } from './world.js?v=28';
+import { hitsPlayer, killProj } from './enemies.js?v=28';
+import { showBossBar, setBossBar } from './boss_core.js?v=28';
 
 // --- ORTAK KAFA ---
 // Ten rengi kafa, kulaklar, kaşlar, gözler, burun, geniş gülüş (dişler); saçı modele göre eklenir

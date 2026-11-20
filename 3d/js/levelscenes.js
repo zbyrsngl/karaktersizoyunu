@@ -2,12 +2,14 @@
 //   1 Gezi: çadır kütüphanesi, gitarlı şarkı halkası, ücretsiz çorba kuyruğu, slogan balonları (saldırı değil)
 //   2 17/25 Aralık: polis arabalarının yanında canlı yayın yapan muhabirler, telefonla çeken meraklılar
 //   4 15 Temmuz: köprü girişinde canlı yayın ekibi, köprüye yürüyen kalabalığın sloganları
-//   10 Saraçhane: kalabalığın üstünde sloganlar
+//   10 Saraçhane: sloganlar, miting otobüsü, pankartlı öğrenciler, tencere çalanlar, İPTAL damgalı dev sandık, simit-çay, ambulans, meşaleler
 // (3, 5, 7, 8, 9: sahneleri kendi dosyalarında; 6 uçuş: flight_fx.js)
 import * as THREE from 'three';
-import { HW, ARENA, signBoard } from './world.js?v=27';
-import { box } from './util.js?v=27';
-import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4, rand } from './decor.js?v=27';
+import { HW, ARENA, signBoard } from './world.js?v=28';
+import { box } from './util.js?v=28';
+import { G } from './state.js?v=28';
+import { beep } from './audio.js?v=28';
+import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4, rand } from './decor.js?v=28';
 
 export function extraScenes(scene, W, L) {
     const f = { 1: gezi, 2: aralik, 4: temmuz, 10: sarachane }[L.id];
@@ -94,4 +96,96 @@ function sarachane(scene, W) {
     bubbleTalk(scene, W, [[at(1, -10), 'HAK, HUKUK, ADALET!', 2.2], [at(-1, -30), 'HER ŞEY ÇOK GÜZEL OLACAK!', 2.4], [at(1, -58), 'SEÇİME SAYGI!', 2], [at(-1, -84), 'HAK, HUKUK, ADALET!', 2.2]], { gap: 0.8, near: 34 });
     bubbleTalk(scene, W, [[at(-1, -112), 'İPTAL Mİ?!', 2], [at(1, -136), 'SANDIK BİZİM!', 2], [at(-1, -164), 'HER ŞEY ÇOK GÜZEL OLACAK!', 2.4]], { gap: 0.8, near: 34 });
     newsCrew(scene, W, -(HW + 5.6), -48, Math.PI / 2 + 0.5, ['SARAÇHANE\'DE BÜYÜK KALABALIK!', 'YSK KARARI TARTIŞILIYOR!'], 1);
+    rallyBus(scene, W, -(HW + 9), -22);
+    banners(scene, W, HW + 7, -36, ['SEÇİM HAKKIMIZ', 'SANDIK BİZİM', 'İPTALE HAYIR'], 0);
+    banners(scene, W, -(HW + 7), -138, ['HAK HUKUK ADALET', 'OYUMA DOKUNMA', 'DİPLOMA İPTAL Mİ?!'], 2);
+    potBangers(scene, W, HW + 8, -96);
+    ballotBox(scene, HW + 9, -70);
+    simitCart(scene, W, -(HW + 8), -76);
+    ambulance(scene, W, HW + 8.5, -122);
+    flares(scene, W, [[1, -14], [-1, -60], [1, -150], [-1, -170]]);
+}
+
+// Miting otobüsü: damında mikrofonla konuşan, yanında el sallayanlar; balonlarda konuşma
+function rallyBus(scene, W, x, z) {
+    const b = new Batch(), M = mat4(x, 0, z, 0);
+    b.box(M, 2.6, 2.8, 11, '#f8fafc', 0, 1.8, 0); b.box(M, 2.64, 0.8, 10.6, '#1e293b', 0, 2.5, 0);
+    b.box(M, 2.66, 0.35, 11, '#dc2626', 0, 1.0, 0);
+    [-3.6, 3.6].forEach(dz => [-1.2, 1.2].forEach(dx => b.box(M, 0.3, 0.9, 0.9, '#111827', dx, 0.45, dz)));
+    b.box(M, 2.8, 0.1, 6, '#475569', 0, 3.25, -1); b.box(M, 0.05, 0.9, 6, '#cbd5e1', 1.35, 3.7, -1); b.box(M, 0.05, 0.9, 6, '#cbd5e1', -1.35, 3.7, -1);   // dam korkuluğu
+    for (let i = 0; i < 3; i++) b.box(M, 0.6, 0.8, 0.6, '#111827', -1.0, 3.7, -3.4 + i * 2.4);   // hoparlörler
+    scene.add(b.mesh());
+    const sign = signBoard('HER ŞEY ÇOK GÜZEL OLACAK', '#fef3c7', '#7c2d12', 9, 1.1); sign.position.set(x + 1.34, 1.9, z); sign.rotation.y = Math.PI / 2; scene.add(sign);
+    const top = [{ ...looks.press(), jacket: '#1f2937', shirt: '#f8fafc', x: x + 0.4, y: 3.3, z: z - 1, yaw: Math.PI / 2, hold: HOLD.mic },
+                 { ...looks.man(), x: x - 0.3, y: 3.3, z: z - 2.6, yaw: Math.PI / 2 }, { ...looks.woman(), x: x - 0.3, y: 3.3, z: z + 0.8, yaw: Math.PI / 2 }];
+    poseCycle(scene, W, top, [o => o.hold ? 'mic' : 'clap', o => o.hold ? 'point' : 'cheer', o => o.hold ? 'open' : 'clap'], [1.8, 1.2, 1.5]);
+    bubbleTalk(scene, W, [[{ x: x + 0.4, y: 5.9, z: z - 1 }, 'SANDIĞA SAHİP ÇIKIN!', 2.4], [{ x: x + 0.4, y: 5.9, z: z - 1 }, 'MİLLETİN İRADESİ!', 2.2], [{ x: x + 0.4, y: 5.9, z: z - 1 }, 'HER ŞEY ÇOK GÜZEL OLACAK!', 2.6]], { gap: 0.8, near: 40 });
+}
+// Pankart taşıyan öğrenciler: iki direkli bez pankart
+function banners(scene, W, x, z, texts, seed) {
+    const s = x > 0 ? 1 : -1, yaw = s > 0 ? -Math.PI / 2 : Math.PI / 2, list = [];
+    texts.forEach((t, i) => {
+        const bz = z + (i - 1) * 4.2, bx = x - s * 0.5;
+        const sg = signBoard(t, '#111827', '#f8fafc', 3.2, 0.8); sg.position.set(bx, 2.3, bz); sg.rotation.y = yaw; scene.add(sg);
+        [-1.5, 1.5].forEach(dz => { scene.add(box(0.05, 2.6, 0.05, '#78350f', bx, 1.3, bz + dz, false)); list.push({ ...looks.man(), beard: null, x: bx + s * 0.4, z: bz + dz, yaw, pose: 'cheer' }); });
+        list.push({ ...looks.woman(), x: bx + s * 1.4, z: bz, yaw, pose: 'clap' });
+    });
+    poseCycle(scene, W, list, [o => o.pose, 'cheer', o => o.pose === 'clap' ? 'stand' : 'cheer'], [1.4, 1, 1.2], { offset: seed });
+}
+// Tencere tava çalanlar (gece eylemi): kepçeyle tencereye vururlar, tın tın
+function potBangers(scene, W, x, z) {
+    const pot = (b, sh) => { b.box(sh, 0.3, 0.2, 0.3, '#9ca3af', 0, -0.68, 0.12); b.box(sh, 0.05, 0.05, 0.2, '#374151', 0.17, -0.62, 0.12); };
+    const list = [];
+    for (let i = 0; i < 6; i++) list.push({ ...(i % 2 ? looks.woman() : looks.man()), x: x + (i % 2) * 1.2, z: z + (i - 3) * 1.1, yaw: -Math.PI / 2 + rand(-0.3, 0.3), holdL: pot });
+    poseCycle(scene, W, list, ['phone', 'clap'], [0.22, 0.22]);
+    let t0 = 0;
+    W.movers.push((dt, t) => {
+        const p = G.player; if (!p || G.state !== 'play' || Math.hypot(p.pos.x - x, p.pos.z - z) > 26) return;
+        if (t - t0 > 0.44) { t0 = t; beep('pan'); }
+    });
+    bubbleTalk(scene, W, [[{ x, y: 2.6, z }, 'TIN TIN TIN!', 1.6]], { gap: 2.4, near: 26 });
+}
+// Dev sandık: üstünde kırmızı "İPTAL" damgası
+function ballotBox(scene, x, z) {
+    const b = new Batch(), M = mat4(x, 0, z, 0.3);
+    b.box(M, 2.4, 2.4, 2.4, '#e0f2fe', 0, 1.2, 0); b.box(M, 2.5, 0.12, 2.5, '#1d4ed8', 0, 2.45, 0); b.box(M, 0.9, 0.06, 0.12, '#111827', 0, 2.52, 0);
+    scene.add(b.mesh());
+    const yaw = -Math.PI / 2 + 0.3, nx = -Math.cos(0.3) * 1.22, nz = Math.sin(0.3) * 1.22;
+    const t = signBoard('SANDIK', '#1d4ed8', '#e0f2fe', 2, 0.6); t.position.set(x + nx, 1.85, z + nz); t.rotation.y = yaw; scene.add(t);
+    const st = signBoard('İPTAL', '#fef2f2', '#dc2626', 1.6, 0.6); st.position.set(x + nx * 1.02, 1.0, z + nz * 1.02); st.rotation.set(0, yaw, 0.25); scene.add(st);
+}
+// Simit-çay arabası
+function simitCart(scene, W, x, z) {
+    const b = new Batch(), M = mat4(x, 0, z, 0);
+    b.box(M, 1.2, 1.0, 2.0, '#b91c1c', 0, 0.9, 0); b.box(M, 1.25, 0.08, 2.1, '#fde68a', 0, 1.42, 0);
+    b.box(M, 1.1, 0.6, 1.9, '#fef3c7', 0, 1.8, 0);
+    for (let i = 0; i < 6; i++) b.box(M, 0.25, 0.06, 0.25, '#b45309', -0.3 + (i % 2) * 0.6, 1.5 + Math.floor(i / 2) * 0.17, -0.6 + Math.floor(i / 2) * 0.5);
+    [-0.7, 0.7].forEach(dz => b.box(M, 0.12, 0.5, 0.5, '#111827', 0.62, 0.3, dz));
+    scene.add(b.mesh());
+    const sg = signBoard('SİMİT · ÇAY', '#fef3c7', '#b91c1c', 1.8, 0.4); sg.position.set(x + 0.62, 2.35, z); sg.rotation.y = Math.PI / 2; scene.add(sg);
+    poseCycle(scene, W, [{ ...looks.man(), mustache: '#292524', x: x - 1, z, yaw: Math.PI / 2, hold: HOLD.cup },
+                        { ...looks.woman(), x: x + 1.4, z: z - 0.6, yaw: -Math.PI / 2, hold: HOLD.cup }, { ...looks.man(), x: x + 1.5, z: z + 0.7, yaw: -Math.PI / 2 }],
+        ['phone', 'stand'], [2, 2]);
+}
+// Ambulans: yanıp sönen lambalar
+function ambulance(scene, W, x, z) {
+    const b = new Batch(), M = mat4(x, 0, z, 0);
+    b.box(M, 2.2, 2.4, 5.6, '#f8fafc', 0, 1.5, 0); b.box(M, 2.22, 0.3, 5.62, '#dc2626', 0, 1.2, 0);
+    [-1.8, 1.8].forEach(dz => [-1, 1].forEach(dx => b.box(M, 0.3, 0.8, 0.8, '#111827', dx, 0.4, dz)));
+    scene.add(b.mesh());
+    const sg = signBoard('AMBULANS', '#dc2626', '#f8fafc', 2.2, 0.5); sg.position.set(x - 1.12, 2.1, z); sg.rotation.y = -Math.PI / 2; scene.add(sg);
+    const l1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.3), new THREE.MeshBasicMaterial({ color: '#ef4444' })), l2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.3), new THREE.MeshBasicMaterial({ color: '#3b82f6' }));
+    l1.position.set(x - 0.4, 2.85, z + 2.2); l2.position.set(x + 0.4, 2.85, z + 2.2); scene.add(l1, l2);
+    const li = new THREE.PointLight('#ef4444', 4, 9, 1.6); li.position.set(x, 3.4, z + 2.2); scene.add(li);
+    W.movers.push((dt, t) => { const k = Math.floor(t * 6) % 2; l1.visible = !!k; l2.visible = !k; li.color.set(k ? '#ef4444' : '#3b82f6'); });
+}
+// Kalabalığın içinde yanan meşaleler (kırmızı titrek ışık)
+function flares(scene, W, spots) {
+    spots.forEach(([s, z], i) => {
+        const x = s * (HW + 3.2);
+        const f = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff3b1f' })); f.position.set(x, 2.5, z); scene.add(f);
+        scene.add(box(0.05, 0.5, 0.05, '#7c2d12', x, 2.2, z, false));
+        const li = new THREE.PointLight('#ff3b1f', 3, 8, 1.8); li.position.set(x, 2.7, z); scene.add(li);
+        W.movers.push((dt, t) => { const k = 0.7 + Math.sin(t * 23 + i * 3) * 0.2 + Math.sin(t * 37 + i) * 0.1; li.intensity = 3 * k; f.scale.setScalar(k); });
+    });
 }
