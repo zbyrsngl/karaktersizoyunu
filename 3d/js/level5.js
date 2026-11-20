@@ -4,14 +4,15 @@
 // cankurtaran kulelerinde nişancılar. Kum torbalı kontrol noktası açılınca canavar DARBE TANKI (boss_darbetank.js);
 // yenilince HIRHIZ: "15 Temmuz Allah'ın bir lütfü!", sonra yalarım amca gelir (outro.js yalarimOutro).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=24';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=24';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=24';
-import { getHeadTex } from './models.js?v=24';
-import { spawnDarbeTank } from './boss_darbetank.js?v=24';
-import { yalarimOutro } from './outro.js?v=24';
-import './police.js?v=24';
-import './tanks.js?v=24';
+import { tr } from './i18n.js?v=27';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=27';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=27';
+import { getHeadTex } from './models.js?v=27';
+import { spawnDarbeTank } from './boss_darbetank.js?v=27';
+import { yalarimOutro } from './outro.js?v=27';
+import { crowd, poseCycle, bubbleTalk, looks, HOLD, Batch, table, chair } from './decor.js?v=27';
+import './police.js?v=27';
+import './tanks.js?v=27';
 
 const TOWERS = [-52, -122], TOWER_X = -4, DECK = 2.6;
 const NEWS = ['CANLI: CUMHURBAŞKANI FACETIME İLE BAĞLANDI', "BOĞAZ KÖPRÜSÜ'NDE TANKLAR", "TRT'DE DARBE BİLDİRİSİ OKUNDU"];
@@ -102,6 +103,24 @@ function newsScreen(scene, x, z, rot, text) {
     scr.position.set(0, 3.9, 0.12); g.add(scr);
 }
 
+// Ekranın önünde canlı yayını izleyen kalabalık: yola taşmaz; bir kısmı bayrak sallar, sırayla tezahürat eder
+function watchers(scene, W, sx, sz, rot, n, seed = 0) {
+    const nx = Math.sin(rot), nz = Math.cos(rot), tx = Math.cos(rot), tz = -Math.sin(rot), list = [];
+    for (let tries = 0; list.length < n && tries < 80; tries++) {
+        const f = rand(1.6, 4.8), l = rand(-3.2, 3.2), x = sx + nx * f + tx * l, z = sz + nz * f + tz * l;
+        if (Math.abs(x) < HW + 0.9 || list.some(o => Math.hypot(o.x - x, o.z - z) < 0.75)) continue;
+        const L = Math.random() < 0.35 ? looks.woman() : looks.man();
+        list.push({ ...L, x, z, yaw: Math.atan2(sx - x, sz - z) + rand(-0.2, 0.2), hold: Math.random() < 0.3 ? HOLD.flag : Math.random() < 0.3 ? HOLD.phone : null });
+    }
+    poseCycle(scene, W, list, [o => o.hold === HOLD.phone ? 'phone' : 'stand', o => o.hold === HOLD.phone ? 'phone' : 'cheer', 'clap', 'stand'], [2.2, 1.2, 1.4, 1.8], { offset: seed });
+    // tezahürat balonları
+    const mid = list[Math.floor(list.length / 2)];
+    if (mid) bubbleTalk(scene, W, [
+        [{ x: mid.x, y: 2.6, z: mid.z }, 'MEYDANLARA!', 2], [{ x: list[0].x, y: 2.6, z: list[0].z }, 'DARBEYE GEÇİT YOK!', 2.2],
+        [{ x: list[list.length - 1].x, y: 2.6, z: list[list.length - 1].z }, 'ŞARJ BİTMESİN!', 2]
+    ], { start: seed, gap: 1.4, near: 30 });
+}
+
 function decorate(scene, W) {
     // Gece denizi (yolun solunda, kumsalın ötesinde), ay ve yıldızlar
     const seaTex = canvasTex(128, 128, (g) => {
@@ -167,7 +186,28 @@ function decorate(scene, W) {
     });
     // Son dakika ekranları, FaceTime ekranları, giriş tabelası
     [[1, -14], [-1, -70], [1, -126]].forEach(([s, z], i) => newsScreen(scene, s * (HW + 2.2), z, -s * Math.PI / 2 * 0.7, NEWS[i % NEWS.length]));
+    [[1, -14], [-1, -70], [1, -126]].forEach(([s, z], i) => watchers(scene, W, s * (HW + 2.2), z, -s * Math.PI / 2 * 0.7, 9, i * 1.7));
     faceTimeScreen(scene, HW + 4, 4.5, -36, -Math.PI / 2 * 0.65);
+    watchers(scene, W, HW + 4, -36, -Math.PI / 2 * 0.65, 8, 0.6);
+    // Otel önünde kafe: masalarda telefondan yayını izleyenler, duvarda televizyon
+    [-22, -104, -150].forEach((z, k) => {
+        const b = new Batch(), x0 = HW + 6;
+        for (let i = 0; i < 3; i++) {
+            const tx = x0 + (i % 2) * 2.6, tz = z - i * 2.4;
+            table(b, tx, tz, 0, { w: 1.1, d: 1.1, top: '#f5f5f4', leg: '#a8a29e' });
+            chair(b, tx - 0.8, tz, Math.PI / 2, '#b45309'); chair(b, tx + 0.8, tz, -Math.PI / 2, '#b45309');
+            b.box(new THREE.Matrix4(), 0.07, 0.1, 0.07, '#fef3c7', tx, 0.82, tz);
+        }
+        scene.add(b.mesh());
+        const sit = [];
+        for (let i = 0; i < 3; i++) {
+            const tx = x0 + (i % 2) * 2.6, tz = z - i * 2.4;
+            sit.push({ ...looks.man(), pose: 'desk', x: tx - 0.8, z: tz, yaw: Math.PI / 2, hold: HOLD.phone });
+            if (i !== 1) sit.push({ ...looks.woman(), pose: 'desk', x: tx + 0.8, z: tz, yaw: -Math.PI / 2, hold: HOLD.cup });
+        }
+        crowd(scene, sit);
+        newsScreen(scene, x0 + 5.2, z - 2.4, -Math.PI / 2, NEWS[(k + 1) % NEWS.length]);
+    });
     faceTimeScreen(scene, 0, 9, ARENA.z1 - 6, 0, 2);
     entrySign(scene, 'MARMARİS', '#1e3a8a');
 

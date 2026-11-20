@@ -7,17 +7,17 @@
 // Hasar: balyoz 2, üstüne zıplama 2, kelepçe 1.
 // 8. bölüm FETÖ: SON (opts.son): "YA ALLAH!" diye gelir, daha hızlı kovalar, oyuncu rafa çıkınca zıplayıp peşinden gelir (moveBody fiziği).
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=24';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=24';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
-import { playSfx } from './audio.js?v=24';
-import { makeRing } from './hazards.js?v=24';
-import { limb, walkPose } from './models.js?v=24';
-import { groundAt, moveBody } from './physics.js?v=24';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=24';
-import { ARENA } from './world.js?v=24';
-import { hitsPlayer, killProj } from './enemies.js?v=24';
-import { showBossBar, setBossBar } from './boss_core.js?v=24';
+import { G, diff, addScore, toast } from './state.js?v=27';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=27';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx } from './audio.js?v=27';
+import { makeRing } from './hazards.js?v=27';
+import { limb, walkPose } from './models.js?v=27';
+import { groundAt, moveBody } from './physics.js?v=27';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp, rand } from './util.js?v=27';
+import { ARENA } from './world.js?v=27';
+import { hitsPlayer, killProj } from './enemies.js?v=27';
+import { showBossBar, setBossBar } from './boss_core.js?v=27';
 
 const TOP = 1.9, SKIN = '#e8c4a0';
 
@@ -181,7 +181,7 @@ const FETO_BODY = { r: 0.4, h: 1.9 };
 function chase(b, dt, d, toP, sp) {
     const p = G.player;
     const walking = b.st === 'walk' && b.t <= 0 && d > 2.0;
-    const v = walking ? 1.75 * sp * (b.grounded ? 1 : 2.4) : 0;
+    const v = walking ? 1.75 * sp * (b.grounded ? 1 : 2.8) : 0;
     b.vel.x = Math.sin(toP) * v; b.vel.z = Math.cos(toP) * v;
     b.vel.y = Math.max(b.vel.y - 30 * dt, -22);
     const res = moveBody({ pos: b.pos, vel: b.vel, r: FETO_BODY.r, h: FETO_BODY.h }, dt, G.world.solids);
@@ -189,9 +189,9 @@ function chase(b, dt, d, toP, sp) {
     b.jumpCd -= dt;
     if (b.pos.y < -6) { b.pos.copy(b.home); b.vel.set(0, 0, 0); }
     if (b.grounded && b.st === 'walk' && !p.dead && b.jumpCd <= 0) {
-        const above = p.pos.y > b.pos.y + 1 && d < 6;
+        const above = p.pos.y > b.pos.y + 0.8 && d < 10;
         if (above || (res.wallHit && walking)) {
-            b.vel.y = 13.8; b.grounded = false; b.jumpCd = 0.9;
+            b.vel.y = 15.8; b.grounded = false; b.jumpCd = 0.7;   // 4 m'ye kadar zıplar: en yüksek rafa da çıkar
             floatText('HOP!', b.pos.clone().setY(b.pos.y + TOP + 0.5), '#fde047', 0.45, 0.7);
         }
     }
@@ -200,7 +200,7 @@ function chase(b, dt, d, toP, sp) {
 function slam(b) {
     const f = new THREE.Vector3(Math.sin(b.facing) * 0.8, 0, Math.cos(b.facing) * 0.8);
     const at = b.pos.clone().add(f);
-    makeRing(at, { speed: 7 * diff().speed, maxR: 11 });
+    makeRing(at, b.son ? { speed: 10 * diff().speed, maxR: 46 } : { speed: 7 * diff().speed, maxR: 11 });   // 8. bölüm: dalga bütün meydanı dolaşır
     burst(at.clone().setY(0.1), { n: 14, color: ['#d6d3d1', '#a8a29e', '#fde047'], speed: 4, up: 2, size: 0.14, life: 0.5 });
     playSfx('hit', { rate: 0.5, vol: 0.8 }); addTrauma(0.35);
 }
@@ -224,10 +224,11 @@ function volley(b) {
     const p = G.player, toP = Math.atan2(p.pos.x - b.pos.x, p.pos.z - b.pos.z), d = Math.hypot(p.pos.x - b.pos.x, p.pos.z - b.pos.z);
     const from = b.pos.clone().add(new THREE.Vector3(Math.sin(b.facing) * 0.4, 1.5, Math.cos(b.facing) * 0.4));
     for (let i = 0; i < 6; i++) {
-        const a = toP + (i - 2.5) * 0.18, sp = Math.min(8, d * 0.55 + 1) * (0.7 + i % 3 * 0.15);
+        // 8. bölüm: dolarlar oyuncunun olduğu yere kadar uçar (eskiden ~8 m'de düşüyordu)
+        const a = toP + (i - 2.5) * (b.son ? 0.14 : 0.18), sp = (b.son ? clamp(d / 1.45, 3, 19) : Math.min(8, d * 0.55 + 1)) * (0.75 + i % 3 * 0.15);
         const m = oneDollar(); m.position.copy(from); G.scene.add(m);
         G.projectiles.push({ type: 'dollar1', mesh: m, pos: m.position, vel: new THREE.Vector3(Math.sin(a) * sp, 7 + rand(0, 2), Math.cos(a) * sp),
-                             life: 7, ownGeo: false, ph: rand(0, 6), landed: false, update: updateDollar });
+                             life: 7, ownGeo: false, ph: rand(0, 6), landed: false, drag: b.son ? 0.7 : 0.4, update: updateDollar });
     }
     playSfx('hit', { rate: 2, vol: 0.4 });
 }
@@ -235,7 +236,7 @@ function updateDollar(pr, dt) {
     if (pr.landed) { pr.mesh.children[0].visible = false; return; }
     pr.ph += dt * 4;
     pr.vel.y = Math.max(pr.vel.y - 14 * dt, -2.2);   // yükselir, sonra yavaşça süzülür
-    pr.vel.x *= Math.pow(0.4, dt); pr.vel.z *= Math.pow(0.4, dt);
+    pr.vel.x *= Math.pow(pr.drag || 0.4, dt); pr.vel.z *= Math.pow(pr.drag || 0.4, dt);
     const sway = Math.sin(pr.ph);
     pr.pos.x += (pr.vel.x + sway * 1.2) * dt; pr.pos.z += pr.vel.z * dt; pr.pos.y += pr.vel.y * dt;
     pr.mesh.rotation.set(sway * 0.6, pr.ph * 0.5, 0);

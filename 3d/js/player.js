@@ -1,15 +1,15 @@
 // HIRHIZ 3D: oyuncu — kameraya göre yürüme, zıplama (tolerans, tampon, değişken yükseklik, tepede süzülme),
 // balyoz (yakındaki düşmana kendiliğinden döner), kalkan (önden ve yukarıdan geleni durdurur), rüşvet atma, can sistemi.
 import * as THREE from 'three';
-import { buildHirhiz, walkPose } from './models.js?v=24';
-import { moveBody } from './physics.js?v=24';
-import { input } from './input.js?v=24';
-import { G, diff, toast } from './state.js?v=24';
-import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=24';
-import { playSfx, beep } from './audio.js?v=24';
-import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=24';
-import { throwGrenade } from './grenade.js?v=24';
-import { resetPowers } from './powerups.js?v=24';
+import { buildHirhiz, walkPose } from './models.js?v=27';
+import { moveBody } from './physics.js?v=27';
+import { input } from './input.js?v=27';
+import { G, diff, toast } from './state.js?v=27';
+import { burst, addTrauma, floatText, spawnFx } from './fx.js?v=27';
+import { playSfx, beep } from './audio.js?v=27';
+import { clamp, damp, dampAngle, angDiff, canvasTex } from './util.js?v=27';
+import { throwGrenade } from './grenade.js?v=27';
+import { resetPowers } from './powerups.js?v=27';
 
 const RUN = 6.5, ACC_G = 55, ACC_A = 24, DEC_G = 45, SPRINT = 1.6;   // Shift: hızlı koşu
 const GRAV = 30, JUMP_V = 13.4, FALL_MULT = 1.6, APEX_V = 2.5, MAX_FALL = 22, CUT_V = 7.5;
@@ -191,7 +191,7 @@ export function updatePlayer(p, dt, camYaw) {
     }
 
     // Balyoz
-    if (input.hammerPressed && p.swing <= 0 && !p.shield) startSwing(p);
+    if (input.hammerPressed && p.swing <= 0 && !p.shield && !p.gorilla) startSwing(p);   // goril modunda balyoz yok
     if (p.swing > 0) {
         const el = SWING - p.swing;
         p.swing -= dt;
@@ -203,12 +203,13 @@ export function updatePlayer(p, dt, camYaw) {
         if (aim) {
             p.facing = Math.atan2(aim.x - p.pos.x, aim.z - p.pos.z);
             const f = p.facing, from = new THREE.Vector3(p.pos.x + Math.sin(f) * 0.4 + Math.cos(f) * 0.3, p.pos.y + 1.5, p.pos.z + Math.cos(f) * 0.4 - Math.sin(f) * 0.3);
-            G.onThrow && G.onThrow(from, aim.clone().sub(from).normalize());
+            if (p.gorilla) G.onBanana && G.onBanana(from, aim.clone().sub(from).normalize());   // goril modunda yalnızca muz
+            else G.onThrow && G.onThrow(from, aim.clone().sub(from).normalize());
             p.throwCd = 0.28; p.throwT = 0.2; beep('swing');
         }
     }
     // El bombası: sol elle, nişangâhın gösterdiği yere kavisle
-    if (input.grenadePressed && !G.level.mode && p.grenCd <= 0 && !p.shield && p.swing <= 0) {
+    if (input.grenadePressed && !G.level.mode && p.grenCd <= 0 && !p.shield && p.swing <= 0 && !p.gorilla) {
         if ((G.grenades || 0) <= 0) {
             if (G.time - p.noGrenT > 1) { p.noGrenT = G.time; floatText('BOMBA YOK!', p.pos.clone().setY(p.pos.y + 2.4), '#fca5a5', 0.4); }
         } else {
@@ -306,6 +307,8 @@ function animate(p, dt, amt) {
         else if (t < 0.45) { const k = (t - 0.28) / 0.17; aR = -3.3 + 2.2 * k; hR = -0.6 * k; }
         else { const k = (t - 0.45) / 0.55; aR = -1.1 + 0.85 * k; hR = -0.6 - 0.4 * k; }
     }
+    // Balyoz başı yerin altına girmesin (dev balyozda sap uzar): kol + balyoz açısı en az minA olsun (aşağıdan ölçülür)
+    { const sc = m.hammer.scale.x, L = 0.86 * sc, minA = Math.acos(clamp((0.62 - 0.14 * sc) / L, -1, 1)), a = -(aR + hR); if (a < minA) hR -= minA - a; }
     m.armR.rotation.x = aR; m.hammer.rotation.x = hR;
     m.armL.rotation.x = p.shield ? -1.45 : -Math.sin(p.phase) * 0.4 * swingK * (p.grounded ? 1 : 0);
     if (p.throwT > 0 && !p.shield) { const k = clamp(1 - p.throwT / 0.2, 0, 1); m.armL.rotation.x = -2.7 + 1.5 * k; }   // atış sol elle: balyozlu sağ kol savrulmaz

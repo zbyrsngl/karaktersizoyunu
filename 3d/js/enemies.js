@@ -4,14 +4,14 @@
 // Aynı anda en çok 2 düşman saldırıya geçer (adil olsun diye).
 // Oyuncunun nişanlı atışı (çay paketi ya da rüşvet destesi) 1, balyoz 2 hasar verir; üstüne zıplamak hemen yener.
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=24';
-import { walkPose, nameLabel } from './models.js?v=24';
-import { G, diff, addScore } from './state.js?v=24';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=24';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
-import { playSfx } from './audio.js?v=24';
-import { groundAt } from './physics.js?v=24';
-import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=24';
+import { tr } from './i18n.js?v=27';
+import { walkPose, nameLabel } from './models.js?v=27';
+import { G, diff, addScore } from './state.js?v=27';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=27';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx } from './audio.js?v=27';
+import { groundAt } from './physics.js?v=27';
+import { AABB, angDiff, dampAngle, textSprite, disposeSprite, canvasTex, mat, rand } from './util.js?v=27';
 
 export const TYPES = {};
 export const ALERT = 17, LOB_G = 16;
@@ -42,7 +42,7 @@ export function spawnEnemies(scene, list) {
 }
 
 export function clearEnemies(scene) {
-    G.enemies.forEach(e => { scene.remove(e.m.root); disposeSprite(e.label); if (e.warn) disposeSprite(e.warn); e.T.onRemove && e.T.onRemove(e); });
+    G.enemies.forEach(e => { scene.remove(e.m.root); disposeSprite(e.label); if (e.warn) disposeSprite(e.warn); if (e.bubble) disposeSprite(e.bubble); e.T.onRemove && e.T.onRemove(e); });
     if (G.world) G.world.solids = G.world.solids.filter(a => !G.enemies.some(e => e.aabb === a));
     G.enemies = [];
     G.projectiles.forEach(p => killProj(p)); G.projectiles = [];
@@ -72,10 +72,12 @@ export function updateEnemies(dt) {
         const dx = p.pos.x - e.pos.x, dz = p.pos.z - e.pos.z;
         const c = { d: Math.hypot(dx, dz), dy: p.pos.y - e.pos.y, toP: Math.atan2(dx, dz) };
         c.alert = c.d < (e.T.alert || ALERT) && Math.abs(c.dy) < 4 && !p.dead;
-        c.canStart = e.cd <= 0 && attackers < MAX_ATTACKERS;
+        c.canStart = e.cd <= 0 && attackers < MAX_ATTACKERS && !(G.calm > 0);   // bölüm başı sakin süre (main.js)
         const wasBusy = busy(e);
         if (e.st === 'stun') updateStun(e, dt);
         else e.T.update(e, dt, c);
+        e.T.tick && e.T.tick(e, dt, c);   // her karede (sersemken de): ör. semazen hep döner
+        if (e.bubble && (e.bubbleT -= dt) <= 0) setBubble(e, null);
         if (!wasBusy && busy(e)) attackers++;
         e.m.root.rotation.y = e.facing;
         // Vurulunca gövde bir an şişer
@@ -123,6 +125,13 @@ export function setWarn(e, txt, col) {
     e.warn = textSprite(txt, { size: 60, height: 0.55, color: col || (txt.includes('!') ? '#ef4444' : '#fde047'), bg: null, stroke: '#111827' });
     e.warn.position.y = (e.T.labelY || 2.45) + 0.5; e.m.root.add(e.warn);
 }
+// Konuşma balonu: kafanın üstünde birkaç saniye durur (saldırı değil, can götürmez)
+export function setBubble(e, txt, t = 2.2) {
+    if (e.bubble) { e.m.root.remove(e.bubble); disposeSprite(e.bubble); e.bubble = null; }
+    if (!txt) return;
+    e.bubble = textSprite(txt, { size: 40, height: 0.4, color: '#111827', bg: 'rgba(248,250,252,0.96)' });
+    e.bubble.position.y = (e.T.labelY || 2.45) + 1.05; e.m.root.add(e.bubble); e.bubbleT = t;
+}
 export function go(e, st, t, warn) { e.st = st; e.t = t; if (warn !== undefined) setWarn(e, warn); }
 export function finish(e, cd) { go(e, 'idle', 0, null); e.cd = cd * diff().fire * e.ramp * rand(0.85, 1.15); resetPose(e); }
 export function resetPose(e) {
@@ -158,14 +167,15 @@ export function damageEnemy(e, power = 2, how = 'hammer') {
     }
     if (e.kind === 'duran') { sayOnce(e, 'KIPIRDAMIYOR!', '#e5e7eb'); return; }
     if (e.hurtT > 0 && how !== 'ammo') return;
-    e.hp -= power; e.hurtT = 0.25; e.pop = 1;
+    e.hp -= power; e.hurtT = 0.25; e.pop = 1; G.calm = Math.min(G.calm || 0, 0.01);   // ilk vuruş sakin süreyi bitirir
     playSfx('hit', { vol: how === 'ammo' ? 0.35 : 0.6, rate: how === 'ammo' ? 1.4 : 1 });
+    if (e.hp > 0 && e.T.hurtSfx) playSfx(e.T.hurtSfx, { vol: 0.7, rate: rand(0.95, 1.08) });
     if (how !== 'ammo') { addTrauma(0.18); G.hitStop = 0.06; }
     burst(e.pos.clone().setY(e.pos.y + 1.2), { n: how === 'ammo' ? 4 : 6, color: ['#fde047', '#f8fafc'], speed: 3, up: 3 });
     // Balyoz hazırlanan saldırıyı keser (mermi kesmez)
     if (how !== 'ammo' && (e.st === 'wind' || e.st === 'bang' || e.st === 'aim')) finish(e, 1.0);
     if (e.hp > 0) return;
-    e.dead = true; e.deadT = 0; e.how = how; setWarn(e, null); e.label.visible = false;
+    e.dead = true; e.deadT = 0; e.how = how; setWarn(e, null); setBubble(e, null); e.label.visible = false;
     e.T.onDeath && e.T.onDeath(e);
     G.kills++;
     addScore(e.T.score || 3000);
@@ -175,7 +185,7 @@ export function damageEnemy(e, power = 2, how = 'hammer') {
     if (bribed) { e.leave = true; resetPose(e); e.m.armR.rotation.x = -2.6; burst(e.pos.clone().setY(e.pos.y + 2), { n: 8, color: ['#22c55e', '#16a34a'], speed: 2, up: 3 }); }
     else if (e.T.arrest) arrest(e);   // 4. bölüm: darbeci asker silahını bırakır, elleri arkadan kelepçelenir, götürülür
     else spawnFx('poof', e.pos.clone().setY(e.pos.y + 0.05), 1.6);
-    playSfx('cry', { vol: 0.5 });
+    playSfx(e.T.cry || 'cry', { vol: e.T.cry ? 0.8 : 0.5 });
     G.onKill && G.onKill(e);
 }
 const CUFF_GEO = new THREE.TorusGeometry(0.07, 0.022, 5, 10);
@@ -332,6 +342,7 @@ function updateAmmo(p, dt) {
             if (Math.abs(p.pos.x - e.pos.x) < 0.45 && Math.abs(p.pos.z - e.pos.z) < 0.45 && p.pos.y > e.pos.y && p.pos.y < e.pos.y + h) {
                 // Kalkanlı polis: önden gelen mermiyi kalkanı durdurur
                 const fromFront = Math.abs(angDiff(e.facing, Math.atan2(-p.vel.x, -p.vel.z))) < 1.2;
+                if (e.covered) { sayOnce(e, 'SİPERDE! KALKINCA VUR!', '#fde047'); blockFx(p.pos.clone()); G.onAmmoHit && G.onAmmoHit(false); killProj(p); return; }   // 9. bölüm: barikatın/çukurun içinde
                 if (e.kind === 'duran') sayOnce(e, 'KIPIRDAMIYOR!', '#e5e7eb');
                 else if (e.T.shieldFront && fromFront && e.st !== 'stun' && e.st !== 'rest') {
                     sayOnce(e, 'KALKANLI! YANDAN VUR!', '#fde047'); blockFx(p.pos.clone()); G.onAmmoHit && G.onAmmoHit(false); killProj(p); return;

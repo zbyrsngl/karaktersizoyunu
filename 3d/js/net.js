@@ -11,14 +11,15 @@
 //  • Düşmanlar her iki cihazda da çalışır (saldırıları en yakın oyuncuya); misafirde konumları ev sahibinden gelenle düzeltilir.
 // Uçuş (6) ve BYLOCK (7) bölümlerinde herkes kendi oyununu oynar; ev sahibi sonraki bölüme geçince misafir de geçer.
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=24';
-import { tr, tf } from './i18n.js?v=24';
-import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=24';
-import { recolorHirhiz, P2_COLORS } from './models.js?v=24';
-import { throwGrenade } from './grenade.js?v=24';
-import { damageEnemy } from './enemies.js?v=24';
-import { setBossBar } from './boss_core.js?v=24';
-import { textSprite } from './util.js?v=24';
+import { G, toast } from './state.js?v=27';
+import { tr, tf } from './i18n.js?v=27';
+import { createPlayer, updatePuppet, puppetSwing, puppetThrow, hammerPoint } from './player.js?v=27';
+import { recolorHirhiz, P2_COLORS } from './models.js?v=27';
+import { throwGrenade } from './grenade.js?v=27';
+import { showFur } from './gorilla.js?v=27';
+import { damageEnemy } from './enemies.js?v=27';
+import { setBossBar } from './boss_core.js?v=27';
+import { textSprite } from './util.js?v=27';
 
 // Taşıyıcı: herkese açık ücretsiz MQTT aracı sunucusu (WebSocket, wss). İki cihaz doğrudan bağlanmaz; mesajlar sunucudan geçer.
 // Böylece mobil operatör ağlarında da çalışır (önceki PeerJS/WebRTC doğrudan bağlantısı telefonlarda kurulamadı).
@@ -185,13 +186,13 @@ export function updateNet(dt) {
     if (puppet) {
         puppet.m.root.visible = coop() && !!remote;
         G.players = coop() ? [p, puppet] : null;
-        if (coop()) updatePuppet(puppet, dt, remote);
+        if (coop()) { updatePuppet(puppet, dt, remote); const gor = !!(remote && remote.fl & 64); if (puppet.furOn !== gor) { puppet.furOn = gor; showFur(puppet.m, gor); } }   // arkadaş goril modunda: postu görünsün
     }
     // kendi konumum (20/sn)
     sendT -= dt;
     if (sendT <= 0 && coop()) {
         sendT = 1 / 15;
-        const fl = (p.shield ? 1 : 0) | (p.grounded ? 2 : 0) | (p.dead ? 4 : 0) | (p.invuln > 0 ? 8 : 0) | (p.power.hammer > 0 ? 16 : 0) | (p.power.shieldUp > 0 ? 32 : 0);
+        const fl = (p.shield ? 1 : 0) | (p.grounded ? 2 : 0) | (p.dead ? 4 : 0) | (p.invuln > 0 ? 8 : 0) | (p.power.hammer > 0 ? 16 : 0) | (p.power.shieldUp > 0 ? 32 : 0) | (p.gorilla ? 64 : 0);
         send({ t: 'P', p: [r2(p.pos.x), r2(p.pos.y), r2(p.pos.z)], v: [r2(p.vel.x), r2(p.vel.y), r2(p.vel.z)], f: r2(p.facing), fl, hp: p.hp, lv: G.level.id,
                ...(G.net.guest && (++stateN % 15) === 0 ? lists() : {}) });
     }
@@ -297,6 +298,9 @@ function onEvent(m) {
             break;
         case 'throw':
             if (P && here && coop()) { puppetThrow(P); G.onThrow && G.onThrow(v3(m.from), v3(m.dir), true); }
+            break;
+        case 'banana':   // goril modundaki arkadaşın muzu
+            if (P && here && coop()) { puppetThrow(P); G.onBanana && G.onBanana(v3(m.from), v3(m.dir), true); }
             break;
         case 'gren':
             if (P && here && coop()) { puppetThrow(P); throwGrenade(v3(m.from), v3(m.to)); }

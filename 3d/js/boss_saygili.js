@@ -6,17 +6,17 @@
 //   SIÇRAMA: üstüne sıçrar, inince yerde şok dalgası yayılır (zıpla!); inişte sersemler → kafasına zıpla!
 // Hasar: kafasına zıplamak ya da balyoz (1 can). Rüşvet işlemez. Canı yarıya inince öfkelenir.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=24';
-import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=24';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
-import { playSfx, beep } from './audio.js?v=24';
-import { makeRing } from './hazards.js?v=24';
-import { walkPose } from './models.js?v=24';
-import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=24';
-import { ARENA } from './world.js?v=24';
-import { buildPolice } from './police.js?v=24';
-import { throwLob } from './enemies.js?v=24';
-import { showBossBar, setBossBar } from './boss_core.js?v=24';
+import { G, diff, addScore, toast } from './state.js?v=27';
+import { hurtPlayer, blockFx, bouncePlayer, HAMMER_REACH } from './player.js?v=27';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx, beep } from './audio.js?v=27';
+import { makeRing } from './hazards.js?v=27';
+import { walkPose } from './models.js?v=27';
+import { angDiff, dampAngle, clamp, rand, mat } from './util.js?v=27';
+import { ARENA } from './world.js?v=27';
+import { buildPolice } from './police.js?v=27';
+import { throwLob } from './enemies.js?v=27';
+import { showBossBar, setBossBar } from './boss_core.js?v=27';
 
 const K = 1.35, TOP = 2.65, REACH = 2.9, LEAP_G = 26;
 const CUFF_GEO = new THREE.TorusGeometry(0.13, 0.035, 6, 12);
@@ -32,6 +32,7 @@ export function spawnSaygili(scene, pos) {
         hitTest: pt => Math.abs(pt.x - b.pos.x) < 0.6 && Math.abs(pt.z - b.pos.z) < 0.6 && pt.y > b.pos.y && pt.y < b.pos.y + TOP + 0.1,
         onAmmo: p => { if (G.time - (b.said || 0) > 1) { b.said = G.time; floatText('RÜŞVET İŞLEMEZ!', b.pos.clone().setY(TOP + 0.6), '#fde047', 0.5); } },
         onHammer: point => { if (Math.hypot(point.x - b.pos.x, point.z - b.pos.z) < 1.4) damage(b, point); },
+        onBanana: point => damage(b, point),   // goril modu: rüşvet almaz ama muz işler
         reset: () => { b.hp = b.maxHp; b.pos.set(0, 0, -218); b.st = 'walk'; b.cd = 2; b.rage = false; setBossBar(b); }
     };
     // Karşılama: ses bitene kadar konuşur

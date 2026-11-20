@@ -3,14 +3,17 @@
 // Kasetler toplanır (hepsi "MONTAJ!"), polisler rüşvetle susturulur; villa balkonlarındaki SINAYPIRCILAR'a ancak rüşvet atarak ulaşılır.
 // Demir kapıdan geçince canavar DEV ÇELİK KASA (boss_kasa.js); yenilince Cengiz gelir (outro.js).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=24';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=24';
-import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=24';
-import { spawnKasa } from './boss_kasa.js?v=24';
-import { cengizOutro } from './outro.js?v=24';
-import './police.js?v=24';
+import { tr } from './i18n.js?v=27';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=27';
+import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=27';
+import { spawnKasa } from './boss_kasa.js?v=27';
+import { cengizOutro } from './outro.js?v=27';
+import './police.js?v=27';
+import { Batch, person, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4 } from './decor.js?v=27';
 
 const NEWS = ["'SIFIRLA' SES KAYDI İNTERNETE DÜŞTÜ", "KAYITLARA 'MONTAJ' DEDİ", "KAYITTA: '30 MİLYON AVRO DAHA VAR'"];
+// Sağdaki boş alanda olaylar: polis dinleme odası, siyah minibüste gizli dinleme, Bilal'in basın toplantısı (villalar buralarda açılır)
+const SCENE_Z = { tap: -30, van: -110, press: -151 };
 const BALCONY_X = HW + 1.4, BALCONY_Y = 3.2, SNIPERS_Z = [-48, -92, -160];
 
 export const LEVEL3 = {
@@ -124,6 +127,7 @@ function decorate(scene, W) {
     for (let z = 16; z > -300; z -= 11) {
         for (let row = 0; row < 3; row++) {
             if (Math.random() < 0.25) continue;
+            if (row < 2 && Object.values(SCENE_Z).some(sz => Math.abs(z - sz) < 13)) continue;   // sahnelere yer aç
             const arena = z < ARENA.z0 + 4, edge = arena ? ARENA.hw : HW;
             const x = edge + 7 + row * 9 + rand(0, 3), base = row * 2.2, w = rand(6, 9), h = rand(4.5, 7), d = rand(6, 8);
             const t = win.clone(); t.repeat.set(w / 4, h / 3.5); t.needsUpdate = true;
@@ -136,7 +140,7 @@ function decorate(scene, W) {
         }
     }
     const cyp = [];
-    for (let z = 12; z > ARENA.z0; z -= 7) if (Math.random() < 0.8) cyp.push([HW + rand(2, 5), z + rand(-2, 2), rand(0.8, 1.2)]);
+    for (let z = 12; z > ARENA.z0; z -= 7) if (Math.random() < 0.8 && !Object.values(SCENE_Z).some(sz => Math.abs(z - sz) < 8)) cyp.push([HW + rand(2, 5), z + rand(-2, 2), rand(0.8, 1.2)]);
     for (let z = ARENA.z0 - 4; z > ARENA.z1; z -= 8) [-1, 1].forEach(s => cyp.push([s * (ARENA.hw + rand(2, 4)), z, rand(0.9, 1.3)]));
     const cypM = new THREE.InstancedMesh(new THREE.ConeGeometry(0.9, 7, 6), mat('#14532d', { flatShading: true }), cyp.length);
     const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3();
@@ -166,6 +170,7 @@ function decorate(scene, W) {
         const s = signBoard('PARA SAYMA MAKİNESİ', '#f8fafc', '#166534', 2.4, 0.5); s.position.set(0, 2.0, 0); g.add(s);
     }
     entrySign(scene, 'BOĞAZ · VİLLALAR', '#4c1d95');
+    tapRoom(scene, W, SCENE_Z.tap); spyVan(scene, W, SCENE_Z.van); pressConf(scene, W, SCENE_Z.press);
 
     // Meydanın arkasında sütunlu büyük villa
     {
@@ -177,4 +182,124 @@ function decorate(scene, W) {
         for (let i = 0; i < 10; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 12, 10), mat('#fafaf9')); c.position.set(-22.5 + i * 5, 6, z + 6.8); scene.add(c); }
         scene.add(box(50, 1, 2, '#fafaf9', 0, 12.4, z + 6.8));
     }
+}
+
+// --- DİNLEME ODASI: yola açık kesit oda; masa başında kulaklıklı polisler, dönen makaralı teyp, hedef panosu ---
+function tapRoom(scene, W, z0) {
+    const x0 = HW + 4, x1 = HW + 13, b = new Batch(), M = mat4(0, 0, 0);
+    b.box(M, x1 - x0, 0.1, 10, '#d6d3d1', (x0 + x1) / 2, 0.05, z0);                 // zemin
+    b.box(M, 0.3, 4, 10, '#94a3b8', x1, 2, z0);                                       // arka duvar
+    [-1, 1].forEach(sz => b.box(M, x1 - x0, 4, 0.3, '#a5b4c8', (x0 + x1) / 2, 2, z0 + sz * 5));
+    b.box(M, x1 - x0 + 0.4, 0.3, 10.4, '#475569', (x0 + x1) / 2, 4.15, z0);          // tavan
+    // masalar ve ekipman (polisler yola bakar, ekranlar onlara dönük)
+    [-2.6, 0, 2.6].forEach((dz) => {
+        table(b, x0 + 2.6, z0 + dz, Math.PI / 2, { w: 1.8, d: 0.9, top: '#57534e' });
+        chair(b, x0 + 3.5, z0 + dz, -Math.PI / 2, '#1f2937');
+        b.box(M, 0.05, 0.35, 0.5, '#0f172a', x0 + 2.35, 1.0, z0 + dz - 0.45);          // ekran
+        b.box(M, 0.4, 0.06, 0.6, '#334155', x0 + 2.6, 0.81, z0 + dz + 0.35);           // kayıt cihazı
+    });
+    // arka duvarda teyp dolapları
+    for (let i = 0; i < 4; i++) b.box(M, 0.5, 2.2, 1.2, '#1f2937', x1 - 0.45, 1.1, z0 - 3 + i * 2);
+    scene.add(b.mesh());
+    // dönen makaralar
+    const reelM = new THREE.MeshLambertMaterial({ color: '#cbd5e1' }), reels = [];
+    for (let i = 0; i < 4; i++) [-0.25, 0.25].forEach(dz => {
+        const r = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 10), reelM);
+        r.rotation.z = Math.PI / 2; r.position.set(x1 - 0.72, 1.6, z0 - 3 + i * 2 + dz); scene.add(r); reels.push(r);
+        r.add(box(0.36, 0.05, 0.05, '#475569', 0, 0.03, 0, false));
+    });
+    W.movers.push(dt => reels.forEach((r, i) => r.rotation.y += dt * (i % 2 ? 3 : 4.2)));
+    // hedef panosu: fotoğraflar ve kırmızı ipler
+    const board = canvasTex(256, 160, (c, Wd, H) => {
+        c.fillStyle = '#a16207'; c.fillRect(0, 0, Wd, H); c.fillStyle = '#fde68a'; c.fillRect(6, 6, Wd - 12, H - 12);
+        const pts = [[40, 40], [130, 30], [210, 50], [70, 105], [170, 108]];
+        c.strokeStyle = '#dc2626'; c.lineWidth = 3; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.lineTo(40, 40); c.stroke();
+        pts.forEach(([x, y]) => { c.fillStyle = '#f8fafc'; c.fillRect(x - 18, y - 22, 36, 44); c.fillStyle = '#57534e'; c.fillRect(x - 12, y - 16, 24, 24); c.fillStyle = '#dc2626'; c.fillRect(x - 3, y - 26, 6, 6); });
+        c.fillStyle = '#111827'; c.textAlign = 'center'; c.textBaseline = 'middle'; fitText(c, 'HEDEF: SIFIRLA', Wd / 2, H - 16, Wd - 20, 18);
+    });
+    const bd = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.6), new THREE.MeshLambertMaterial({ map: board }));
+    bd.position.set(x0 + 4.5, 2.6, z0 + 4.83); bd.rotation.y = Math.PI; scene.add(bd);
+    const s = signBoard('DİNLEME ODASI', '#f8fafc', '#1e3a8a', 5, 0.7); s.position.set(x0 - 0.05, 4.7, z0); s.rotation.y = -Math.PI / 2; scene.add(s);
+    // kulaklıklı polisler: biri not alır, biri arkasına yaslanır; şef telefonla konuşur
+    const cops = [-2.6, 0, 2.6].map((dz, i) => ({ ...looks.police(), headset: true, pose: 'desk', x: x0 + 3.45, z: z0 + dz, yaw: -Math.PI / 2, hold: i === 1 ? HOLD.book : null }));
+    poseCycle(scene, W, cops, ['desk', o => o.hold ? 'desk' : 'chair', 'desk'], [3, 1.2, 2.5]);
+    const chief = { ...looks.police(), headset: true, x: x0 + 5.6, z: z0 + 1.3, yaw: -Math.PI / 2 - 0.4, pose: 'phone', hold: HOLD.phone };
+    crowd(scene, [chief]);
+    bubbleTalk(scene, W, [
+        [{ x: x0 + 3.4, y: 2.2, z: z0 - 2.6 }, 'KAYIT ALINIYOR...', 2.2],
+        [{ x: x0 + 3.4, y: 2.2, z: z0 }, "'SIFIRLA' DEDİ!", 2.2, '#b91c1c'],
+        [{ x: chief.x, y: 2.6, z: chief.z }, 'HEMEN ÇOĞALTIN!', 2.2],
+        [{ x: x0 + 3.4, y: 2.2, z: z0 + 2.6 }, '30 MİLYON AVRO DAHA VAR...', 2.4]
+    ], { gap: 0.8, near: 32 });
+}
+
+// --- SİYAH MİNİBÜS: kapısı açık, içinde kulaklıklı sivil polisler, çatıda çanak anten, üstünde kılıf yazı ---
+function spyVan(scene, W, z0) {
+    const x = HW + 5.2, b = new Batch(), M = mat4(x, 0, z0);
+    b.box(M, 2.2, 2.0, 5.2, '#0b0b0f', 0.0, 1.45, 0);                    // gövde
+    b.box(M, 0.02, 1.3, 1.5, '#334155', -1.11, 1.5, -0.6);                // açık kapının içi (aydınlık)
+    b.box(M, 2.24, 0.6, 1.4, '#111827', 0, 2.0, 2.0);                     // ön cam şeridi
+    b.box(M, 2.1, 0.5, 0.2, '#1f2937', 0, 0.75, 2.62);                    // tampon
+    [-1, 1].forEach(sx => [-1.7, 1.7].forEach(dz => b.box(M, 0.3, 0.75, 0.75, '#111', sx * 1.05, 0.38, dz)));
+    b.box(M, 0.06, 1.3, 1.6, '#0b0b0f', -1.2, 1.55, -2.1);                // sürgülü kapı (geri kaymış)
+    b.box(M, 0.4, 0.06, 0.4, '#374151', 0.3, 2.5, -1.2); b.box(M, 0.04, 0.9, 0.04, '#9ca3af', 0.3, 2.95, -1.2);   // anten
+    scene.add(b.mesh());
+    const dish = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2.5), new THREE.MeshLambertMaterial({ color: '#d1d5db', side: THREE.DoubleSide }));
+    dish.position.set(x - 0.3, 2.6, z0 + 0.6); dish.rotation.z = 0.9; scene.add(dish);
+    W.movers.push((dt, t) => dish.rotation.y = Math.sin(t * 0.7) * 0.8);
+    // kapı aralığında yanıp sönen cihaz lambaları
+    const leds = [];
+    for (let i = 0; i < 6; i++) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: i % 2 ? '#22c55e' : '#ef4444' })); l.position.set(x - 1.09, 1.2 + (i % 3) * 0.25, z0 - 1.2 + Math.floor(i / 3) * 0.25); scene.add(l); leds.push(l); }
+    W.movers.push((dt, t) => leds.forEach((l, i) => l.visible = Math.sin(t * (3 + i) + i) > -0.2));
+    // kılıf yazı: "ÇİÇEKÇİ MEHMET"
+    const side = signBoard('ÇİÇEKÇİ MEHMET', '#fbcfe8', '#0b0b0f', 2.6, 0.45); side.position.set(x - 1.12, 2.1, z0 + 1.1); side.rotation.y = -Math.PI / 2; scene.add(side);
+    // kapıda oturan kulaklıklı siviller (kapıya dönük, dizlerinde cihaz)
+    const civ = [{ ...looks.civil(), headset: true, pose: 'chair', x: x - 0.75, z: z0 - 0.95, yaw: -Math.PI / 2, hold: HOLD.book, y: 0.5, s: 0.9 },
+                 { ...looks.civil(), headset: true, pose: 'chair', x: x - 0.75, z: z0 - 0.2, yaw: -Math.PI / 2, y: 0.5, s: 0.9 }];
+    poseCycle(scene, W, civ, ['chair', 'desk'], [2.5, 1.5]);
+    const look = { ...looks.civil(), glasses: true, x: x - 1.9, z: z0 + 2.4, yaw: -Math.PI / 2 + 0.3, pose: 'phone', hold: HOLD.phone };   // dışarıda gözcü
+    crowd(scene, [look]);
+    bubbleTalk(scene, W, [
+        [{ x: x - 0.75, y: 2.6, z: z0 - 0.95 }, 'HEDEF KONUŞUYOR...', 2.2],
+        [{ x: look.x, y: 2.6, z: look.z }, 'KİMSE BİZİ GÖRMEDİ.', 2.2],
+        [{ x: x - 0.75, y: 2.6, z: z0 - 0.2 }, 'KASETLERİ ÇOĞALT!', 2.2]
+    ], { gap: 0.9, near: 30 });
+}
+
+// --- BASIN TOPLANTISI: kürsüde BİLAL, karşısında mikrofonlu ve kameralı muhabirler; sorular ve cevaplar balonlarda ---
+function bilal(b, x, z, pose) {   // kodla çizildi: uzun boylu, lacivert takım, kısa sakal, gözlük, kısa siyah saç
+    person(b, { x, z, yaw: -Math.PI / 2, pose, s: 1.12, skin: '#e3b190', jacket: '#1e293b', shirt: '#f8fafc', pants: '#1e293b', hair: '#111827', beard: '#1c1917', mustache: '#1c1917', glasses: true });
+}
+function pressConf(scene, W, z0) {
+    const x = HW + 9.5, b = new Batch(), M = mat4(0, 0, 0);
+    b.box(M, 3.5, 0.9, 6, '#7f1d1d', x + 0.5, 0.45, z0);                  // yüksek sahne (kırmızı halı)
+    for (let i = 0; i < 3; i++) b.box(M, 0.4, 0.3 * (i + 1), 1.6, '#57534e', x - 2.25 + i * 0.4, 0.15 * (i + 1), z0 + 2.2);   // basamaklar
+    b.box(M, 0.8, 1.15, 0.6, '#78350f', x - 0.7, 1.48, z0);                // kürsü
+    for (let i = 0; i < 6; i++) b.box(M, 0.03, 0.35, 0.03, '#111827', x - 1.05, 2.2, z0 - 0.25 + i * 0.1, 0, 0, 0.4);   // mikrofonlar
+    for (let i = 0; i < 6; i++) b.box(M, 0.08, 0.08, 0.08, ['#dc2626', '#2563eb', '#16a34a', '#facc15', '#f8fafc', '#7c3aed'][i], x - 1.18, 2.36, z0 - 0.25 + i * 0.1);
+    b.box(M, 0.2, 4.4, 6.4, '#1e3a8a', x + 2.1, 2.2, z0);                  // arka pano
+    [-1, 1].forEach(sz => b.box(M, 0.12, 2.6, 0.12, '#111827', x - 3.5, 1.3, z0 + sz * 3.4));   // ışık direkleri
+    // tripodlu kameralar
+    [-1.9, 1.9].forEach(dz => { b.box(M, 0.05, 1.3, 0.05, '#111827', x - 5.6, 0.65, z0 + dz); b.box(M, 0.3, 0.35, 0.5, '#1f2937', x - 5.6, 1.45, z0 + dz); });
+    scene.add(b.mesh());
+    const board = signBoard('BASIN TOPLANTISI', '#f8fafc', '#1e3a8a', 5.8, 0.8); board.position.set(x + 1.98, 3.7, z0); board.rotation.y = -Math.PI / 2; scene.add(board);
+    [-1, 1].forEach(sz => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: '#fef9c3' })); l.position.set(x - 3.5, 2.7, z0 + sz * 3.4); scene.add(l); });
+    // Bilal: konuşurken eli açık, sonra parmak sallar
+    const bm = ['open', 'point', 'stand'].map(pose => { const bb = new Batch(); bilal(bb, x, z0, pose); const m = bb.mesh(); m.position.y = 0.9; scene.add(m); return m; });
+    W.movers.push((dt, t) => { const k = Math.floor(t / 1.4) % 3; bm.forEach((m, i) => m.visible = i === k); });
+    // muhabirler (yarım daire): mikrofon uzatanlar ve kameramanlar
+    const J = [];
+    for (let i = 0; i < 7; i++) {
+        const a = -0.9 + i * 0.3, r = 3.4 + (i % 2) * 0.8, jx = x - 0.7 - Math.cos(a) * r, jz = z0 + Math.sin(a) * r * 1.2;
+        J.push({ ...looks.press(), x: jx, z: jz, yaw: Math.atan2(x - jx, z0 - jz), pose: i % 3 === 1 ? 'camera' : 'mic', hold: i % 3 === 1 ? HOLD.camera : HOLD.mic });
+    }
+    poseCycle(scene, W, J, [o => o.pose, o => o.pose === 'mic' ? 'stand' : 'camera', o => o.pose], [2.6, 0.8, 1.8], { offset: 0.5 });
+    const at = (o, y = 2.5) => ({ x: o.x, y, z: o.z }), B = { x: x, y: 4.1, z: z0 }, Y = '#111827', BB = 'rgba(253,230,138,0.97)';
+    bubbleTalk(scene, W, [
+        [at(J[0]), 'SES KAYITLARI GERÇEK Mİ?', 2.4], [B, 'HEPSİ MONTAJ!', 2.2, Y, BB],
+        [at(J[2]), 'PARALAR SIFIRLANDI MI?', 2.4], [B, 'SIFIRLADIK BABACIĞIM!', 2.4, Y, BB],
+        [at(J[4]), 'EVDE PARA KALDI MI?', 2.4], [B, '30 MİLYON AVRO DAHA VAR...', 2.6, Y, BB],
+        [at(J[6]), 'AYAKKABI KUTULARI NE OLACAK?', 2.4], [B, 'ONLAR SPOR AYAKKABI!', 2.4, Y, BB],
+        [at(J[3]), 'İSTİFA EDECEK MİSİNİZ?', 2.4], [B, 'SORU YOK, TEŞEKKÜRLER!', 2.4, Y, BB]
+    ], { gap: 0.5, near: 36 });
 }

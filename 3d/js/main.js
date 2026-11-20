@@ -1,33 +1,35 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=24';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=24';
-import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=24';
-import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=24';
-import { updateStreets, resetStreets } from './streets.js?v=24';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=24';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=24';
-import { updateHazards, clearHazards } from './hazards.js?v=24';
-import { updateBoss, removeBoss } from './boss_core.js?v=24';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=24';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=24';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=24';
-import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=24';
-import { groundAt } from './physics.js?v=24';
-import { playLevelStory } from './story3d.js?v=24';
-import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=24';
-import { isGuest } from './enemies.js?v=24';
-import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=24';
-import { LEVEL1 } from './level1.js?v=24';
-import { LEVEL2 } from './level2.js?v=24';
-import { LEVEL3 } from './level3.js?v=24';
-import { LEVEL4 } from './level4.js?v=24';
-import { LEVEL5 } from './level5.js?v=24';
-import { LEVEL6 } from './level6.js?v=24';
-import { LEVEL7 } from './level7.js?v=24';
-import { LEVEL8 } from './level8.js?v=24';
-import { LEVEL9 } from './level9.js?v=24';
-import { LEVEL10 } from './level10.js?v=24';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=27';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=27';
+import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=27';
+import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=27';
+import { updateStreets, resetStreets } from './streets.js?v=27';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=27';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=27';
+import { updateHazards, clearHazards } from './hazards.js?v=27';
+import { updateBoss, removeBoss } from './boss_core.js?v=27';
+import { updateNeckBombs, clearNeckBombs } from './abiler.js?v=27';
+import { toggleGorilla, setGorilla, updateGorilla, throwBanana } from './gorilla.js?v=27';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=27';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=27';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=27';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=27';
+import { groundAt } from './physics.js?v=27';
+import { playLevelStory } from './story3d.js?v=27';
+import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=27';
+import { isGuest } from './enemies.js?v=27';
+import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=27';
+import { LEVEL1 } from './level1.js?v=27';
+import { LEVEL2 } from './level2.js?v=27';
+import { LEVEL3 } from './level3.js?v=27';
+import { LEVEL4 } from './level4.js?v=27';
+import { LEVEL5 } from './level5.js?v=27';
+import { LEVEL6 } from './level6.js?v=27';
+import { LEVEL7 } from './level7.js?v=27';
+import { LEVEL8 } from './level8.js?v=27';
+import { LEVEL9 } from './level9.js?v=27';
+import { LEVEL10 } from './level10.js?v=27';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -211,6 +213,7 @@ function breakBrick(b, fromNet) {
         G.world.items.push({ id: 'b' + idx, kind: 'bag', mesh: g, pos: g.position, baseY: g.position.y, taken: false, temp: true });
     }
 }
+G.onBanana = (from, dir, fromNet) => { throwBanana(from, dir); if (!fromNet) netEvent('banana', { from: from.toArray(), dir: dir.toArray() }); };   // çok oyunculu: arkadaşın ekranında da (hasara ev sahibi karar verir)
 G.onThrow = (from, dir, fromNet) => { throwAmmo(from, dir); if (!fromNet) netEvent('throw', { from: from.toArray(), dir: dir.toArray() }); };
 // Nişan: bilgisayarda ekranın ortasındaki nişangâhtan çıkan ışının ilk çarptığı yer;
 // telefonda karakterin önündeki (±40°, 26 m) en yakın düşman, yoksa düz ileri
@@ -329,13 +332,13 @@ function updateLevel(dt) {
             else if (it.kind === 'heart') { if (p.hp < p.maxHp) { p.hp++; floatText('+1 CAN', at, '#fca5a5'); } else { addScore(5000); floatText('CAN DOLU: +5000', at, '#fde047'); } }
             else if (it.kind === 'bag') { addScore(5000); addCollected(p); floatText('KUL HAKKI!', at, '#fde047'); }
             else if (POWER_MAKERS[it.kind]) applyPower(it.kind, at);
-            else if (it.kind === 'charger') { G.battery = Math.min(100, G.battery + 45); addScore(1000); floatText('ŞARJ!', at, '#4ade80'); }
+            else if (it.kind === 'charger') { G.battery = Math.min(100, G.battery + 60); addScore(1000); floatText('ŞARJ!', at, '#4ade80'); }
             updateHud(); updateHearts();
         }
     }
     // 5. bölüm: telefonun şarjı azalır (dolu şarj ~55 sn); biterse 1 can gider, %55'ten devam
     if (L.battery && !G.boss && !p.dead) {
-        G.battery -= 1.8 * dt;
+        if (!(G.calm > 0)) G.battery -= 0.8 * dt;   // ~2 dakikada biter (eskiden 55 sn); sakin başlangıçta azalmaz
         if (G.battery <= 0) {
             G.battery = 55;
             floatText('ŞARJ BİTTİ!', p.pos.clone().setY(p.pos.y + 2.4), '#ef4444', 0.6, 1.6);
@@ -441,7 +444,7 @@ G.onGrenadeCount = (gained) => {
 
 // --- OYUN AKIŞI ---
 function resetLevel() {
-    clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards(); clearGrenades(); resetGrenadeStock();
+    clearEnemies(scene); removeBoss(scene); clearFx(); clearHazards(); clearGrenades(); resetGrenadeStock(); clearNeckBombs(); setGorilla(player, false);
     if (G.outro) { G.outro.remove(); G.outro = null; }
     const W = G.world, L = G.level;
     if (L.mode) {
@@ -462,6 +465,7 @@ function resetLevel() {
     W.barricade.setCount(G.target);
     spawnEnemies(scene, W.spawns || L.spawns); resetStreets();
     resetPlayer(player, START);
+    G.calm = CALM_T; G.calmStart = START.clone();   // bölüm başında düşmanlar bir süre saldırmaz: oyuncu mekânı tanısın
     cam.yaw = 0; cam.pitch = 0.32; cam.target.copy(START).setY(1.6);
     updateHud(); updateHearts();
 }
@@ -488,6 +492,7 @@ function beginLevel(id) {
     clearAll();
     playMusic(G.level.music);
     toast(G.level.mission, 3000);
+    if (!G.level.mode) setTimeout(() => { if (G.state === 'play' && G.calm > 0) toast('ETRAFI TANI: DÜŞMANLAR BİRAZDAN HAREKETE GEÇECEK', 3200, '#93c5fd'); }, 3400);
     showHint();
     if (!G.level.mode) setTimeout(() => { if (G.state === 'play') sayBismillah(); }, 600);
 }
@@ -504,6 +509,14 @@ G.onGrenadeThrown = (from, to) => {
     if (from) netEvent('gren', { from: from.toArray(), to: to.toArray() });
 };
 // Ölünce: kontrol noktasından (ya da canavar meydanının girişinden) devam
+// Sakin başlangıç: süre dolunca, oyuncu ilerleyince ya da ilk vuruşta biter (enemies.js c.canStart)
+const CALM_T = 14;
+function updateCalm(dt) {
+    if (!(G.calm > 0)) return;
+    G.calm -= dt;
+    const p = G.player, far = p && G.calmStart && Math.hypot(p.pos.x - G.calmStart.x, p.pos.z - G.calmStart.z) > 28;
+    if (G.calm <= 0 || far) { G.calm = 0; toast('DİKKAT! DÜŞMANLAR HAREKETE GEÇTİ!', 2200, '#fca5a5'); }
+}
 function retry(fromNet) {
     if (!isGuest()) netEvent('retry');
     respawnT = 0;
@@ -513,7 +526,7 @@ function retry(fromNet) {
     let at = START.clone();
     if (W.checkpoint.reached) at.set(0, 0, W.checkpoint.z - 1);
     if (G.boss) { at.set(0, 0, ARENA.z0 - 2); G.boss.reset && G.boss.reset(); }
-    G.projectiles.forEach(pr => pr.life = 0); clearHazards(); clearGrenades(); resetGrenadeStock(); updateGrenadeHud();
+    G.projectiles.forEach(pr => pr.life = 0); clearHazards(); clearGrenades(); clearNeckBombs(); resetGrenadeStock(); updateGrenadeHud();
     resetPlayer(p, at);
     p.collected = Math.min(p.collected, G.collect);
     cam.yaw = 0; cam.target.copy(at).setY(1.6);
@@ -535,8 +548,8 @@ function showHint() {
     const h = $('hint'), A = tr(G.level.ammoName).toLocaleLowerCase(lang);
     h.innerHTML = G.level.hint ? tr(G.level.hint(input.touch || touchDevice))
         : input.touch || touchDevice
-        ? tf('Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ {0} (öndekine nişan alır) · 💣 el bombası', A)
-        : tf('WASD yürü · Shift hızlı koş · Fare: kamera ve nişan (önce oyuna tıkla) · Boşluk zıpla<br>Sol tık {0} · F balyoz · R el bombası · E / sağ tık kalkan · P duraklat', A);
+        ? tf('Sol: yürü · Sağda sürükle: kamera<br>✕ zıpla · ○ balyoz · △ kalkan (basılı tut) · □ {0} (öndekine nişan alır) · 💣 el bombası · 🦍 goril (canavarda)', A)
+        : tf('WASD yürü · Shift hızlı koş · Fare: kamera ve nişan (önce oyuna tıkla) · Boşluk zıpla<br>Sol tık {0} · F balyoz · R el bombası · E / sağ tık kalkan · G goril modu (canavarda) · P duraklat', A);
     h.classList.add('on'); setTimeout(() => h.classList.remove('on'), 7000);
 }
 
@@ -613,12 +626,16 @@ function step(dt) {
         updateFx(dt); consumePresses();
         return;
     }
+    if (input.gorillaPressed && G.state === 'play') toggleGorilla(player);
     updatePlayer(player, dt, cam.yaw);
+    updateGorilla(player, dt);
     updatePowers(dt);
     updateNet(dt);
+    if (G.state === 'play') updateCalm(dt);
     updateEnemies(dt);
     updateBoss(dt);
     updateHazards(dt);
+    updateNeckBombs(dt);
     updateGrenades(dt);
     if (G.state === 'play') { updateLevel(dt); updateStreets(dt); }
     updateWorld(G.world, dt, G.time);
@@ -649,7 +666,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '24';
+const VER = '27';
 $('ver').textContent = tf('Sürüm {0}', VER);   // ana menüde: telefonda yeni sürümün yüklendiği buradan görülür
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
@@ -659,6 +676,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=24').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=27').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

@@ -5,17 +5,18 @@
 // Saldırı sırası: kavisli su topu → BASINÇLI SU (1.6 sn sürekli tazyik, seni iter; yana kaç ya da kalkanla karşıla) → gaz kapsülü.
 // Efektler: dönen mavi-kırmızı tepe lambası ışığı, siren, farlardan ışık hüzmesi, egzoz dumanı, yerde su birikintileri,
 // hasar aldıkça motordan duman ve kıvılcım; yenilince patlamalar ve tankından fışkıran su.
+// Yenilince enkaz katı olur: üstüne çıkılır, çıkan HIRHIZ Türk bayrağı sallar (bölüm sonu sahnesi bunu bekler, en çok 15 sn).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=24';
-import { G, diff, addScore, toast } from './state.js?v=24';
-import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=24';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
-import { playSfx, hiss, siren } from './audio.js?v=24';
-import { groundAt } from './physics.js?v=24';
-import { makeCloud } from './hazards.js?v=24';
-import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand } from './util.js?v=24';
-import { ARENA } from './world.js?v=24';
-import { showBossBar, setBossBar } from './boss_core.js?v=24';
+import { tr } from './i18n.js?v=27';
+import { G, diff, addScore, toast } from './state.js?v=27';
+import { hurtPlayer, shieldBlocks, blockFx, bouncePlayer } from './player.js?v=27';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx, hiss, siren } from './audio.js?v=27';
+import { groundAt } from './physics.js?v=27';
+import { makeCloud } from './hazards.js?v=27';
+import { box, mat, canvasTex, fitText, angDiff, dampAngle, clamp, rand, AABB } from './util.js?v=27';
+import { ARENA } from './world.js?v=27';
+import { showBossBar, setBossBar } from './boss_core.js?v=27';
 
 const HX = 1.3, HZ = 3.1, ROOF = 2.3;          // gövdenin yarı eni, yarı boyu, tavan yüksekliği
 const WATER_G = 19, GAS_G = 19, FIRE = 2.0;
@@ -88,7 +89,7 @@ export function spawnToma(scene, pos) {
     b.onHammer = onArmor; b.onAmmo = p => shot(b, p.pos);
     b.onBlast = pt => { for (let i = 0; i < 4; i++) shot(b, pt); };   // el bombası zırhı deler: 4 çay atışı kadar   // balyoz işlemez; çay paketi az da olsa işler
     b.reset = () => { b.ragedTxt = false; b.hp = b.maxHp; b.pos.set(0, 0, -222); b.fireT = 2.5; b.jet = 0; clearPuddles(); setBossBar(b); };
-    b.onRemove = clearPuddles;
+    b.onRemove = () => { clearPuddles(); removeWreck(b); dropFlags(); };
     G.boss = b; b.forceDefeat = () => { if (!b.dead) defeat(b); };   // çok oyunculu: ev sahibi yendiyse misafirde de
     toast('BÖLÜM SONU CANAVARI: TOMA!', 2600, '#fca5a5');
     floatText('HER YER TAKSİM!', pos.clone().setY(4.2), '#f8fafc', 0.7, 2.2);
@@ -132,8 +133,11 @@ function updateToma(b, dt) {
         // yenilince: arka arkaya patlamalar, tanktan fışkıran su
         if (b.deadT < 2.6 && Math.random() < dt * 3) { const o = fromLocalDir(b, rand(-1, 1), rand(-2.5, 2.5)); spawnFx('boom', new THREE.Vector3(b.pos.x + o.x, 0.4, b.pos.z + o.z), 1.4); playSfx('boom', { vol: 0.5, rate: rand(0.8, 1.2) }); addTrauma(0.2); }
         if (b.deadT < 4) { const t = fromLocalDir(b, 0, -1.1); for (let k = 0; k < 2; k++) jetDrop(new THREE.Vector3(b.pos.x + t.x, ROOF + 0.4, b.pos.z + t.z), new THREE.Vector3(rand(-2, 2), rand(9, 13), rand(-2, 2)), true); }
-        if (b.deadT > 3.2 && !b.reported) { b.reported = true; G.onBossDefeated && G.onBossDefeated(); }   // oyun zamanıyla (duraklatınca beklesin)
-        m.body.rotation.z = Math.min(0.12, b.deadT * 0.2);
+        if (b.deadT > 2.6 && !b.hinted) { b.hinted = true; toast("TOMA'NIN ÜSTÜNE ÇIK, BAYRAĞI SALLA!", 3500, '#fde047'); }
+        updateFlags(b, dt);
+        // bölüm sonu sahnesi: bayrak biraz sallandıktan sonra (çıkmazsa 15 sn sonra)
+        if (b.deadT > 3.2 && !b.reported && (b.flagT > 2.5 || b.deadT > 15)) { b.reported = true; G.onBossDefeated && G.onBossDefeated(); }   // oyun zamanıyla (duraklatınca beklesin)
+        m.body.rotation.z = Math.min(0.05, b.deadT * 0.1);
         if (Math.random() < dt * 8) burst(b.pos.clone().setY(2.6), { n: 2, color: ['#57534e', '#a8a29e'], speed: 0.6, up: 3, gravity: -1, size: 0.3, life: 1.2 });
         return;
     }
@@ -262,6 +266,109 @@ function defeat(b) {
     playSfx('boom', { vol: 0.9 }); addTrauma(0.9);
     floatText('TOMA SUSTU!', b.pos.clone().setY(4.5), '#fde047', 0.8, 2.5);
     G.projectiles.forEach(p => { if (p.type === 'water' || p.type === 'tgas') p.life = 0; });
+    addWreck(b);
+}
+
+// --- ENKAZ: üstüne çıkılır ---
+// Dönük gövde eksen hizalı kutularla dilim dilim yaklaşık kaplanır (fizik yalnızca eksen hizalı kutu bilir)
+const WRECK_TOP = ROOF - 0.05;
+function addWreck(b) {
+    if (b.wreck || !G.world) return;
+    b.wreck = [];
+    const N = 6, L = 2 * HZ / N;
+    for (let i = 0; i < N; i++) {
+        const lz = -HZ + L * (i + 0.5);
+        let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (const [cx, cz] of [[-HX, lz - L / 2], [HX, lz - L / 2], [-HX, lz + L / 2], [HX, lz + L / 2]]) {
+            const o = fromLocalDir(b, cx * 0.92, cz * 0.97);
+            x0 = Math.min(x0, b.pos.x + o.x); x1 = Math.max(x1, b.pos.x + o.x); z0 = Math.min(z0, b.pos.z + o.z); z1 = Math.max(z1, b.pos.z + o.z);
+        }
+        const a = new AABB(x0, 0, z0, x1, WRECK_TOP, z1, 'solid');
+        b.wreck.push(a); G.world.solids.push(a);
+    }
+}
+function removeWreck(b) {
+    if (!b.wreck) return;
+    if (G.world) G.world.solids = G.world.solids.filter(a => !b.wreck.includes(a));
+    b.wreck = null;
+}
+
+// --- TÜRK BAYRAĞI: enkazın üstüne çıkan HIRHIZ sağ elinde sallar ---
+let flagTex = null;
+function turkTex() {
+    if (flagTex) return flagTex;
+    // Oranlar: 1200x800 bayrağın ölçüleri (dış ay merkezi 425, r 200; iç ay 475, r 160; yıldız merkezi 583.3, r 100)
+    return (flagTex = canvasTex(240, 160, (g, W, H) => {
+        const k = W / 1200;
+        g.fillStyle = '#e30a17'; g.fillRect(0, 0, W, H);
+        g.fillStyle = '#ffffff'; g.beginPath(); g.arc(425 * k, 400 * k, 200 * k, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#e30a17'; g.beginPath(); g.arc(475 * k, 400 * k, 160 * k, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#ffffff'; g.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const a = Math.PI + i * Math.PI / 5, r = (i % 2 ? 0.382 : 1) * 100 * k;
+            g.lineTo(583.3 * k + Math.cos(a) * r, 400 * k + Math.sin(a) * r);
+        }
+        g.closePath(); g.fill();
+    }));
+}
+const FLAG_W = 1.3, FLAG_H = 0.87;
+function makeFlag() {
+    const g = new THREE.Group();
+    // kol aşağı sarkarken eli y=-0.53'te; kol kalkınca bu yön yukarı bakar
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.9, 6), mat('#e5e7eb')); pole.position.y = -1.25; g.add(pole);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), mat('#facc15')); knob.position.y = -2.22; g.add(knob);
+    const geo = new THREE.PlaneGeometry(FLAG_W, FLAG_H, 14, 4); geo.translate(FLAG_W / 2, -FLAG_H / 2, 0);
+    const cloth = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: turkTex(), emissiveMap: turkTex(), emissive: '#ffffff', emissiveIntensity: 0.35, side: THREE.DoubleSide }));
+    const hold = new THREE.Group(); hold.position.y = -2.15; hold.rotation.x = Math.PI; hold.add(cloth); g.add(hold);
+    cloth.castShadow = true;
+    g.userData = { cloth, base: Float32Array.from(geo.attributes.position.array) };
+    return g;
+}
+function waveFlag(f, t) {
+    const { cloth, base } = f.userData, pos = cloth.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+        const x = base[i * 3], y = base[i * 3 + 1], k = x / FLAG_W;
+        pos.array[i * 3 + 2] = Math.sin(x * 6 - t * 9) * 0.11 * k;
+        pos.array[i * 3 + 1] = y + Math.sin(x * 4 - t * 7) * 0.03 * k;
+    }
+    pos.needsUpdate = true; cloth.geometry.computeVertexNormals();
+}
+function onWreck(b, q) {
+    if (!q || q.dead || !q.m) return false;
+    const l = toLocal(b, q.pos);
+    return Math.abs(l.x) < HX + 0.4 && Math.abs(l.z) < HZ + 0.4 && q.pos.y > WRECK_TOP - 0.3 && q.pos.y < WRECK_TOP + 1.2;
+}
+function updateFlags(b, dt) {
+    b.flagT = b.flagT || 0;
+    let anyUp = false;
+    for (const q of (G.players || [G.player])) {
+        const m = q.m; if (!m) continue;
+        const up = onWreck(b, q);
+        if (up && !m.flag) { m.flag = makeFlag(); m.armR.add(m.flag); }
+        if (m.flag) {
+            m.flag.visible = up; if (m.hammer) m.hammer.visible = !up;
+            if (!up) continue;
+            const t = G.time;
+            m.armR.rotation.set(-2.75 + Math.sin(t * 5) * 0.25, 0, Math.sin(t * 2.5) * 0.35);
+            m.flag.rotation.y = Math.sin(t * 2.5) * 0.4;
+            waveFlag(m.flag, t);
+            if (!m.flagCheered) {   // ilk kez çıktı: kutlama
+                m.flagCheered = true;
+                spawnFx('confetti', q.pos.clone().setY(q.pos.y + 2.5), 1.6);
+                floatText('YAŞASIN!', q.pos.clone().setY(q.pos.y + 3.2), '#f8fafc', 0.6, 1.8);
+                if (q === G.player && !b.flagT) addScore(5000);
+            }
+            anyUp = true;
+        }
+    }
+    if (anyUp) b.flagT += dt;
+}
+function dropFlags() {   // bölüm değişince bayrak elden kalkar, balyoz geri gelir
+    for (const q of (G.players || [G.player])) {
+        const m = q && q.m; if (!m || !m.flag) continue;
+        m.armR.remove(m.flag); m.flag.traverse(o => o.geometry && o.geometry.dispose()); m.flag = null; m.flagCheered = false;
+        if (m.hammer) m.hammer.visible = true;
+    }
 }
 
 // --- SU ---

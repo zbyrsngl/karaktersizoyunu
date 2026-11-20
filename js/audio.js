@@ -58,6 +58,7 @@ function pcmToWav(b64, rate) {
 // darbeler (Independent.nu, CC0), FETÖ'nün "Ya Allah!" sesi (Windows Türkçe yapay sesi)
 const SFX_FILES = {
     cry: ['sfx/uufff.mp3'],                                // polis ölümü
+    cry_kadin: ['sfx/kadin_cry.mp3'],                       // kırmızılı kadın ölümü (kadın sesi)
     hit: [1, 2, 3, 4, 5].map(i => `sfx/hit${i}.mp3`),
     greet_feto2: ['sfx/feto2_greet.mp3'],                   // canavar karşılama sesi; FETÖ (4. ve 8. bölüm): "Ya Allah!" (Windows Türkçe yapay sesi Tolga, kalınlaştırılıp yankılandı)
     granny: ['sfx/gotununkili.mp3'],                        // canavar ölünce gelen teyzeler
@@ -128,7 +129,8 @@ function enemyDeathSound(en) {
     const pan = (en.x + en.w / 2 - camX - width / 2) / (width / 2);
     playSfx('hit', { rate: 0.9 + Math.random() * 0.2, vol: 0.9, pan });
     const rate = en.kind === 'police' ? 0.76 + Math.random() * 0.08 : 0.92 + Math.random() * 0.2;
-    playSfx('cry', { rate, vol: 0.85, delay: 0.05, pan });
+    if (en.skin === 'kirmizi') playSfx('cry_kadin', { rate: 1, vol: 0.9, delay: 0.05, pan });
+    else playSfx('cry', { rate, vol: 0.85, delay: 0.05, pan });
 }
 
 // Silah sesi: Web Audio ile üretilen kısa, boğuk patlama (dosya gerekmez)

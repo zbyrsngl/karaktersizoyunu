@@ -1,8 +1,8 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=24';
-import { box, mat, canvasTex, textSprite } from './util.js?v=24';
+import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=27';
+import { box, mat, canvasTex, textSprite } from './util.js?v=27';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {
@@ -278,7 +278,13 @@ export function buildHero(skin) {
     }
     const armL = limb(torso, -0.32, 0.56, 0, 0.12, 0.5, 0.13, C.top);
     const armR = limb(torso, 0.32, 0.56, 0, 0.12, 0.5, 0.13, C.top);
-    if (skin === 'kirmizi') armL.add(box(0.26, 0.32, 0.1, '#f5f5f4', 0, -0.66, 0.06));   // beyaz bez çanta (savurur)
+    let bag = null;
+    if (skin === 'kirmizi') {   // kırmızı el çantası (fırlatır / savurur)
+        bag = new THREE.Group(); bag.position.set(0, -0.72, 0.06); armL.add(bag);
+        bag.add(box(0.3, 0.24, 0.11, '#b91c1c', 0, 0, 0));
+        bag.add(box(0.04, 0.16, 0.03, '#7f1d1d', -0.1, 0.18, 0, false)); bag.add(box(0.04, 0.16, 0.03, '#7f1d1d', 0.1, 0.18, 0, false));
+        bag.add(box(0.06, 0.04, 0.02, '#fde047', 0, 0.06, 0.065, false));
+    }
     armL.add(box(0.1, 0.1, 0.1, C.skin, 0, -0.53, 0, false));
     armR.add(box(0.1, 0.1, 0.1, C.skin, 0, -0.53, 0, false));
     let lid = null;
@@ -293,7 +299,7 @@ export function buildHero(skin) {
     if (skin === 'duran') {   // yerde sırt çantası
         root.add(box(0.36, 0.42, 0.24, '#374151', -0.55, 0.21, -0.1));
     }
-    return { root, body, legL, legR, armL, armR, torso, head, skirt, lid };
+    return { root, body, legL, legR, armL, armR, torso, head, skirt, lid, bag };
 }
 
 // Üniformanın göğsünde ve sırtında okunaklı yazı (polislerde 17/25, askerlerde ASKER — dile göre)

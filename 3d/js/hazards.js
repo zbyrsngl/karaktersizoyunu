@@ -3,10 +3,11 @@
 // - ateş: meşalenin düştüğü yerde kısa süre yanar, basana can götürür
 // - ses dalgası: tencere tavadan yerde büyüyen halka; üstünden zıplanmazsa can götürür
 import * as THREE from 'three';
-import { G } from './state.js?v=24';
-import { hurtPlayer } from './player.js?v=24';
-import { floatText, burst } from './fx.js?v=24';
-import { rand } from './util.js?v=24';
+import { G } from './state.js?v=27';
+import { hurtPlayer } from './player.js?v=27';
+import { floatText, burst, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx } from './audio.js?v=27';
+import { rand } from './util.js?v=27';
 
 let list = [];
 
@@ -47,6 +48,28 @@ export function makeRing(pos, { speed = 6, maxR = 9 } = {}) {
     list.push({ kind: 'ring', m, pos: m.position.clone(), r: 0.3, speed, maxR, hit: false });
 }
 
+// Bomba: mesh yere konur, fünye bitince patlar (kaçmaya vakit var)
+const BOMB_R = 2.1;
+export function makeBomb(pos, mesh, { fuse = 1.1 } = {}) {
+    mesh.position.copy(pos).setY(pos.y + 0.2); mesh.rotation.set(0, 0, 0);
+    if (!mesh.parent) G.scene.add(mesh);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(BOMB_R - 0.12, BOMB_R, 32), new THREE.MeshBasicMaterial({ color: '#ef4444', transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
+    ring.rotation.x = -Math.PI / 2; ring.position.copy(pos).setY(pos.y + 0.05); G.scene.add(ring);
+    list.push({ kind: 'bomb', mesh, ring, pos: pos.clone(), t: fuse, max: fuse });
+}
+function bombBlast(h) { blast(h.pos); }
+// Patlama (bomba, takke): yakındaki oyuncu can kaybeder
+export function blast(pos, r = BOMB_R) {
+    const p = G.player, at = pos.clone();
+    spawnFx('boom', at, 1.8);
+    burst(at.clone().setY(at.y + 0.4), { n: 14, color: ['#fde047', '#fb923c', '#f97316'], speed: 7, up: 6, size: 0.1, life: 0.5 });
+    burst(at.clone().setY(at.y + 0.4), { n: 8, color: ['#44403c', '#57534e'], speed: 4, up: 6, size: 0.2, life: 0.9 });
+    playSfx('boom', { vol: 0.7, rate: 1.1 });
+    const d = Math.hypot(p.pos.x - at.x, p.pos.z - at.z);
+    addTrauma(Math.max(0.1, 0.5 - d / 20));
+    if (!p.dead && d < r && p.pos.y < at.y + 1.6) hurtPlayer(at, { knock: 9 });
+}
+
 export function updateHazards(dt) {
     const p = G.player;
     for (const h of list) {
@@ -67,6 +90,13 @@ export function updateHazards(dt) {
             if (Math.random() < dt * 10) burst(h.pos.clone().setY(h.pos.y + 0.4), { n: 1, color: ['#57534e', '#f97316'], speed: 0.3, up: 2, gravity: -1, size: 0.12, life: 0.6 });
             if (h.t > 0.2 && !p.dead && Math.hypot(p.pos.x - h.pos.x, p.pos.z - h.pos.z) < h.r + 0.2 && p.pos.y < h.pos.y + 0.5)
                 hurtPlayer(h.pos, { knock: 7 });
+        } else if (h.kind === 'bomb') {
+            h.t -= dt;
+            const blink = Math.sin(G.time * (14 + (h.max - h.t) * 20)) > 0;
+            h.ring.material.opacity = blink ? 0.75 : 0.25;
+            h.mesh.scale.setScalar(1 + (blink ? 0.08 : 0));
+            if (Math.random() < dt * 30) burst(h.mesh.position.clone().setY(h.mesh.position.y + 0.28), { n: 1, color: ['#fde047', '#f97316', '#f8fafc'], speed: 0.8, up: 1.5, gravity: 3, size: 0.06, life: 0.3 });
+            if (h.t <= 0) bombBlast(h);
         } else if (h.kind === 'ring') {
             h.r += h.speed * dt;
             h.m.scale.setScalar(h.r);
@@ -83,10 +113,11 @@ export function updateHazards(dt) {
         if (h.t > 0) return true;
         if (h.g) G.scene.remove(h.g);
         if (h.m) { G.scene.remove(h.m); h.m.geometry.dispose(); h.m.material.dispose(); }
+        if (h.kind === 'bomb') { G.scene.remove(h.mesh); G.scene.remove(h.ring); h.ring.geometry.dispose(); h.ring.material.dispose(); }
         return false;
     });
 }
 export function clearHazards() {
-    list.forEach(h => { if (h.g) G.scene.remove(h.g); if (h.m) G.scene.remove(h.m); });
+    list.forEach(h => { if (h.g) G.scene.remove(h.g); if (h.m) G.scene.remove(h.m); if (h.mesh) G.scene.remove(h.mesh); if (h.ring) G.scene.remove(h.ring); });
     list = [];
 }

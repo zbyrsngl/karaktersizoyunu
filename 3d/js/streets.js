@@ -7,11 +7,11 @@
 //  • Güç tuğlaları (mavi ★): içinden el bombası (her bölümde 3 sabit yerde), can, kalkan gücü, hız, dev balyoz çıkar (powerups.js).
 // Yerleşim bölüm numarasıyla tohumlanmış rastgele sayılarla yapılır: her açılışta aynı.
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=24';
-import { box, mat, canvasTex, AABB } from './util.js?v=24';
-import { HW, ARENA, EXT_Z0, START_Z, BRICK_Y, signBoard, TEX } from './world.js?v=24';
-import { powerBrickTex, POWER_KINDS } from './powerups.js?v=24';
-import { groundAt } from './physics.js?v=24';
+import { G, toast } from './state.js?v=27';
+import { box, mat, canvasTex, AABB } from './util.js?v=27';
+import { HW, ARENA, EXT_Z0, START_Z, BRICK_Y, signBoard, TEX } from './world.js?v=27';
+import { powerBrickTex, POWER_KINDS } from './powerups.js?v=27';
+import { groundAt } from './physics.js?v=27';
 
 // --- TEMALAR (bölüme göre) ---
 const THEMES = {
@@ -20,8 +20,8 @@ const THEMES = {
     3:  { walls: ['#f5f5f4', '#fde68a', '#fecaca'], roof: '#9a3412', props: ['car', 'crates', 'barrier', 'policecar'] },
     4:  { walls: ['#94a3b8'], roof: '#334155', props: ['car', 'sandbags', 'burnt', 'car'] },
     5:  { walls: ['#fef3c7', '#e0f2fe', '#fde68a'], roof: '#c2410c', props: ['sandbags', 'crates', 'car', 'barrier'] },
-    8:  { walls: ['#7c4a24', '#8b5a2b', '#6b3f1d'], roof: '#e2e8f0', props: ['logs', 'hay', 'crates', 'logs'] },
-    9:  { walls: ['#a8a29e', '#d6d3d1', '#8f8a84'], roof: '#44403c', props: ['barrier', 'crates', 'policecar', 'dumpster'] },
+    8:  { walls: ['#a16207', '#92400e', '#f5f5f4'], roof: '#365314', props: ['hay', 'logs', 'crates', 'hay'] },   // çiftlik köyü (bahar)
+    9:  { walls: ['#a8a29e', '#8f8a84', '#d6d3d1'], roof: '#7c2d12', props: ['sandbags', 'crates', 'logs', 'burnt'] },   // dağ köyü: taş evler
     10: { walls: ['#e7e5e4', '#f5deb3', '#d6d3d1'], roof: '#57534e', props: ['policecar', 'barrier', 'car', 'dumpster'] }
 };
 const SHOPS = ['BAKKAL', 'BERBER', 'ÇAY OCAĞI', 'LOKANTA', 'ECZANE', 'KIRTASİYE', 'FIRIN', 'KUAFÖR', 'DÖNERCİ', 'TERZİ', 'KASAP', 'MANAV'];

@@ -5,15 +5,16 @@
 // 12 jet teslim olunca TANKER UÇAK gelir: füze yelpazesi (aralarında hep bir boşluk) ve nişanlı üçlü atış.
 // Tanker düşünce HIRHIZ: "Bunlar haşhaşi! Bunlar sülük!" (hashasi.mp3) — tankerden paraşütlü haşhaşiler ve sülükler dökülür.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=24';
-import { input } from './input.js?v=24';
-import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=24';
-import { getHeadTex, makeShield } from './models.js?v=24';
-import { makeItem } from './world.js?v=24';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=24';
-import { playSfx } from './audio.js?v=24';
-import { showBossBar, setBossBar } from './boss_core.js?v=24';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=24';
+import { G, diff, addScore, toast } from './state.js?v=27';
+import { input } from './input.js?v=27';
+import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=27';
+import { getHeadTex, makeShield } from './models.js?v=27';
+import { makeItem } from './world.js?v=27';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=27';
+import { playSfx } from './audio.js?v=27';
+import { showBossBar, setBossBar } from './boss_core.js?v=27';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=27';
+import { initFlightLife, updateFlightLife, clearFlightLife } from './flight_fx.js?v=27';
 
 const SPEED = 30;                       // dünyanın arkaya akma hızı (m/s)
 const XMAX = 11, YMIN = 3, YMAX = 17;   // uçağın gidebildiği kutu
@@ -180,6 +181,7 @@ function bannerPlane(text) {
 export function makeFlightMode() {
     let F = null;   // bölüm durumu
     const mode = { kind: 'flight' };
+    mode.debug = () => F;   // testler için
 
     mode.build = (scene, L) => {
         scene.fog = new THREE.Fog(L.fog, 70, 230);
@@ -219,6 +221,13 @@ export function makeFlightMode() {
         // HIRHIZ'ın uçağı
         F.plane = buildPlane(); scene.add(F.plane.root);
         F.pos = F.plane.root.position; F.vel = new THREE.Vector3();
+        // daha dolu gök: yakından geçen alçak bulut kümeleri
+        for (let i = 0; i < 16; i++) {
+            const c = new THREE.Group();
+            for (let k = 0; k < 4; k++) { const m = new THREE.Mesh(puff, cm[k % 2]); const s = rand(4, 8); m.scale.set(s * 1.6, s * 0.5, s); m.position.set(rand(-8, 8), rand(-1, 1), rand(-6, 6)); c.add(m); }
+            c.position.set(rand(-120, 120), rand(-22, -12), rand(-320, 20)); scene.add(c); F.clouds.push(c);
+        }
+        initFlightLife(F, scene);
         return W;
     };
     function placeCloud(c, z) {
@@ -239,14 +248,14 @@ export function makeFlightMode() {
         G.player.m.root.visible = false;
         F.pos.copy(HOME); F.vel.set(0, 0, 0); F.plane.root.rotation.set(0, 0, 0); F.plane.root.visible = true;
         F.spawnT = 2; F.bagT = 3; F.bagsMade = 0; F.bossPhase = false; F.deadT = 0; F.t = 0;
-        F.throwCd = 0;
+        F.throwCd = 0; clearFlightLife(F);
     };
     mode.retry = () => {
         const boss = F.bossPhase;
         clearAll();
         resetPlayer(G.player, G.player.pos.clone()); G.player.m.root.visible = false;
         F.pos.copy(HOME); F.vel.set(0, 0, 0); F.plane.root.rotation.set(0, 0, 0); F.deadT = 0;
-        F.spawnT = 2;
+        F.spawnT = 2; clearFlightLife(F);
         if (boss) spawnTanker(true);
     };
     mode.hint = touch => touch
@@ -263,6 +272,7 @@ export function makeFlightMode() {
         look.set(F.pos.x * 0.75, F.pos.y * 0.8 + 2.2, -24);
         camera.lookAt(look);
         F.plane.face.lookAt(camera.position);
+        updateFlightLife(F, dt, camera);
     };
 
     function scroll(dt) {

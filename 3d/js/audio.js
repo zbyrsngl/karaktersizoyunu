@@ -29,6 +29,8 @@ const FILES = {
     boom: ['../explosion.wav'],
     ouch: ['../sfx/ahh.mp3'],
     cry: ['../sfx/uufff.mp3'],
+    cry_kadin: ['../sfx/kadin_cry.mp3'],     // kırmızılı kadın ölünce (kadın sesi)
+    ah_kadin: ['../sfx/kadin_ah.mp3'],       // kırmızılı kadın vurulunca
     saygili: ['../sfx/saygili_giris.mp3'],
     makara: ['../sfx/makara_giris.mp3'],      // 2. bölüm sonu: Egemen Bağış'a benzeyen karakter kutlar (makara.mp3'ün ilk 10 sn'si)   // 2. bölüm SAYGILI gelince (kullanıcının verdiği sesin ilk 20 sn'si)
     sifirla: ['../sfx/sifirla.mp3'],          // 3. bölüm: kaset alınınca ve kasa sıfırlarken
@@ -112,6 +114,7 @@ export function beep(type) {
     if (type === 'jump') { o.type = 'square'; o.frequency.setValueAtTime(320, t); o.frequency.exponentialRampToValueAtTime(640, t + 0.12); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15); o.start(t); o.stop(t + 0.16); }
     else if (type === 'swing') { o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.18); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2); o.start(t); o.stop(t + 0.21); }
     else if (type === 'pan') { o.type = 'triangle'; o.frequency.setValueAtTime(1400 + Math.random() * 300, t); g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25); o.start(t); o.stop(t + 0.26); }
+    else if (type === 'mine') { o.type = 'square'; o.frequency.setValueAtTime(1900, t); g.gain.setValueAtTime(0.07, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07); o.start(t); o.stop(t + 0.08); }
     else if (type === 'stomp') { o.type = 'square'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(880, t + 0.1); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); o.start(t); o.stop(t + 0.19); }
 }
 
@@ -124,6 +127,57 @@ export function hiss(dur = 1.5, freq = 1400, vol = 0.18) {
     src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.7;
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.08); g.gain.setValueAtTime(vol, t + dur - 0.3); g.gain.linearRampToValueAtTime(0, t + dur);
     src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur + 0.05);
+}
+// Jet geçişi: arkadan yaklaşan uğultu yükselir, yanından geçerken tepe yapar, sonra kalınlaşarak uzaklaşır (Doppler hissi)
+export function jetPass(dur = 2.6, vol = 0.32, peakAt = 0.55) {
+    if (!ac || muted) return;
+    if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const t = ac.currentTime, src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = noiseBuf; src.loop = true; f.type = 'lowpass'; f.Q.value = 1.2;
+    const pk = t + dur * peakAt;
+    f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(3800, pk); f.frequency.exponentialRampToValueAtTime(250, t + dur);
+    g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(vol, pk); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur + 0.05);
+    // motorun ıslığı (yükselip düşen ton)
+    const o = ac.createOscillator(), og = ac.createGain(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(900, pk); o.frequency.exponentialRampToValueAtTime(260, t + dur);
+    og.gain.setValueAtTime(0.001, t); og.gain.exponentialRampToValueAtTime(vol * 0.12, pk); og.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(og); og.connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+// Ses duvarı patlaması: çift "BUM" (N dalgası) + derin gümbürtü
+export function sonicBoom() {
+    if (!ac || muted) return;
+    playSfx('boom', { rate: 0.5, vol: 1 });
+    setTimeout(() => playSfx('boom', { rate: 0.42, vol: 0.9 }), 110);
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(28, t + 1.2);
+    g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.35);
+}
+// Goril kükremesi: hırıltılı gürültü + titreyen kalın testere dişi
+export function roar(dur = 1.1) {
+    if (!ac || muted) return;
+    if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const t = ac.currentTime, src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = noiseBuf; src.loop = true; f.type = 'bandpass'; f.frequency.setValueAtTime(420, t); f.frequency.linearRampToValueAtTime(260, t + dur); f.Q.value = 2;
+    g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.12); g.gain.setValueAtTime(0.5, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur + 0.05);
+    const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(95, t + dur);
+    lfo.frequency.value = 23; lg.gain.value = 18; lfo.connect(lg); lg.connect(o.frequency);
+    og.gain.setValueAtTime(0.001, t); og.gain.exponentialRampToValueAtTime(0.16, t + 0.1); og.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(og); og.connect(master); o.start(t); lfo.start(t); o.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
+}
+// Göğüs davulu: art arda boğuk gümlemeler
+export function chestBeat(n = 6, gap = 0.13) {
+    if (!ac || muted) return;
+    const t0 = ac.currentTime + 0.15;
+    for (let i = 0; i < n; i++) {
+        const t = t0 + i * gap, o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.1);
+        g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.13);
+    }
 }
 // Siren: iki tonlu (TOMA meydana girerken)
 export function siren(dur = 2.4) {

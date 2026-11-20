@@ -3,10 +3,10 @@
 // otobüslerinin üstünde nişancılar. 11 polis → bariyer → canavar EKREM (boss_human.js). İlk yenilgide "YSK: SEÇİM İPTAL!",
 // SEÇİM TEKRARI ile büyüyüp geri gelir; ikinci kez yenilince diploma iptal, Silivri hücresi: "15 MİLYON OY: ADAY!" — HIRHIZ: "ADAY OLAMAZ!"
 import * as THREE from 'three';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=24';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=24';
-import { spawnEkrem, ekremJail } from './boss_human.js?v=24';
-import './police.js?v=24';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=27';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=27';
+import { spawnEkrem, ekremJail } from './boss_human.js?v=27';
+import './police.js?v=27';
 
 const BUSES = [[4.5, -54], [-4.5, -124]], BUS_TOP = 3.0;
 

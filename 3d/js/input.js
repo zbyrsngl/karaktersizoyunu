@@ -6,12 +6,12 @@ export const input = {
     mx: 0, my: 0,                 // hareket (-1..1), my +1 = ileri
     camDX: 0, camDY: 0,           // bu karedeki kamera dönüşü (piksel)
     jumpPressed: false, jumpHeld: false,
-    hammerPressed: false, throwPressed: false, grenadePressed: false, shieldHeld: false, sprint: false,
+    hammerPressed: false, throwPressed: false, grenadePressed: false, gorillaPressed: false, shieldHeld: false, sprint: false,
     pausePressed: false, restartPressed: false,
     touch: false, camTouched: 0   // son kamera dokunuşundan beri geçen süre (otomatik takip için)
 };
 const keys = new Set();
-const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyE', 'KeyK'], throw: ['Enter'], grenade: ['KeyR', 'KeyG'], sprint: ['ShiftLeft', 'ShiftRight'] };
+const KEYMAP = { jump: ['Space'], hammer: ['KeyF', 'KeyJ'], shield: ['KeyE', 'KeyK'], throw: ['Enter'], grenade: ['KeyR'], gorilla: ['KeyG'], sprint: ['ShiftLeft', 'ShiftRight'] };
 const isKey = (k, a) => KEYMAP[a].includes(k);
 
 let canvasEl = null, onAnyInput = null;
@@ -24,6 +24,7 @@ export function initInput(canvas, anyInput) {
         if (isKey(e.code, 'hammer')) input.hammerPressed = true;
         if (isKey(e.code, 'throw')) input.throwPressed = true;
         if (isKey(e.code, 'grenade') && !e.repeat) input.grenadePressed = true;
+        if (isKey(e.code, 'gorilla') && !e.repeat) input.gorillaPressed = true;
         if (e.code === 'KeyP' || e.code === 'Escape') input.pausePressed = true;
         if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     });
@@ -100,6 +101,7 @@ function initTouch(canvas) {
     btn('b-hammer', () => { input.hammerPressed = true; });
     btn('b-bribe', () => { input.throwPressed = true; });
     btn('b-grenade', () => { input.grenadePressed = true; });
+    btn('b-gorilla', () => { input.gorillaPressed = true; });
     btn('b-shield', () => { touchShield = true; }, () => { touchShield = false; });
 }
 function setTouch() {
@@ -126,7 +128,7 @@ export function pollInput() {
 }
 // Basışlar sabit adımda kullanılınca silinir
 export function consumePresses() {
-    input.jumpPressed = input.hammerPressed = input.throwPressed = input.grenadePressed = false;
+    input.jumpPressed = input.hammerPressed = input.throwPressed = input.grenadePressed = input.gorillaPressed = false;
 }
 export function clearAll() {
     consumePresses(); input.pausePressed = input.restartPressed = false;

@@ -11,11 +11,12 @@ export function runTest(name, H) {
     window.addEventListener('error', ev => say('HATA: ' + ev.message + ' @ ' + ((ev.error && ev.error.stack) || '').split(String.fromCharCode(10)).slice(1, 3).join(' ')));
     G.freeze = true;
     startGame();
+    if (!new URLSearchParams(location.search).get('calm')) G.calm = 0;   // testlerde sakin başlangıç kapalı (&calm=1 ile dene)
     const p = G.player;
     try {
         if (name === 'hikaye') {   // bölümün giriş hikâyesi (2D oynatıcı); &sahne=N: N kez ilerlet
             const Q = new URLSearchParams(location.search), n = +(Q.get('sahne') || 0);
-            import('./story3d.js?v=24').then(S => {
+            import('./story3d.js?v=27').then(S => {
                 S.playLevelStory(G.level.id, () => say('hikaye bitti'));
                 for (let i = 0; i < n * 2; i++) window.storyNext();
                 setTimeout(() => say('hikaye açık=' + S.storyOpen() + ' kafa=' + !!window.headCanvas), 1500);
@@ -33,7 +34,7 @@ export function runTest(name, H) {
         if (name === 'lobi') {   // menüde iki kişilik oyun paneli (telefon görünümü kontrolü)
             G.state = 'menu'; document.getElementById('menu').hidden = false; document.body.classList.add('in-menu');
             document.getElementById('net').hidden = false; document.getElementById('net-btn').scrollIntoView();
-            import('./net.js?v=24').then(N => N.hostRoom('LOBI')); setTimeout(() => say('lobi ' + document.getElementById('net-status').textContent), 6000);
+            import('./net.js?v=27').then(N => N.hostRoom('LOBI')); setTimeout(() => say('lobi ' + document.getElementById('net-status').textContent), 6000);
         }
         if (name === 'net') {   // iki kişilik oyun: &rol=host|guest &kod=XXXX — iki iframe'li bir sayfada (biri host, biri guest, aynı kod) gerçek zamanlı aç (sanal zaman WebRTC'yi beklemez). Sonuç başlıkta.
             const Q = new URLSearchParams(location.search), rol = Q.get('rol'), kod = Q.get('kod') || 'TEST', LV = +(Q.get('lv') || 2);
@@ -44,7 +45,7 @@ export function runTest(name, H) {
             G.freeze = false;   // gerçek döngü çalışsın (ağ mesajları gerçek zamanlı)
             const wait = (f, ms = 15000) => new Promise((ok, no) => { const t0 = performance.now(); const iv = setInterval(() => { if (f()) { clearInterval(iv); ok(); } else if (performance.now() - t0 > ms) { clearInterval(iv); no(new Error('zaman aşımı')); } }, 100); });
             const sleep = ms => new Promise(r => setTimeout(r, ms));
-            import('./net.js?v=24').then(async NET => {
+            import('./net.js?v=27').then(async NET => {
                 try {
                     if (rol === 'host') {
                         await NET.hostRoom(kod); say('host: oda açıldı');
@@ -53,12 +54,12 @@ export function runTest(name, H) {
                         G.enemies.forEach(e => { e.cd = 99; });
                         // ev sahibi 3 düşmanı yenik sayar (misafirde de ölmeli)
                         const victims = G.enemies.filter(e => !e.dead && e.kind !== 'duran').slice(0, 3);
-                        victims.forEach(e => { e.hurtT = 0; import('./enemies.js?v=24').then(E => E.damageEnemy(e, 99, 'hammer')); });
+                        victims.forEach(e => { e.hurtT = 0; import('./enemies.js?v=27').then(E => E.damageEnemy(e, 99, 'hammer')); });
                         await sleep(7000);
                         // ev sahibi bütün düşmanları yener ve meydana girer: canavar iki tarafta da gelmeli
-                        const E = await import('./enemies.js?v=24');
+                        const E = await import('./enemies.js?v=27');
                         G.enemies.forEach(e => { if (!e.dead && e.kind !== 'duran') { e.hurtT = 0; E.damageEnemy(e, 99, 'hammer'); } });
-                        const { ARENA } = await import('./world.js?v=24');
+                        const { ARENA } = await import('./world.js?v=27');
                         await sleep(2200); p.pos.set(0, 0, ARENA.z0 - 4); p.hp = 99; await sleep(2500);
                         p.pos.set(3, 0, ARENA.z0 - 1); await sleep(1500);   // misafir canavara daha yakın
                         if (G.boss) { G.boss.forceDefeat(); await wait(() => G.state === 'won', 40000).catch(() => {}); }
@@ -124,7 +125,7 @@ export function runTest(name, H) {
             }
             const P = p.power; res.push(`bomba=${G.grenades} kalkan=${P.shieldUp.toFixed(0)} hız=${P.speed.toFixed(0)} balyoz=${P.hammer.toFixed(0)}`);
             P.shieldUp = 5; const hp0 = p.hp; p.invuln = 0; G.onHammer && 0; const hurt = (await_ => 0);
-            import('./player.js?v=24').then(M => {
+            import('./player.js?v=27').then(M => {
                 M.hurtPlayer(p.pos.clone().setX(p.pos.x + 1)); res.push(`kalkanlıyken can ${hp0}->${p.hp}`);
                 P.hammer = 10; P.shieldUp = 10; run(0.4);
                 cam.yaw = 2.4; cam.pitch = 0.2; cam.dist = 4; updateCamera(0.0001); render();
@@ -172,7 +173,7 @@ export function runTest(name, H) {
             res.push(`${G.level.id}:pad${vis('pad')}`); say(res.join(' '));
         }
         if (name === 'ses') {   // konuşma seslerinin yükseltme katsayıları ve müziğin Web Audio'dan geçmesi
-            import('./audio.js?v=24').then(A => { A.unlockAudio(); setTimeout(() => {
+            import('./audio.js?v=27').then(A => { A.unlockAudio(); setTimeout(() => {
                 const D = A.audioDebug(), r = [];
                 for (const k of ['hasret', 'yaallah', 'savci', 'peygamber', 'cengiz', 'selo', 'saygili', 'ekrem']) r.push(k + '=' + (D.gains[k] ? D.gains[k][0].toFixed(2) : '-'));
                 say('müzik=' + D.music + ' ' + r.join(' '));
@@ -302,7 +303,7 @@ export function runTest(name, H) {
         }
         if (name === 'retry') {   // ölüp "Tekrar dene": duruş düzelmeli
             p.hp = 1; G.enemies.forEach(e => e.dead = true);
-            import('./player.js?v=24').then(() => {});
+            import('./player.js?v=27').then(() => {});
             p.pos.set(0, 0, -10); run(0.2);
             G.player.dead = false; p.invuln = 0; H.G.onPlayerDead = () => {};
             p.hp = 1; p.invuln = 0;
@@ -316,7 +317,7 @@ export function runTest(name, H) {
         }
         if (name === 'attacks') {   // her kahramanın saldırısı: 1 düşman + oyuncu (bol canlı), olan biteni say
             const seen = {};
-            for (const skin of ({ 1: ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere'], 4: ['soldier', 'shieldsoldier', 'gassoldier', 'tanksniper'], 5: ['minitank', 'police', 'sniper'] }[G.level.id] || ['police', 'riot', 'gas', 'sniper'])) {
+            for (const skin of ({ 1: ['carsi', 'kirmizi', 'sema', 'capulcu', 'tencere'], 4: ['soldier', 'shieldsoldier', 'gassoldier', 'tanksniper'], 5: ['minitank', 'police', 'sniper'], 8: ['abi_kitap', 'abi_tesbih', 'abi_takke'], 9: ['keles', 'bombaci', 'canli'] }[G.level.id] || ['police', 'riot', 'gas', 'sniper'])) {
                 const e = G.enemies.find(x => x.skin === skin && !x.dead);
                 G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') { x.st = 'idle'; x.cd = 99; } });
                 p.pos.set(e.pos.x, 0, e.pos.z + (skin === 'minitank' ? 6 : -(skin.includes('sniper') ? 12 : 6))); p.vel.set(0, 0, 0); p.hp = 99; p.maxHp = 99; p.invuln = 0; p.dead = false;
@@ -326,6 +327,79 @@ export function runTest(name, H) {
                 e.cd = 99;
             }
             say(Object.entries(seen).map(([k, v]) => k + ':' + v).join(' ; '));
+        }
+        if (name === 'tomaflag') {   // TOMA yenilir, enkazın üstüne çıkılır, bayrak sallanır, sonra teyzeler
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -190); run(0.5);
+            const b = G.boss; let n = 0;
+            while (b && !b.dead && n < 40) { p.pos.set(b.pos.x, 4, b.pos.z); p.vel.set(0, -2, 0); p.hp = 9; run(0.7); n++; }
+            // yanına in, sonra zıplayarak üstüne çık
+            p.pos.set(b.pos.x + 3.2, 0, b.pos.z); p.vel.set(0, 0, 0); run(1.0);
+            const ground = p.pos.y.toFixed(2);
+            p.pos.set(b.pos.x, 3.5, b.pos.z); p.vel.set(0, 0, 0); run(1.5);
+            const top = p.pos.y.toFixed(2), flag = !!(p.m.flag && p.m.flag.visible);
+            run(3.5);
+            const o = !!G.outro;
+            cam.yaw = Math.PI * 0.8; cam.pitch = 0.2; cam.dist = 6; for (let i = 0; i < 60; i++) { updateCamera(STEP); cam.dist = 6; cam.yaw = Math.PI * 0.8; }
+            render();
+            say(`öldü=${b.dead} enkaz=${b.wreck && b.wreck.length} yan=${ground} üst=${top} bayrak=${flag} flagT=${(b.flagT || 0).toFixed(1)} sahne=${o} çekiç=${p.m.hammer.visible}`);
+        }
+        if (name === 'gezisaldiri') {   // &tur=skin: saldırı anının görüntüsü (atılan nesne havada, balon kafada)
+            const Q = new URLSearchParams(location.search), skin = Q.get('tur') || 'capulcu', at = +(Q.get('an') || 0.8);
+            run(0.2);
+            const e = G.enemies.find(x => x.skin === skin && !x.dead && x.pos.z < 0);
+            G.enemies.forEach(x => { if (x !== e && x.kind !== 'duran') { x.cd = 99; } });
+            p.pos.set(e.pos.x + 1.5, 0, e.pos.z + 7); p.hp = 99; p.maxHp = 99; p.facing = Math.PI;
+            e.cd = 0; setBubbleT(e); let t = 0, sts = new Set();
+            for (let i = 0; i < 60 * 6; i++) { step(STEP); p.invuln = 1; sts.add(e.st); if (e.st !== 'idle') t += STEP; if (t >= at) break; }
+            const yw = Math.atan2(e.pos.x - p.pos.x, e.pos.z - p.pos.z) + Math.PI + 0.3; p.hp = 3; p.maxHp = 3;
+            for (let i = 0; i < 60; i++) { updateCamera(STEP); cam.dist = 5; cam.yaw = yw; cam.pitch = 0.2; }
+            render(); say(`e=${e.pos.x.toFixed(1)},${e.pos.z.toFixed(1)} vis=${e.m.root.visible} p=${p.pos.x.toFixed(1)},${p.pos.z.toFixed(1)} yaw=${cam.yaw.toFixed(2)} ${skin} ${[...sts].join('/')} mermi=${G.projectiles.map(q => q.type).join(',')} balon=${!!e.bubble}`);
+            function setBubbleT(e) { e.shoutT = 0; }
+        }
+        if (name === 'cek') {   // serbest çekim: &px,&pz oyuncu (kamera hedefi), &py, &yaw, &pitch, &dist, &t (bekleme sn), &gizle=1 oyuncuyu gizler
+            const Q = new URLSearchParams(location.search), num = (k, d) => Q.has(k) ? +Q.get(k) : d;
+            G.enemies.forEach(e => e.cd = 99);
+            p.pos.set(num('px', 0), num('py', 0), num('pz', 0)); p.vel.set(0, 0, 0); p.hp = 99; p.invuln = 99;
+            const yaw = num('yaw', 0), pitch = num('pitch', 0.3), dist = num('dist', 6);
+            for (let i = 0; i < num('t', 1) * 60; i++) { step(STEP); p.pos.set(num('px', 0), Math.max(p.pos.y, num('py', 0)), num('pz', 0)); p.vel.set(0, 0, 0); updateCamera(STEP); cam.yaw = yaw; cam.pitch = pitch; cam.dist = dist; }
+            for (let i = 0; i < 30; i++) { updateCamera(STEP); cam.yaw = yaw; cam.pitch = pitch; cam.dist = dist; }
+            if (Q.get('gizle')) p.m.root.visible = false;
+            render(); say(`kamera ${p.pos.x.toFixed(1)},${p.pos.y.toFixed(1)},${p.pos.z.toFixed(1)} ${H.calls ? H.calls() : ''}`);
+        }
+        if (name === 'f16') {   // 6. bölüm: F-16 geçişi (&an= sn: geçişten sonra ne zaman çekilsin)
+            const Q = new URLSearchParams(location.search), F = G.level.mode.debug();
+            run(0.5); F.life.next = 0.01; F.jets.forEach(j => j.cool = 99);
+            let boomAt = -1, n = 0;
+            for (let i = 0; i < 60 * 6; i++) { step(STEP); updateCamera(STEP); G.player.invuln = 9; if (boomAt < 0 && F.life.f16.some(j => j.boomed)) boomAt = i; if (boomAt >= 0 && i - boomAt >= +(Q.get('an') || 0.15) * 60) break; }
+            n = F.life.f16.length;
+            render(); say(`f16=${n} bum=${boomAt} parçacık=${F.life.puffs.length} ${H.calls ? H.calls() : ''}`);
+        }
+        if (name === 'oda') {   // özel bölümün arka planı (bulmaca paneli gizli)
+            run(+(new URLSearchParams(location.search).get('t') || 2));
+            ['puzzle', 'hint', 'hud'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+            render(); say('oda ' + (H.calls ? H.calls() : ''));
+        }
+        if (name === 'goril') {   // canavarda G: post, muz atışı, göğüs yumruklama; canavarsız açılmaz
+            const before = (key('KeyG', true), step(STEP), key('KeyG', false), !!p.gorilla);
+            G.enemies.forEach(e => { if (e.kind !== 'duran' && !e.dead) { e.dead = true; G.kills++; G.onKill(e); } });
+            run(1.8); p.pos.set(0, 0, -192); run(1.0);
+            const B = G.boss; if (B && B.st === 'talk') { B.t = 0; } run(0.5);
+            key('KeyG', true); step(STEP); key('KeyG', false);
+            const on = !!p.gorilla, hp0 = B.hp; let bananas = 0;
+            p.facing = Math.atan2(B.pos.x - p.pos.x, B.pos.z - p.pos.z);
+            for (let i = 0; i < 60 * 6; i++) {
+                G.aimTarget = () => B.pos.clone().setY(B.pos.y + 1.2);
+                if (i % 20 === 0 && !location.search.includes('atma')) { H.input.throwPressed = true; }
+                step(STEP); p.invuln = 9; p.hp = 3;
+                G.projectiles.forEach(q => { if (q.type === 'banana' && !q.cnt) { q.cnt = 1; bananas++; } });
+                if (i === (location.search.includes('atma') ? 20 : 30)) { for (let k = 0; k < 40; k++) { updateCamera(STEP); cam.yaw = p.facing + 0.5; cam.dist = 3.8; cam.pitch = 0.15; } render(); }
+            }
+            if (location.search.includes('atma')) { p.facing = 0; for (let k = 0; k < 40; k++) { step(STEP); updateCamera(STEP); cam.yaw = p.facing + 0.5; cam.dist = 3.8; cam.pitch = 0.15; } render(); }
+            say(`önce=${before} açık=${on} muz=${bananas} can ${hp0.toFixed(1)}→${B.hp.toFixed(1)} post=${p.m.fur && p.m.fur[0].visible} balyoz=${p.m.hammer.visible}`);
+        }
+        if (name === 'mayin') {   // 9. bölüm mayınları: her açılışta (ve her cihazda) aynı yerde mi
+            say('mayın ' + G.world.mines.length + ': ' + G.world.mines.slice(0, 3).map(m => m.x.toFixed(2) + ',' + m.z.toFixed(2)).join(' '));
         }
         if (name === 'tea') {   // telefonda öndekine nişan: çay paketleri düşmanı yener
             H.input.touch = true;
@@ -421,7 +495,7 @@ export function runTest(name, H) {
             render(); say('kasa');
         }
         if (name === 'headtex') {   // fotoğraf kafa kesimlerini ekrana koy
-            import('./outro.js?v=24').then(async o => {
+            import('./outro.js?v=27').then(async o => {
                 const t1 = o.photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77], { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] });
                 const t2 = o.photoHead('../resimler/cengiz.png', [50, 22, 88, 112], [44, 53, 37, 51]);
                 await new Promise(r => setTimeout(r, 1500));

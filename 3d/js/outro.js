@@ -4,12 +4,12 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=24';
-import { burst } from './fx.js?v=24';
-import { limb, walkPose, sharpen } from './models.js?v=24';
-import { playSfx } from './audio.js?v=24';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=24';
-import { ARENA } from './world.js?v=24';
+import { G, toast } from './state.js?v=27';
+import { burst } from './fx.js?v=27';
+import { limb, walkPose, sharpen } from './models.js?v=27';
+import { playSfx } from './audio.js?v=27';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=27';
+import { ARENA } from './world.js?v=27';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre).
 // İsteğe bağlı [.., rxB, ryB]: alt yarı ayrı ölçülerle (yumurta biçimi: çeneye doğru daralır, yaka/arka plan girmez)
@@ -67,9 +67,10 @@ function buildCengiz() {
 }
 // "Son peygamber" adamı: gri takım, bir eli havada işaret parmağı yukarıda (konuşurken sallar), öbür elinde mikrofon
 function buildPeygamber() {
-    const m = suitMan({ suit: '#4b5563', suitD: '#374151', shirt: '#e0f2fe', tie: '#111827', pin: '#b91c1c', faceW: 0.7, faceH: 0.99,
-                        tex: photoHead('../resimler/sonpeygamber.png', [174, 78, 112, 158], [56, 80, 52, 77],
-                                       { amt: 1.6, con: 1.15, blur: 4, tint: [0.97, 1.04, 0.9] }) });   // video karesi: bulanık ve mor tonlu → keskinleştir, rengi düzelt
+    // yüz önceden işlendi (resimler/sonpeygamber_yuz.png: 2 kat büyütme, gürültü temizliği, yerel kontrast, keskinleştirme,
+    // mor ton düzeltmesi, saç dahil temiz kesim) → burada kırpma/keskinleştirme yok
+    const m = suitMan({ suit: '#4b5563', suitD: '#374151', shirt: '#e0f2fe', tie: '#111827', pin: '#b91c1c', faceW: 0.76, faceH: 1.0,
+                        tex: photoHead('../resimler/sonpeygamber_yuz.png', [0, 0, 280, 370], [140, 185, 300, 400]) });
     const finger = box(0.04, 0.16, 0.04, '#e0a98a', 0, -0.65, 0, false); m.armR.add(finger);
     const mic = new THREE.Group(); mic.position.y = -0.55; m.armL.add(mic);
     mic.add(box(0.06, 0.26, 0.06, '#111827', 0, 0.12, 0.05));
@@ -262,7 +263,7 @@ export function grannyOutro(scene) {
         m.root.position.set(clamp(cx + side * (11 + row * 2), -ARENA.hw + 0.8, ARENA.hw - 0.8), 0, clamp(cz - 1.5 - row * 1.2, ARENA.z1 + 1, ARENA.z0 - 1));
         scene.add(m.root);
         // HIRHIZ'ın önünde yarım daire
-        const a = side * (0.42 + row * 0.5), r = 2.7 + row * 0.3;
+        const a = side * (0.42 + row * 0.5), r = 2.7 + row * 0.3 + (p.pos.y > 1 ? 3.4 : 0);   // HIRHIZ TOMA enkazının üstündeyse çevresinde dururlar
         const goal = new THREE.Vector3(clamp(cx + Math.sin(Math.PI + a) * r, -ARENA.hw + 0.8, ARENA.hw - 0.8), 0, cz + Math.cos(Math.PI + a) * r);
         return { m, goal, st: 'run', phase: i * 1.3, speed: 4.2 + row * 0.5, facing: side < 0 ? Math.PI / 2 : -Math.PI / 2 };
     });
