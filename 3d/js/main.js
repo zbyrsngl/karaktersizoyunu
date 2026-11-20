@@ -1,35 +1,35 @@
 // HIRHIZ 3D — ana döngü, kamera, ışık, bölüm yükleme, oyun akışı, menüler
 import * as THREE from 'three';
-import { G, DIFFS, diff, addScore, toast } from './state.js?v=28';
-import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=28';
-import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=28';
-import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=28';
-import { updateStreets, resetStreets } from './streets.js?v=28';
-import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=28';
-import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=28';
-import { updateHazards, clearHazards } from './hazards.js?v=28';
-import { updateBoss, removeBoss } from './boss_core.js?v=28';
-import { updateNeckBombs, clearNeckBombs } from './abiler.js?v=28';
-import { toggleGorilla, setGorilla, updateGorilla, throwBanana } from './gorilla.js?v=28';
-import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=28';
-import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=28';
-import { damp, angDiff, clamp, canvasTex } from './util.js?v=28';
-import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=28';
-import { groundAt } from './physics.js?v=28';
-import { playLevelStory } from './story3d.js?v=28';
-import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=28';
-import { isGuest } from './enemies.js?v=28';
-import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=28';
-import { LEVEL1 } from './level1.js?v=28';
-import { LEVEL2 } from './level2.js?v=28';
-import { LEVEL3 } from './level3.js?v=28';
-import { LEVEL4 } from './level4.js?v=28';
-import { LEVEL5 } from './level5.js?v=28';
-import { LEVEL6 } from './level6.js?v=28';
-import { LEVEL7 } from './level7.js?v=28';
-import { LEVEL8 } from './level8.js?v=28';
-import { LEVEL9 } from './level9.js?v=28';
-import { LEVEL10 } from './level10.js?v=28';
+import { G, DIFFS, diff, addScore, toast } from './state.js?v=29';
+import { initInput, pollInput, consumePresses, clearAll, input, releasePointer } from './input.js?v=29';
+import { buildWorld, updateWorld, ARENA, HW, makeBag, makeItem, START_Z } from './world.js?v=29';
+import { updatePowers, applyPower, POWER_MAKERS } from './powerups.js?v=29';
+import { updateStreets, resetStreets } from './streets.js?v=29';
+import { createPlayer, resetPlayer, updatePlayer, updateHearts, addCollected, faceCamera, hurtPlayer } from './player.js?v=29';
+import { spawnEnemies, clearEnemies, updateEnemies, hammerHit, throwAmmo } from './enemies.js?v=29';
+import { updateHazards, clearHazards } from './hazards.js?v=29';
+import { updateBoss, removeBoss } from './boss_core.js?v=29';
+import { updateNeckBombs, clearNeckBombs } from './abiler.js?v=29';
+import { toggleGorilla, setGorilla, updateGorilla, throwBanana } from './gorilla.js?v=29';
+import { initFx, updateFx, clearFx, spawnFx, burst, floatText, shake, addTrauma } from './fx.js?v=29';
+import { unlockAudio, playSfx, playMusic, stopMusic, isMuted, setMuted } from './audio.js?v=29';
+import { damp, angDiff, clamp, canvasTex } from './util.js?v=29';
+import { initGrenades, updateGrenades, clearGrenades, resetGrenadeStock } from './grenade.js?v=29';
+import { groundAt } from './physics.js?v=29';
+import { playLevelStory } from './story3d.js?v=29';
+import { initNet, updateNet, netEvent, netOn, netSceneChanged, netBeforeDispose, partnerDead, partnerPos, partnerHere, closeNet } from './net.js?v=29';
+import { isGuest } from './enemies.js?v=29';
+import { tr, tf, lang, LANGS, LANG_NAMES, setLang, translateDom, numFmt } from './i18n.js?v=29';
+import { LEVEL1 } from './level1.js?v=29';
+import { LEVEL2 } from './level2.js?v=29';
+import { LEVEL3 } from './level3.js?v=29';
+import { LEVEL4 } from './level4.js?v=29';
+import { LEVEL5 } from './level5.js?v=29';
+import { LEVEL6 } from './level6.js?v=29';
+import { LEVEL7 } from './level7.js?v=29';
+import { LEVEL8 } from './level8.js?v=29';
+import { LEVEL9 } from './level9.js?v=29';
+import { LEVEL10 } from './level10.js?v=29';
 
 const LEVELS = { 1: LEVEL1, 2: LEVEL2, 3: LEVEL3, 4: LEVEL4, 5: LEVEL5, 6: LEVEL6, 7: LEVEL7, 8: LEVEL8, 9: LEVEL9, 10: LEVEL10 };
 const MAX_LEVEL = 10;
@@ -517,6 +517,15 @@ function updateCalm(dt) {
     const p = G.player, far = p && G.calmStart && Math.hypot(p.pos.x - G.calmStart.x, p.pos.z - G.calmStart.z) > 28;
     if (G.calm <= 0 || far) { G.calm = 0; toast('DİKKAT! DÜŞMANLAR HAREKETE GEÇTİ!', 2200, '#fca5a5'); }
 }
+// Doğuş yeri: altı sağlam zemin olan en yakın nokta (önce ileri-geri, sonra yanlara bakar)
+function safeSpawn(at) {
+    const S = G.world.solids, ok = (x, z) => [[0, 0], [0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]].every(([dx, dz]) => { const g = groundAt(S, x + dx, z + dz, 0.5); return g > -0.05 && g < 0.05; });
+    for (let d = 0; d <= 10; d += 0.5) for (const sz of d ? [1, -1] : [1]) for (const x of [at.x, 0, -3, 3]) {
+        const z = at.z + sz * d;
+        if (ok(x, z)) return new THREE.Vector3(x, 0, z);
+    }
+    return at;
+}
 function retry(fromNet) {
     if (!isGuest()) netEvent('retry');
     respawnT = 0;
@@ -526,6 +535,7 @@ function retry(fromNet) {
     let at = START.clone();
     if (W.checkpoint.reached) at.set(0, 0, W.checkpoint.z - 1);
     if (G.boss) { at.set(0, 0, ARENA.z0 - 2); G.boss.reset && G.boss.reset(); }
+    at = safeSpawn(at);   // kontrol noktası çukur kenarındaysa çukurda doğma (8, 9, 10. bölümler)
     G.projectiles.forEach(pr => pr.life = 0); clearHazards(); clearGrenades(); clearNeckBombs(); resetGrenadeStock(); updateGrenadeHud();
     resetPlayer(p, at);
     p.collected = Math.min(p.collected, G.collect);
@@ -666,7 +676,7 @@ function frame(now) {
 const Q = new URLSearchParams(location.search), T = Q.get('test');
 // Telefon index.html'i ~10 dk önbellekte tutar; yeni sürüm yayındaysa sayfayı yeni adresle bir kez yeniden aç.
 // Dosyalar değişince buradaki VER, version.txt ve bütün ?v= numaraları birlikte artırılır.
-const VER = '28';
+const VER = '29';
 $('ver').textContent = tf('Sürüm {0}', VER);   // ana menüde: telefonda yeni sürümün yüklendiği buradan görülür
 if (!T) fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
     v = v.trim();
@@ -676,6 +686,6 @@ loadLevel(T ? (+Q.get('bolum') || 1) : selected);
 resetLevel();
 showPanel('menu');
 requestAnimationFrame(frame);
-if (T) import('./test.js?v=28').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
+if (T) import('./test.js?v=29').then(m => m.runTest(T, { G, input, camera, startGame: (n) => startGame(n || G.level.id), loadLevel, retry, step, STEP, cam, updateCamera,
     render: () => renderer.render(scene, camera),
     calls: () => { cullFar(); renderer.render(scene, camera); return renderer.info.render.calls + ' çizim ' + renderer.info.render.triangles + ' üçgen'; } }));

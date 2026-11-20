@@ -5,16 +5,16 @@
 // 12 jet teslim olunca TANKER UÇAK gelir: füze yelpazesi (aralarında hep bir boşluk) ve nişanlı üçlü atış.
 // Tanker düşünce HIRHIZ: "Bunlar haşhaşi! Bunlar sülük!" (hashasi.mp3) — tankerden paraşütlü haşhaşiler ve sülükler dökülür.
 import * as THREE from 'three';
-import { G, diff, addScore, toast } from './state.js?v=28';
-import { input } from './input.js?v=28';
-import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=28';
-import { getHeadTex, makeShield } from './models.js?v=28';
-import { makeItem } from './world.js?v=28';
-import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=28';
-import { playSfx } from './audio.js?v=28';
-import { showBossBar, setBossBar } from './boss_core.js?v=28';
-import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=28';
-import { initFlightLife, updateFlightLife, clearFlightLife } from './flight_fx.js?v=28';
+import { G, diff, addScore, toast } from './state.js?v=29';
+import { input } from './input.js?v=29';
+import { resetPlayer, hurtPlayer, updateHearts } from './player.js?v=29';
+import { getHeadTex, makeShield } from './models.js?v=29';
+import { makeItem } from './world.js?v=29';
+import { burst, floatText, spawnFx, addTrauma } from './fx.js?v=29';
+import { playSfx } from './audio.js?v=29';
+import { showBossBar, setBossBar } from './boss_core.js?v=29';
+import { box, mat, canvasTex, fitText, textSprite, disposeSprite, clamp, damp, rand } from './util.js?v=29';
+import { initFlightLife, updateFlightLife, clearFlightLife } from './flight_fx.js?v=29';
 
 const SPEED = 30;                       // dünyanın arkaya akma hızı (m/s)
 const XMAX = 11, YMIN = 3, YMAX = 17;   // uçağın gidebildiği kutu

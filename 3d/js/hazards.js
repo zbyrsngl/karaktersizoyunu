@@ -3,11 +3,11 @@
 // - ateş: meşalenin düştüğü yerde kısa süre yanar, basana can götürür
 // - ses dalgası: tencere tavadan yerde büyüyen halka; üstünden zıplanmazsa can götürür
 import * as THREE from 'three';
-import { G } from './state.js?v=28';
-import { hurtPlayer } from './player.js?v=28';
-import { floatText, burst, spawnFx, addTrauma } from './fx.js?v=28';
-import { playSfx } from './audio.js?v=28';
-import { rand } from './util.js?v=28';
+import { G } from './state.js?v=29';
+import { hurtPlayer } from './player.js?v=29';
+import { floatText, burst, spawnFx, addTrauma } from './fx.js?v=29';
+import { playSfx } from './audio.js?v=29';
+import { rand } from './util.js?v=29';
 
 let list = [];
 

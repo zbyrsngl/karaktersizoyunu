@@ -1,8 +1,8 @@
 // HIRHIZ 3D: karakter modelleri (kutulardan, kodla; resim dosyası yalnızca HIRHIZ'ın kafası: ../recep.jpg)
 // Bütün karakterler yerel +Z yönüne bakar; ayak tabanı y=0'dadır.
 import * as THREE from 'three';
-import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=28';
-import { box, mat, canvasTex, textSprite } from './util.js?v=28';
+import { tr, HAMMER_WORD, SHIELD_WORD } from './i18n.js?v=29';
+import { box, mat, canvasTex, textSprite } from './util.js?v=29';
 
 // Eklem: dönme noktası p olan grup; parça aşağı sarkar
 export function limb(parent, x, y, z, w, h, d, color, shoe) {

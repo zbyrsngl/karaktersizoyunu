@@ -1,5 +1,5 @@
 // HIRHIZ 3D: oyunun paylaşılan durumu (modüller arası)
-import { tr } from './i18n.js?v=28';
+import { tr } from './i18n.js?v=29';
 export const DIFFS = {
     easy:   { hp: 5, speed: 0.75, fire: 1.4, boss: 0.7, score: 0.5, name: 'KOLAY' },
     normal: { hp: 3, speed: 1,    fire: 1,   boss: 1,   score: 1,   name: 'NORMAL' },

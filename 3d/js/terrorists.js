@@ -4,15 +4,15 @@
 //   CANLI BOMBA: seni görünce bağırarak koşar; yanına kadar gelirse kendini patlatır. Önce durdur! (vurulunca yeleği patlar: yakın durma)
 // Yakalanan terörist kelepçeyle götürülür ("YAKALANDI!"). Mayınlar (makeMines): yaklaşınca bip bip öter, 1.4 sn sonra patlar.
 import * as THREE from 'three';
-import { limb, walkPose } from './models.js?v=28';
-import { G, diff } from './state.js?v=28';
-import { hurtPlayer } from './player.js?v=28';
-import { burst, floatText, addTrauma, spawnFx } from './fx.js?v=28';
-import { playSfx, beep } from './audio.js?v=28';
-import { makeBomb, blast } from './hazards.js?v=28';
-import { box, mat, dampAngle, rand, AABB } from './util.js?v=28';
-import { Batch, mat4 } from './decor.js?v=28';
-import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight, throwLob, damageEnemy, setBubble } from './enemies.js?v=28';
+import { limb, walkPose } from './models.js?v=29';
+import { G, diff } from './state.js?v=29';
+import { hurtPlayer } from './player.js?v=29';
+import { burst, floatText, addTrauma, spawnFx } from './fx.js?v=29';
+import { playSfx, beep } from './audio.js?v=29';
+import { makeBomb, blast } from './hazards.js?v=29';
+import { box, mat, dampAngle, rand, AABB } from './util.js?v=29';
+import { Batch, mat4 } from './decor.js?v=29';
+import { TYPES, patrol, stepToward, go, finish, handPos, shootStraight, throwLob, damageEnemy, setBubble } from './enemies.js?v=29';
 
 const CAMO = '#4d5b2a', CAMO_D = '#3f4a22', SKIN = '#c68642';
 function buildTerror(kind) {
@@ -144,19 +144,22 @@ function canli(e, dt, c) {
     e.m.lights.forEach((l, i) => l.visible = Math.sin(G.time * rate + i * 3) > 0);
     if (e.st === 'idle') {
         if (!c.alert) { patrol(e, dt, 1.1 * S.speed); return; }
-        if (c.d < 22 && Math.abs(c.dy) < 2) { go(e, 'run', 9, '!!'); setBubble(e, 'AAAAAAAAA!', 9); }
+        if (c.d < 24 && Math.abs(c.dy) < 3) { go(e, 'run', 12, '!!'); setBubble(e, 'AAAAAAAAA!', 9); }
         else patrol(e, dt, 1.1 * S.speed);
     } else if (e.st === 'run') {   // bağırarak koşar
         e.t -= dt; e.facing = dampAngle(e.facing, c.toP, 10, dt);
-        if (stepToward(e, c.toP, 5.3 * S.speed, dt)) { e.phase += dt * 14; walkPose(e.m, e.phase, 1); }
+        if (stepToward(e, c.toP, 5.8 * S.speed, dt)) { e.phase += dt * 14; walkPose(e.m, e.phase, 1); e.stuckT = 0; } else e.stuckT = (e.stuckT || 0) + dt;
         e.m.armL.rotation.x = -2.6 + Math.sin(G.time * 18) * 0.3; e.m.armR.rotation.x = -2.6 - Math.sin(G.time * 18) * 0.3;
         if ((e.beepT = (e.beepT || 0) - dt) <= 0) { e.beepT = 0.25; beep('mine'); }
-        if (c.d < 2.1 && Math.abs(c.dy) < 1.8) { go(e, 'arm', 0.35, null); setBubble(e, null); }
+        // yakına gelince (ya da önü kapanıp takılınca) hemen kurar; beklemez
+        if (c.d < 4.2 && Math.abs(c.dy) < 2.2) { go(e, 'arm', 0.3, null); setBubble(e, null); }
+        else if (e.stuckT > 0.8 && c.d < 14) { go(e, 'arm', 0.3, null); setBubble(e, null); }   // çukur ya da siper önünde takıldıysa beklemez
         if (e.t <= 0) { setBubble(e, null); finish(e, 2); }
     } else if (e.st === 'arm') {   // patlamadan hemen önce parlar
-        e.t -= dt; e.m.body.scale.setScalar(1 + (0.35 - e.t) * 0.6);
+        e.t -= dt; e.m.body.scale.setScalar(1 + (0.3 - e.t) * 0.7);
+        e.facing = dampAngle(e.facing, c.toP, 10, dt); stepToward(e, c.toP, 5.8 * S.speed, dt);   // kurarken de üstüne koşmaya devam eder
         if ((e.beepT -= dt) <= 0) { e.beepT = 0.06; beep('mine'); }
-        if (e.t <= 0) { e.selfDet = true; blast(e.pos.clone(), 3.2); addTrauma(0.6); damageEnemy(e, 99, 'blast'); }
+        if (e.t <= 0) { e.selfDet = true; blast(e.pos.clone(), 3.6); addTrauma(0.6); damageEnemy(e, 99, 'blast'); }
     }
 }
 

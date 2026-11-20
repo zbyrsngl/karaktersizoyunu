@@ -3,13 +3,13 @@
 // Kasetler toplanır (hepsi "MONTAJ!"), polisler rüşvetle susturulur; villa balkonlarındaki SINAYPIRCILAR'a ancak rüşvet atarak ulaşılır.
 // Demir kapıdan geçince canavar DEV ÇELİK KASA (boss_kasa.js); yenilince Cengiz gelir (outro.js).
 import * as THREE from 'three';
-import { tr } from './i18n.js?v=28';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=28';
-import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=28';
-import { spawnKasa } from './boss_kasa.js?v=28';
-import { cengizOutro } from './outro.js?v=28';
-import './police.js?v=28';
-import { Batch, person, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4 } from './decor.js?v=28';
+import { tr } from './i18n.js?v=29';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=29';
+import { T1, T2, HW, ARENA, signBoard, entrySign, tiled } from './world.js?v=29';
+import { spawnKasa } from './boss_kasa.js?v=29';
+import { cengizOutro } from './outro.js?v=29';
+import './police.js?v=29';
+import { Batch, person, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4 } from './decor.js?v=29';
 
 const NEWS = ["'SIFIRLA' SES KAYDI İNTERNETE DÜŞTÜ", "KAYITLARA 'MONTAJ' DEDİ", "KAYITTA: '30 MİLYON AVRO DAHA VAR'"];
 // Sağdaki boş alanda olaylar: polis dinleme odası, siyah minibüste gizli dinleme, Bilal'in basın toplantısı (villalar buralarda açılır)

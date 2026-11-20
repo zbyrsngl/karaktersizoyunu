@@ -5,11 +5,11 @@
 //   10 Saraçhane: sloganlar, miting otobüsü, pankartlı öğrenciler, tencere çalanlar, İPTAL damgalı dev sandık, simit-çay, ambulans, meşaleler
 // (3, 5, 7, 8, 9: sahneleri kendi dosyalarında; 6 uçuş: flight_fx.js)
 import * as THREE from 'three';
-import { HW, ARENA, signBoard } from './world.js?v=28';
-import { box } from './util.js?v=28';
-import { G } from './state.js?v=28';
-import { beep } from './audio.js?v=28';
-import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4, rand } from './decor.js?v=28';
+import { HW, ARENA, signBoard } from './world.js?v=29';
+import { box } from './util.js?v=29';
+import { G } from './state.js?v=29';
+import { beep } from './audio.js?v=29';
+import { Batch, crowd, poseCycle, bubbleTalk, looks, HOLD, table, chair, mat4, rand } from './decor.js?v=29';
 
 export function extraScenes(scene, W, L) {
     const f = { 1: gezi, 2: aralik, 4: temmuz, 10: sarachane }[L.id];

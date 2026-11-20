@@ -4,11 +4,11 @@
 // titreyen floresanlar; pencerede gece İstanbul (Fatih ve Süleymaniye camileri).
 // 4 farklı rakamlı şifre: yeşil = doğru yer, sarı = var ama yeri yanlış, gri = yok. 8 hak; hak bitince şifre değişir.
 import * as THREE from 'three';
-import { G, addScore, toast } from './state.js?v=28';
-import { playSfx } from './audio.js?v=28';
-import { tr, tf } from './i18n.js?v=28';
-import { box, mat, canvasTex, fitText, rand } from './util.js?v=28';
-import { Batch, crowd, poseCycle, looks, HOLD, table, chair, mat4 } from './decor.js?v=28';
+import { G, addScore, toast } from './state.js?v=29';
+import { playSfx } from './audio.js?v=29';
+import { tr, tf } from './i18n.js?v=29';
+import { box, mat, canvasTex, fitText, rand } from './util.js?v=29';
+import { Batch, crowd, poseCycle, looks, HOLD, table, chair, mat4 } from './decor.js?v=29';
 
 const LEN = 4, TRIES = 8, GOOD = 5;   // GOOD: 3. yıldız için en çok bu kadar tahmin
 const TICKER = "BYLOCK LİSTELERİ AÇIKLANDI • 'MOR BEYİN' UYGULAMASI: 11 BİN 480 KİŞİNİN LİSTEDE YANLIŞLIKLA YER ALDIĞI ORTAYA ÇIKTI • KHK İLE 125 BİNDEN FAZLA KAMU GÖREVLİSİ İHRAÇ EDİLDİ • ÖĞRETMENLER, AKADEMİSYENLER, GAZETECİLER DE LİSTEDE • ";

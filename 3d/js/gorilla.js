@@ -3,12 +3,12 @@
 // Bu moddayken yalnızca MUZ atar (sol tık / □): balyoz ve el bombası kapalı. Muz canavara rüşvet/çay gibi işler
 // (SAYGILI rüşvet almaz ama muzu yer: ona balyoz gibi işler). Canavar yenilince mod kendiliğinden kapanır.
 import * as THREE from 'three';
-import { G } from './state.js?v=28';
-import { floatText, burst, addTrauma } from './fx.js?v=28';
-import { roar, chestBeat } from './audio.js?v=28';
-import { box, mat } from './util.js?v=28';
-import { damageEnemy, killProj, isGuest } from './enemies.js?v=28';
-import { groundAt } from './physics.js?v=28';
+import { G } from './state.js?v=29';
+import { floatText, burst, addTrauma } from './fx.js?v=29';
+import { roar, chestBeat } from './audio.js?v=29';
+import { box, mat } from './util.js?v=29';
+import { damageEnemy, killProj, isGuest } from './enemies.js?v=29';
+import { groundAt } from './physics.js?v=29';
 
 const BEAT_EVERY = 5, BEAT_LEN = 1.3;
 const FUR = '#3b2a20', FUR_D = '#2a1d15', CHEST = '#6b5444';

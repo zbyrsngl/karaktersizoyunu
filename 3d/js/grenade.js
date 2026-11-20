@@ -4,12 +4,12 @@
 // kıvılcım ve moloz, yerde kurum izi, kamera sarsıntısı. Yarıçapındaki düşmanlar düşer, tuğlalar kırılır, canavar hasar alır.
 // Elde en çok 3 bomba; oyun 1 bombayla başlar, yenileri güç tuğlalarından (her bölümde 3 sabit yerde) çıkar.
 import * as THREE from 'three';
-import { G } from './state.js?v=28';
-import { burst, spawnFx, addTrauma, floatText } from './fx.js?v=28';
-import { playSfx } from './audio.js?v=28';
-import { damageEnemy } from './enemies.js?v=28';
-import { groundAt } from './physics.js?v=28';
-import { mat, clamp, rand, canvasTex } from './util.js?v=28';
+import { G } from './state.js?v=29';
+import { burst, spawnFx, addTrauma, floatText } from './fx.js?v=29';
+import { playSfx } from './audio.js?v=29';
+import { damageEnemy } from './enemies.js?v=29';
+import { groundAt } from './physics.js?v=29';
+import { mat, clamp, rand, canvasTex } from './util.js?v=29';
 
 export const GRENADE = { max: 3, start: 1, radius: 4.8, fuse: 1.6, grav: 20, minD: 3, maxD: 22 };
 let scene = null;

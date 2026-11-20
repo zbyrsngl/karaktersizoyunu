@@ -4,11 +4,11 @@
 // CANLI BOMBA bağırarak koşar, yola rastgele MAYINLAR gömülü (yaklaşınca bip bip, sonra patlar).
 // Kelepçeyle yakalanırlar. 11 terörist → kamp kapısı → canavar SELO (boss_human.js). Yenilince hücre parmaklığı iner.
 import * as THREE from 'three';
-import { box, mat, canvasTex, rand } from './util.js?v=28';
-import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=28';
-import { spawnSelo, seloJail } from './boss_human.js?v=28';
-import { Batch, mat4 } from './decor.js?v=28';
-import { makeMines, sandbags } from './terrorists.js?v=28';
+import { box, mat, canvasTex, rand } from './util.js?v=29';
+import { T1, T2, HW, ARENA, signBoard, entrySign } from './world.js?v=29';
+import { spawnSelo, seloJail } from './boss_human.js?v=29';
+import { Batch, mat4 } from './decor.js?v=29';
+import { makeMines, sandbags } from './terrorists.js?v=29';
 
 const TOWERS = [-50, -120], TOWER_X = -4.5, DECK = 2.8;
 const SEGS = [[10, -36], [-39.5, -70], [-73.5, -106], [-109.5, -142], [-145.5, -184]];

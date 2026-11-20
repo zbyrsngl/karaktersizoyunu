@@ -4,12 +4,12 @@
 //   3. bölüm: Cengiz (../resimler/cengiz.png) "Bu milletin a. koyacağız"
 //   4. bölüm: HIRHIZ "Bir savcı 2 polisle hepinizi bitiririm!", sonra sonpeygamber resmindeki adam parmağını sallayarak konuşur
 import * as THREE from 'three';
-import { G, toast } from './state.js?v=28';
-import { burst } from './fx.js?v=28';
-import { limb, walkPose, sharpen } from './models.js?v=28';
-import { playSfx } from './audio.js?v=28';
-import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=28';
-import { ARENA } from './world.js?v=28';
+import { G, toast } from './state.js?v=29';
+import { burst } from './fx.js?v=29';
+import { limb, walkPose, sharpen } from './models.js?v=29';
+import { playSfx } from './audio.js?v=29';
+import { box, mat, canvasTex, textSprite, disposeSprite, dampAngle, clamp } from './util.js?v=29';
+import { ARENA } from './world.js?v=29';
 
 // Fotoğraftan elips kesimli kafa dokusu: src içindeki [sx, sy, sw, sh] kutusu, elips [cx, cy, rx, ry] (kutuya göre).
 // İsteğe bağlı [.., rxB, ryB]: alt yarı ayrı ölçülerle (yumurta biçimi: çeneye doğru daralır, yaka/arka plan girmez)

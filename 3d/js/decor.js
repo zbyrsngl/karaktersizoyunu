@@ -3,8 +3,8 @@
 // Pozlar: stand, sit (yere oturmuş, piknik), chair (sandalyede), ruku, secde, kneel (tahiyyat), cheer (kollar havada), point (vaaz).
 // Hareket: bir grubun farklı pozlu kopyaları sırayla gösterilir (namaz, alkış, vaaz), ya da ağ topluca sallanır.
 import * as THREE from 'three';
-import { G } from './state.js?v=28';
-import { textSprite, disposeSprite, rand } from './util.js?v=28';
+import { G } from './state.js?v=29';
+import { textSprite, disposeSprite, rand } from './util.js?v=29';
 
 const BOX = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
 const BP = BOX.attributes.position.array, BN = BOX.attributes.normal.array;
